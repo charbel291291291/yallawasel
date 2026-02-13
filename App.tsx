@@ -31,7 +31,6 @@ import { supabase } from "./services/supabaseClient";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import MounéClassesSection from "./components/MounéClassesSection";
 import MounéDetail from "./components/MounéDetail";
-import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import Image from "./components/Image";
 import OfflineIndicator from "./components/OfflineIndicator";
 import AnimatedSplash from "./components/AnimatedSplash";
@@ -503,7 +502,6 @@ const AppShell = () => {
           <AIChat lang={lang} />
         </ErrorBoundary>
       )}
-      <PWAInstallPrompt />
       <OfflineIndicator />
     </div>
   );

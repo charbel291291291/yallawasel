@@ -1,4 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  startTransition,
+} from "react";
 
 interface InstallGateProps {
   children: React.ReactNode;
@@ -17,22 +23,32 @@ const isIOS = (): boolean => {
   return /iPhone|iPad|iPod/i.test(navigator.userAgent);
 };
 
+// Detect mobile device
+const isMobileDevice = (): boolean => {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+};
+
 const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
   const [isInstalled, setIsInstalled] = useState<boolean | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [dismissCount, setDismissCount] = useState(0);
   const [isIOSDevice] = useState(isIOS());
+  const [isMobile] = useState(isMobileDevice());
 
   useEffect(() => {
-    // Initial check
-    setIsInstalled(isStandalone());
+    // Initial check with startTransition for better performance
+    startTransition(() => {
+      setIsInstalled(isStandalone());
+    });
 
     // Listen for display-mode changes
     const mediaQuery = window.matchMedia("(display-mode: standalone)");
     const handleChange = (e: MediaQueryListEvent) => {
       if (e.matches) {
-        setIsInstalled(true);
+        startTransition(() => {
+          setIsInstalled(true);
+        });
       }
     };
     mediaQuery.addEventListener("change", handleChange);
@@ -52,16 +68,26 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
     };
     window.addEventListener("beforeinstallprompt", handleBeforeInstall as any);
 
-    // Check if app was just installed
+    // Check if app was just installed - use less frequent checks
     const checkInstalled = () => {
       if (isStandalone()) {
-        setIsInstalled(true);
-        setShowInstallPrompt(false);
+        startTransition(() => {
+          setIsInstalled(true);
+          setShowInstallPrompt(false);
+        });
       }
     };
 
-    // Check periodically for installation
-    const interval = setInterval(checkInstalled, 1000);
+    // Check for installation every 10 seconds (reduced for performance)
+    const interval = setInterval(checkInstalled, 10000);
+
+    // Also check immediately on visibility change (user returns from install)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkInstalled();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       mediaQuery.removeEventListener("change", handleChange);
@@ -70,6 +96,7 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
         handleBeforeInstall as any
       );
       clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -79,19 +106,21 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
     try {
       const { outcome } = await deferredPrompt.prompt();
 
-      if (outcome === "accepted") {
-        setIsInstalled(true);
-        setShowInstallPrompt(false);
-      } else {
-        // User dismissed - increment count
-        const newCount = dismissCount + 1;
-        setDismissCount(newCount);
-        localStorage.setItem("pwa_dismiss_count", newCount.toString());
-
-        if (newCount >= 3) {
+      startTransition(() => {
+        if (outcome === "accepted") {
+          setIsInstalled(true);
           setShowInstallPrompt(false);
+        } else {
+          // User dismissed - increment count
+          const newCount = dismissCount + 1;
+          setDismissCount(newCount);
+          localStorage.setItem("pwa_dismiss_count", newCount.toString());
+
+          if (newCount >= 3) {
+            setShowInstallPrompt(false);
+          }
         }
-      }
+      });
     } catch (error) {
       console.error("Install prompt error:", error);
     }
@@ -100,13 +129,15 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
   };
 
   const handleDismiss = () => {
-    const newCount = dismissCount + 1;
-    setDismissCount(newCount);
-    localStorage.setItem("pwa_dismiss_count", newCount.toString());
+    startTransition(() => {
+      const newCount = dismissCount + 1;
+      setDismissCount(newCount);
+      localStorage.setItem("pwa_dismiss_count", newCount.toString());
 
-    if (newCount >= 3) {
-      setShowInstallPrompt(false);
-    }
+      if (newCount >= 3) {
+        setShowInstallPrompt(false);
+      }
+    });
   };
 
   // Show loading while checking
@@ -127,7 +158,12 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
     return <>{children}</>;
   }
 
-  // Show install gate
+  // Desktop - no install gate needed, allow access
+  if (!isMobile) {
+    return <>{children}</>;
+  }
+
+  // Mobile but not installed - show install gate
   return (
     <>
       {children}
