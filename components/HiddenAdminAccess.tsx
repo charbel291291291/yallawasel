@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 
 interface HiddenAdminAccessProps {
   children: React.ReactNode;
@@ -43,35 +43,40 @@ const HiddenAdminAccess: React.FC<HiddenAdminAccessProps> = ({ children }) => {
     }
   };
 
-  // Handle logo clicks for hidden admin access
-  const handleLogoClick = () => {
+  // Handle logo clicks for hidden admin access - wrapped in useCallback for performance
+  const handleLogoClick = React.useCallback(() => {
     const now = Date.now();
-    if (now - lastClickTime > 2000) {
+    const timeDiff = now - lastClickTime;
+
+    if (timeDiff > 2000) {
       setClickCount(1);
     } else {
-      setClickCount((prev) => prev + 1);
+      setClickCount((prev) => {
+        const newCount = prev + 1;
+        // Check after state update
+        if (newCount >= 5) {
+          setShowTerminal(true);
+          setPin("");
+          setError("");
+          setShake(false);
+          setFailedAttempts(0);
+
+          // Play beep sound when terminal opens
+          playBeepSound();
+
+          // Start cursor blinking
+          if (cursorIntervalRef.current) {
+            clearInterval(cursorIntervalRef.current);
+          }
+          cursorIntervalRef.current = setInterval(() => {
+            setCursorVisible((prev) => !prev);
+          }, 500);
+        }
+        return newCount;
+      });
     }
     setLastClickTime(now);
-
-    if (clickCount + 1 >= 5) {
-      setShowTerminal(true);
-      setPin("");
-      setError("");
-      setShake(false);
-      setFailedAttempts(0);
-
-      // Play beep sound when terminal opens
-      playBeepSound();
-
-      // Start cursor blinking
-      if (cursorIntervalRef.current) {
-        clearInterval(cursorIntervalRef.current);
-      }
-      cursorIntervalRef.current = setInterval(() => {
-        setCursorVisible((prev) => !prev);
-      }, 500);
-    }
-  };
+  }, [lastClickTime]);
 
   // Handle keyboard shortcut: CTRL + SHIFT + L
   useEffect(() => {
@@ -171,7 +176,8 @@ const HiddenAdminAccess: React.FC<HiddenAdminAccessProps> = ({ children }) => {
   }, []);
 
   // Handle children - either clone single element or render multiple children
-  const renderChildren = () => {
+  // Memoize to avoid unnecessary re-renders
+  const renderedChildren = useMemo(() => {
     if (!children) return null;
 
     // If children is a single valid React element
@@ -206,11 +212,11 @@ const HiddenAdminAccess: React.FC<HiddenAdminAccessProps> = ({ children }) => {
 
     // Otherwise return as is
     return children;
-  };
+  }, [children, handleLogoClick]);
 
   return (
     <>
-      {renderChildren()}
+      {renderedChildren}
 
       {/* Hidden Admin Terminal Modal */}
       {showTerminal && (

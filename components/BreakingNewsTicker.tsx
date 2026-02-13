@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 interface BreakingNewsTickerProps {
   happyHours:
@@ -18,7 +18,6 @@ const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({
   happyHours,
 }) => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
 
   // Filter active happy hours, with safe handling for undefined
   const activeHappyHours = happyHours?.filter((hh) => hh.active) || [];
@@ -39,8 +38,12 @@ const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({
 
   const currentHappyHour = activeHappyHours[currentMessageIndex];
 
-  // Create the breaking news message
-  const message = `BREAKING: ${currentHappyHour.name} - ${currentHappyHour.multiplier}x POINTS & +${currentHappyHour.bonus_points} BONUS POINTS!`;
+  // Memoize message creation to avoid recalculating on every render
+  const message = useMemo(
+    () =>
+      `BREAKING: ${currentHappyHour.name} - ${currentHappyHour.multiplier}x POINTS & +${currentHappyHour.bonus_points} BONUS POINTS!`,
+    [currentHappyHour]
+  );
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white py-2 breaking-news-3d">

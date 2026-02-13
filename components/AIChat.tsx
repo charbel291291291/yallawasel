@@ -279,9 +279,9 @@ const AIChat: React.FC<AIChatProps> = ({ lang }) => {
 
   return (
     <div
-      className={`fixed bottom-6 ${
+      className={`fixed bottom-[90px] ${
         lang === "ar" ? "left-6" : "right-6"
-      } z-50 pointer-events-none`}
+      } z-40 pointer-events-none`}
     >
       <div className="pointer-events-auto flex flex-col items-end gap-4">
         {/* Main Chat Window */}

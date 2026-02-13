@@ -35,6 +35,7 @@ import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import Image from "./components/Image";
 import OfflineIndicator from "./components/OfflineIndicator";
 import AnimatedSplash from "./components/AnimatedSplash";
+import InstallGate from "./components/InstallGate";
 import BreakingNewsTicker from "./components/BreakingNewsTicker";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -52,7 +53,11 @@ function App() {
           {!splashComplete && (
             <AnimatedSplash onComplete={handleSplashComplete} />
           )}
-          {splashComplete && <AppShell />}
+          {splashComplete && (
+            <InstallGate>
+              <AppShell />
+            </InstallGate>
+          )}
         </>
       </HashRouter>
     </SettingsProvider>
@@ -83,12 +88,15 @@ const AppShell = () => {
     const fetchData = async () => {
       try {
         // Fetch products
-        const { data: productsData } = await supabase
+        const { data: productsData, error: productsError } = await supabase
           .from("products")
           .select("*")
           .eq("is_active", true)
           .order("name");
-        if (productsData && productsData.length > 0) {
+
+        if (productsError) {
+          console.error("Error fetching products:", productsError);
+        } else if (productsData && productsData.length > 0) {
           setProducts(
             productsData.map((p: any) => ({
               id: p.id,
@@ -105,9 +113,8 @@ const AppShell = () => {
               isActive: p.is_active,
             }))
           );
-        } else {
-          setProducts(MOCK_PRODUCTS);
         }
+        // Only use MOCK_PRODUCTS if no products in database
 
         // Fetch active happy hours
         const { data: happyHoursData } = await supabase
@@ -119,12 +126,89 @@ const AppShell = () => {
           setHappyHours(happyHoursData);
         }
       } catch (err) {
-        setProducts(MOCK_PRODUCTS);
+        console.error("Error fetching data:", err);
+        // Products will remain empty, happy hours will remain empty
       } finally {
         setHappyHoursLoaded(true);
       }
     };
     fetchData();
+  }, []);
+
+  // Real-time subscription for database changes
+  useEffect(() => {
+    const happyHoursChannel = supabase
+      .channel("happy_hours_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "happy_hours_schedule" },
+        () => {
+          // Refetch happy hours when database changes
+          supabase
+            .from("happy_hours_schedule")
+            .select("*")
+            .eq("active", true)
+            .order("created_at", { ascending: false })
+            .then(({ data }) => {
+              if (data) setHappyHours(data);
+            });
+        }
+      )
+      .subscribe();
+
+    const productsChannel = supabase
+      .channel("products_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        () => {
+          // Refetch products when database changes
+          supabase
+            .from("products")
+            .select("*")
+            .eq("is_active", true)
+            .order("name")
+            .then(({ data }) => {
+              if (data && data.length > 0) {
+                setProducts(
+                  data.map((p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                    nameAr: p.name_ar || p.name,
+                    description: p.description,
+                    descriptionAr: p.description_ar || p.description,
+                    price: Number(p.price),
+                    cost: Number(p.cost),
+                    stock: Number(p.stock),
+                    category: p.category,
+                    image: p.image,
+                    tags: p.tags || [],
+                    isActive: p.is_active,
+                  }))
+                );
+              }
+            });
+        }
+      )
+      .subscribe();
+
+    const mouneChannel = supabase
+      .channel("moune_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "moune_classes" },
+        () => {
+          // Trigger Mouné classes refresh - the component will handle its own refetch
+          // This is handled by the component's own subscription
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(happyHoursChannel);
+      supabase.removeChannel(productsChannel);
+      supabase.removeChannel(mouneChannel);
+    };
   }, []);
 
   // Auth State Listener
@@ -277,7 +361,7 @@ const AppShell = () => {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-500 pb-20 sm:pb-0 ${
+      className={`min-h-screen transition-colors duration-500 pb-24 sm:pb-0 ${
         isAdminRoute ? "" : "pt-24"
       }`}
     >
@@ -961,25 +1045,17 @@ const NavDropdown = ({
   isActive: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  // Use onMouseLeave instead of click-outside for better performance
+  const handleMouseLeave = () => setIsOpen(false);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div
+      className="relative"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={handleMouseLeave}
+    >
       <button
-        onClick={() => setIsOpen(!isOpen)}
         className={`px-4 py-2.5 rounded-lg text-xs font-black transition-all duration-300 uppercase tracking-wider flex items-center gap-1 ${
           isActive || isOpen
             ? "bg-white text-primary shadow-sm scale-[1.02] border border-gray-100"
@@ -996,7 +1072,6 @@ const NavDropdown = ({
           <Link
             to="/moune"
             className="block px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors"
-            onClick={() => setIsOpen(false)}
           >
             All Classes
           </Link>
@@ -1006,7 +1081,6 @@ const NavDropdown = ({
               key={item.to}
               to={item.to}
               className="block px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors"
-              onClick={() => setIsOpen(false)}
             >
               {item.label}
             </Link>
@@ -1021,36 +1095,57 @@ const MobileTabBar = ({ lang, onOpenCart, cartCount }: any) => {
   const t = translations[lang];
   const location = useLocation();
   return (
-    <div className="sm:hidden fixed bottom-6 left-6 right-6 z-40">
-      <div className="glass-panel rounded-3xl p-3 flex justify-around items-center border border-white/40 shadow-[0_20px_40px_rgba(0,0,0,0.15)]">
+    <div
+      className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.08)] border-t border-gray-100/50"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      <div className="flex justify-around items-center h-[70px] px-2 max-w-lg mx-auto">
         <MobileTab
           to="/"
           icon="fa-house"
+          iconOutline="fa-house"
           label={t.home}
           isActive={location.pathname === "/"}
         />
         <MobileTab
           to="/shop"
           icon="fa-box-open"
+          iconOutline="fa-box"
           label={t.kits}
           isActive={location.pathname === "/shop"}
+        />
+        <MobileTab
+          to="/impact"
+          icon="fa-hand-holding-heart"
+          iconOutline="fa-heart"
+          label={t.impact}
+          isActive={location.pathname === "/impact"}
         />
 
         {/* Cart Tab */}
         <button
           onClick={onOpenCart}
-          className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all text-gray-400 relative"
+          className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all relative ${
+            location.pathname === "/cart" || cartCount > 0
+              ? "text-red-600 scale-105"
+              : "text-gray-400"
+          }`}
         >
-          <i className="fa-solid fa-bag-shopping text-lg"></i>
-          {cartCount > 0 && (
-            <span className="absolute top-2 right-3 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
-          )}
-          <span className="text-[9px] font-bold mt-1">{t.bag}</span>
+          <div className="relative">
+            <i className="fa-regular fa-bag-shopping text-xl"></i>
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+                {cartCount}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-medium mt-1">{t.bag}</span>
         </button>
 
         <MobileTab
           to="/profile"
           icon="fa-user-circle"
+          iconOutline="fa-user"
           label={t.wallet}
           isActive={location.pathname === "/profile"}
         />
@@ -1059,17 +1154,25 @@ const MobileTabBar = ({ lang, onOpenCart, cartCount }: any) => {
   );
 };
 
-const MobileTab = ({ to, icon, label, isActive }: any) => (
+const MobileTab = ({ to, icon, iconOutline, label, isActive }: any) => (
   <Link
     to={to}
-    className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all ${
-      isActive
-        ? "bg-primary text-white shadow-lg shadow-primary/20 scale-110"
-        : "text-gray-400"
+    className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 ${
+      isActive ? "text-red-600 scale-105" : "text-gray-400 hover:text-gray-600"
     }`}
   >
-    <i className={`fa-solid ${icon} text-lg`}></i>
-    <span className="text-[9px] font-bold mt-1">{label}</span>
+    <i
+      className={`${isActive ? "fa-solid" : "fa-regular"} ${
+        isActive ? icon : iconOutline || icon
+      } text-xl`}
+    ></i>
+    <span
+      className={`text-[10px] font-medium mt-1 ${
+        isActive ? "text-red-600" : "text-gray-400"
+      }`}
+    >
+      {label}
+    </span>
   </Link>
 );
 

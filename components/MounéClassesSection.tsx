@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { translations, Language } from "../translations";
+import { supabase } from "../services/supabaseClient";
 
 interface MounéClass {
   id: string;
@@ -26,8 +27,81 @@ const MounéClassesSection: React.FC<MounéClassesSectionProps> = ({
   addToCart,
 }) => {
   const t = translations[lang];
+  const [mounéClasses, setMounéClasses] = useState<MounéClass[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const mounéClasses: MounéClass[] = [
+  const fetchMounéClasses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("moune_classes")
+        .select("*")
+        .eq("is_active", true)
+        .order("price", { ascending: true });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setMounéClasses(
+          data.map((item) => ({
+            id: item.id,
+            name: item.name,
+            nameAr: item.name_ar || item.name,
+            description: item.description,
+            descriptionAr: item.description_ar || item.description,
+            totalWeight: item.total_weight || "",
+            mealsCount: item.meals_count || 0,
+            price: item.price,
+            image: item.image,
+            color: getClassColor(item.class_type),
+            isBestValue: item.class_type === "classic",
+          }))
+        );
+      } else {
+        setMounéClasses(getDefaultClasses());
+      }
+    } catch (error) {
+      console.error("Error fetching Mouné classes:", error);
+      setMounéClasses(getDefaultClasses());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMounéClasses();
+
+    // Real-time subscription for Mouné classes
+    const channel = supabase
+      .channel("moune_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "moune_classes" },
+        () => {
+          fetchMounéClasses();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Helper function to get color based on class type
+  const getClassColor = (classType?: string) => {
+    switch (classType) {
+      case "mini":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case "premium":
+        return "bg-gradient-to-r from-yellow-100 to-amber-100 text-amber-900 border-amber-300";
+      case "classic":
+      default:
+        return "bg-primary text-white border-primary";
+    }
+  };
+
+  // Default classes as fallback
+  const getDefaultClasses = (): MounéClass[] => [
     {
       id: "mini-moune",
       name: "Mini Mouné (Budget Smart)",
@@ -76,6 +150,34 @@ const MounéClassesSection: React.FC<MounéClassesSectionProps> = ({
         "bg-gradient-to-r from-yellow-100 to-amber-100 text-amber-900 border-amber-300",
     },
   ];
+
+  if (loading) {
+    return (
+      <section className="mt-16">
+        <div className="text-center mb-12">
+          <h2 className="font-luxury text-4xl font-bold text-gray-900 mb-4">
+            {lang === "ar" ? "اختر فئة مونك" : "Choose Your Mouné Class"}
+          </h2>
+          <div className="w-24 h-1 bg-primary rounded-full mx-auto"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="depth-card rounded-[2.5rem] overflow-hidden border border-gray-100/50 animate-pulse"
+            >
+              <div className="h-64 bg-gray-200"></div>
+              <div className="p-8 space-y-4">
+                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mt-16">
