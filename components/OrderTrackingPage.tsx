@@ -18,7 +18,7 @@ interface Order {
   phone: string;
   address: string;
   items: any[];
-  total_amount: number;
+  total: number;
   status: string;
   created_at: string;
   updated_at: string;
@@ -303,7 +303,7 @@ const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ lang }) => {
             <div className="flex justify-between py-3">
               <span className="text-gray-900 font-bold">Total</span>
               <span className="text-primary font-black text-xl">
-                ${Number(order.total_amount).toFixed(2)}
+                ${Number(order.total).toFixed(2)}
               </span>
             </div>
           </div>

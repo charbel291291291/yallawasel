@@ -337,7 +337,6 @@ const AppShell = () => {
           phone: profile?.phone || user.phone || "",
           address: profile?.address || "",
           total: total,
-          total_amount: total,
           status: "pending",
           payment_method: "cash",
           delivery_zone: "Adonis",
@@ -363,7 +362,7 @@ const AppShell = () => {
             full_name: data.full_name,
             phone: data.phone,
             address: data.address,
-            total_amount: data.total_amount,
+            total_amount: data.total,
             items: data.items,
             order_id: data.id,
           });

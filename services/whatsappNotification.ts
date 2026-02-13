@@ -5,7 +5,7 @@ export interface OrderNotificationData {
   full_name: string;
   phone: string;
   address: string;
-  total_amount: number;
+  total: number;
   items: any[];
   order_id: string;
 }
@@ -36,7 +36,7 @@ export const sendWhatsAppNotification = async (
 🛍️ *Items:*
   • ${itemsList}
 
-💰 *Total:* $${Number(orderData.total_amount).toFixed(2)}
+💰 *Total:* $${Number(orderData.total).toFixed(2)}
 
 ━━━━━━━━━━━━━━━━━━━━
 View in Admin Panel for details.
@@ -89,7 +89,7 @@ export const getOrderConfirmationMessage = (
 Thank you for your order, ${orderData.full_name}!
 
 📋 Order #${orderData.order_id.slice(0, 8).toUpperCase()}
-💰 Total: $${Number(orderData.total_amount).toFixed(2)}
+💰 Total: $${Number(orderData.total).toFixed(2)}
 
 We'll notify you when your order is on its way!
 

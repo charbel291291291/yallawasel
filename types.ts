@@ -105,7 +105,6 @@ export interface Order {
   address: string;
   items: CartItem[];
   total: number;
-  total_amount: number;
   status: OrderStatus;
   date: string;
   created_at: string;

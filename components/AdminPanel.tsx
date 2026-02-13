@@ -586,7 +586,7 @@ const OrdersView = () => {
     // Get order details before updating
     const { data: order } = await supabase
       .from("orders")
-      .select("user_id, total, total_amount, status")
+      .select("user_id, total, status")
       .eq("id", id)
       .single();
 
@@ -605,7 +605,7 @@ const OrdersView = () => {
 
     // Process impact when order is delivered
     if (newStatus === "delivered" && order && order.user_id) {
-      const orderTotal = order.total_amount || order.total || 0;
+      const orderTotal = order.total || 0;
       if (orderTotal > 0) {
         await processOrderImpact(id, order.user_id, orderTotal);
       }
@@ -760,7 +760,7 @@ const OrdersView = () => {
                   {o.items ? `${o.items.length} items` : "No items"}
                 </td>
                 <td className="p-4 font-black">
-                  ${Number(o.total || o.total_amount).toFixed(2)}
+                  ${Number(o.total).toFixed(2)}
                 </td>
                 <td className="p-4">
                   <div className="flex justify-center">
@@ -986,10 +986,7 @@ const OrdersView = () => {
             <div className="flex justify-between items-center pt-6 border-t border-gray-100">
               <span className="text-gray-900 font-bold text-lg">Total</span>
               <span className="text-3xl font-black text-primary">
-                $
-                {Number(
-                  selectedOrder.total || selectedOrder.total_amount
-                ).toFixed(2)}
+                ${Number(selectedOrder.total).toFixed(2)}
               </span>
             </div>
 
