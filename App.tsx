@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   HashRouter,
   Routes,
@@ -36,6 +36,7 @@ import Image from "./components/Image";
 import OfflineIndicator from "./components/OfflineIndicator";
 import AnimatedSplash from "./components/AnimatedSplash";
 import BreakingNewsTicker from "./components/BreakingNewsTicker";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   const [splashComplete, setSplashComplete] = useState(false);
@@ -281,18 +282,20 @@ const AppShell = () => {
       }`}
     >
       {!isAdminRoute && (
-        <HiddenAdminAccess>
-          <Navbar
-            user={user}
-            settings={settings}
-            cartCount={cart.length}
-            lang={lang}
-            toggleLanguage={toggleLanguage}
-            onLogout={handleLogout}
-            onOpenCart={() => setIsCartOpen(true)}
-          />
-          {happyHoursLoaded && <BreakingNewsTicker happyHours={happyHours} />}
-        </HiddenAdminAccess>
+        <ErrorBoundary>
+          <HiddenAdminAccess>
+            <Navbar
+              user={user}
+              settings={settings}
+              cartCount={cart.length}
+              lang={lang}
+              toggleLanguage={toggleLanguage}
+              onLogout={handleLogout}
+              onOpenCart={() => setIsCartOpen(true)}
+            />
+            {happyHoursLoaded && <BreakingNewsTicker happyHours={happyHours} />}
+          </HiddenAdminAccess>
+        </ErrorBoundary>
       )}
 
       <div
@@ -302,56 +305,91 @@ const AppShell = () => {
           <Route
             path="/"
             element={
-              <HomePage
-                products={products}
-                addToCart={addToCart}
-                lang={lang}
-                settings={settings}
-              />
+              <ErrorBoundary>
+                <HomePage
+                  products={products}
+                  addToCart={addToCart}
+                  lang={lang}
+                  settings={settings}
+                />
+              </ErrorBoundary>
             }
           />
           <Route
             path="/shop"
             element={
-              <ShopPage
-                products={products}
-                addToCart={addToCart}
-                lang={lang}
-                settings={settings}
-              />
+              <ErrorBoundary>
+                <ShopPage
+                  products={products}
+                  addToCart={addToCart}
+                  lang={lang}
+                  settings={settings}
+                />
+              </ErrorBoundary>
             }
           />
           <Route
             path="/impact"
-            element={<ImpactPage lang={lang} settings={settings} />}
+            element={
+              <ErrorBoundary>
+                <ImpactPage lang={lang} settings={settings} />
+              </ErrorBoundary>
+            }
           />
           <Route
             path="/services"
-            element={<ServicesPage lang={lang} user={user} />}
+            element={
+              <ErrorBoundary>
+                <ServicesPage lang={lang} user={user} />
+              </ErrorBoundary>
+            }
           />
           <Route
             path="/moune"
-            element={<MounéClassesSection lang={lang} addToCart={addToCart} />}
+            element={
+              <ErrorBoundary>
+                <MounéClassesSection lang={lang} addToCart={addToCart} />
+              </ErrorBoundary>
+            }
           />
           <Route
             path="/moune/:id"
-            element={<MounéDetail lang={lang} addToCart={addToCart} />}
+            element={
+              <ErrorBoundary>
+                <MounéDetail lang={lang} addToCart={addToCart} />
+              </ErrorBoundary>
+            }
           />
           <Route
             path="/profile"
             element={
-              user ? (
-                <ProfilePage user={user} lang={lang} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/login" />
-              )
+              <ErrorBoundary>
+                {user ? (
+                  <ProfilePage
+                    user={user}
+                    lang={lang}
+                    onLogout={handleLogout}
+                  />
+                ) : (
+                  <Navigate to="/login" />
+                )}
+              </ErrorBoundary>
             }
           />
-          <Route path="/admin" element={<AdminPanel />} />
+          <Route
+            path="/admin"
+            element={
+              <ErrorBoundary>
+                <AdminPanel />
+              </ErrorBoundary>
+            }
+          />
           <Route
             path="/login"
             element={
-              user ? <Navigate to="/profile" /> : <LoginPage lang={lang} />
+              <ErrorBoundary>
+                {user ? <Navigate to="/profile" /> : <LoginPage lang={lang} />}
+              </ErrorBoundary>
             }
           />
           <Route path="*" element={<Navigate to="/" />} />
@@ -376,7 +414,11 @@ const AppShell = () => {
           cartCount={cart.length}
         />
       )}
-      {!isAdminRoute && !isLoginPage && <AIChat lang={lang} />}
+      {!isAdminRoute && !isLoginPage && (
+        <ErrorBoundary>
+          <AIChat lang={lang} />
+        </ErrorBoundary>
+      )}
       <PWAInstallPrompt />
       <OfflineIndicator />
     </div>
@@ -804,10 +846,20 @@ const Navbar = ({
               label={t.kits}
               isActive={location.pathname === "/shop"}
             />
-            <NavLink
-              to="/moune"
+            <NavDropdown
               label="Mouné Classes"
-              isActive={location.pathname === "/moune"}
+              isActive={
+                location.pathname === "/moune" ||
+                location.pathname.startsWith("/moune/")
+              }
+              items={[
+                { to: "/moune/mini-moune", label: "Mini Mouné (Budget Smart)" },
+                {
+                  to: "/moune/classic-moune",
+                  label: "Classic Mouné (Best Value)",
+                },
+                { to: "/moune/premium-village", label: "Premium Village" },
+              ]}
             />
             <NavLink
               to="/impact"
@@ -898,6 +950,72 @@ const NavLink = ({
     {label}
   </Link>
 );
+
+const NavDropdown = ({
+  label,
+  items,
+  isActive,
+}: {
+  label: string;
+  items: Array<{ to: string; label: string }>;
+  isActive: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`px-4 py-2.5 rounded-lg text-xs font-black transition-all duration-300 uppercase tracking-wider flex items-center gap-1 ${
+          isActive || isOpen
+            ? "bg-white text-primary shadow-sm scale-[1.02] border border-gray-100"
+            : "text-gray-500 hover:text-gray-900 hover:bg-white/40"
+        }`}
+      >
+        {label}
+        <i
+          className={`fas fa-chevron-${isOpen ? "up" : "down"} text-[8px]`}
+        ></i>
+      </button>
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in">
+          <Link
+            to="/moune"
+            className="block px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            All Classes
+          </Link>
+          <div className="border-t border-gray-100 my-1"></div>
+          {items.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="block px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const MobileTabBar = ({ lang, onOpenCart, cartCount }: any) => {
   const t = translations[lang];

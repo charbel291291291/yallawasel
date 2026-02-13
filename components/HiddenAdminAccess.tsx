@@ -170,13 +170,47 @@ const HiddenAdminAccess: React.FC<HiddenAdminAccessProps> = ({ children }) => {
     };
   }, []);
 
+  // Handle children - either clone single element or render multiple children
+  const renderChildren = () => {
+    if (!children) return null;
+
+    // If children is a single valid React element
+    if (React.isValidElement(children)) {
+      return React.cloneElement(
+        children as React.ReactElement,
+        {
+          ...((children as React.ReactElement).props as object),
+          onLogoClick: handleLogoClick,
+        } as any
+      );
+    }
+
+    // If children is an array, find and clone the first element (Navbar)
+    if (Array.isArray(children)) {
+      return children.map((child, index) => {
+        if (React.isValidElement(child)) {
+          return React.cloneElement(
+            child as React.ReactElement,
+            {
+              ...((child as React.ReactElement).props as object),
+              onLogoClick:
+                index === 0
+                  ? handleLogoClick
+                  : ((child as React.ReactElement).props as any)?.onLogoClick,
+            } as any
+          );
+        }
+        return child;
+      });
+    }
+
+    // Otherwise return as is
+    return children;
+  };
+
   return (
     <>
-      {React.cloneElement(children as React.ReactElement, {
-        ...((children as React.ReactElement).props || {}),
-        ref: logoRef,
-        onLogoClick: handleLogoClick,
-      })}
+      {renderChildren()}
 
       {/* Hidden Admin Terminal Modal */}
       {showTerminal && (
