@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
 
 interface BreakingNewsTickerProps {
-  happyHours: Array<{
-    id: string;
-    name: string;
-    start_time: string;
-    end_time: string;
-    multiplier: number;
-    bonus_points: number;
-    active: boolean;
-  }>;
+  happyHours:
+    | Array<{
+        id: string;
+        name: string;
+        start_time: string;
+        end_time: string;
+        multiplier: number;
+        bonus_points: number;
+        active: boolean;
+      }>
+    | undefined;
 }
 
 const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({
@@ -18,8 +20,8 @@ const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
 
-  // Filter active happy hours
-  const activeHappyHours = happyHours.filter((hh) => hh.active);
+  // Filter active happy hours, with safe handling for undefined
+  const activeHappyHours = happyHours?.filter((hh) => hh.active) || [];
 
   useEffect(() => {
     if (activeHappyHours.length === 0) return;

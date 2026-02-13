@@ -67,6 +67,7 @@ const AppShell = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [happyHours, setHappyHours] = useState<HappyHour[]>([]);
+  const [happyHoursLoaded, setHappyHoursLoaded] = useState(false);
 
   const { settings, loading: settingsLoading, isReady } = useSettings();
   const location = useLocation();
@@ -118,6 +119,8 @@ const AppShell = () => {
         }
       } catch (err) {
         setProducts(MOCK_PRODUCTS);
+      } finally {
+        setHappyHoursLoaded(true);
       }
     };
     fetchData();
@@ -288,7 +291,7 @@ const AppShell = () => {
             onLogout={handleLogout}
             onOpenCart={() => setIsCartOpen(true)}
           />
-          <BreakingNewsTicker happyHours={happyHours} />
+          {happyHoursLoaded && <BreakingNewsTicker happyHours={happyHours} />}
         </HiddenAdminAccess>
       )}
 

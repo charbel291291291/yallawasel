@@ -36,12 +36,14 @@ export interface Product {
 
 export interface HappyHour {
   id: string;
-  productId: string;
-  product?: Product;
-  discountPrice: number;
-  startTime: string;
-  endTime: string;
-  isActive: boolean;
+  created_at: string;
+  name: string;
+  start_time: string;
+  end_time: string;
+  days_of_week: number[];
+  multiplier: number;
+  bonus_points: number;
+  active: boolean;
 }
 
 export interface Service {
