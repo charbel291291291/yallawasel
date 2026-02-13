@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  startTransition,
+} from "react";
 import {
   HashRouter,
   Routes,
@@ -276,24 +282,33 @@ const AppShell = () => {
     };
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
-    setUser(null);
-  };
-
-  const toggleLanguage = () => setLang((prev) => (prev === "en" ? "ar" : "en"));
-
-  const addToCart = (product: Product) => {
-    setCart((prev) => {
-      const existing = prev.find((p) => p.id === product.id);
-      if (existing)
-        return prev.map((p) =>
-          p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p
-        );
-      return [...prev, { ...product, quantity: 1 }];
+    startTransition(() => {
+      setUser(null);
     });
-    setIsCartOpen(true);
-  };
+  }, []);
+
+  const toggleLanguage = useCallback(() => {
+    startTransition(() => {
+      setLang((prev) => (prev === "en" ? "ar" : "en"));
+    });
+  }, []);
+
+  const addToCart = useCallback((product: Product) => {
+    startTransition(() => {
+      setCart((prev) => {
+        const existing = prev.find((p) => p.id === product.id);
+        if (existing)
+          return prev.map((p) =>
+            p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p
+          );
+        return [...prev, { ...product, quantity: 1 }];
+      });
+    });
+    // Defer opening cart to avoid blocking
+    setTimeout(() => setIsCartOpen(true), 0);
+  }, []);
 
   const handleCheckout = async () => {
     if (!user) return;
@@ -342,15 +357,17 @@ const AppShell = () => {
           created_by: user.id,
         });
 
-        // Trigger WhatsApp notification for admin
-        sendWhatsAppNotification({
-          full_name: data.full_name,
-          phone: data.phone,
-          address: data.address,
-          total_amount: data.total_amount,
-          items: data.items,
-          order_id: data.id,
-        });
+        // Trigger WhatsApp notification for admin (defer to avoid blocking)
+        setTimeout(() => {
+          sendWhatsAppNotification({
+            full_name: data.full_name,
+            phone: data.phone,
+            address: data.address,
+            total_amount: data.total_amount,
+            items: data.items,
+            order_id: data.id,
+          });
+        }, 100);
       }
 
       // Update User Points (10 points per dollar)
@@ -368,21 +385,25 @@ const AppShell = () => {
         .select("*")
         .eq("id", user.id)
         .single();
-      if (updatedProfile) {
-        setUser((prev) =>
-          prev ? { ...prev, points: updatedProfile.points } : null
-        );
-      }
 
-      setCart([]);
-      setIsCartOpen(false);
+      // Use startTransition for UI updates after async work
+      startTransition(() => {
+        if (updatedProfile) {
+          setUser((prev) =>
+            prev ? { ...prev, points: updatedProfile.points } : null
+          );
+        }
+
+        setCart([]);
+        setIsCartOpen(false);
+      });
+
+      // Show success message
       alert(
         lang === "ar"
           ? "تم استلام طلبك بنجاح!"
           : `Order received successfully! Track it at: /order/${data.id}`
       );
-      // Optionally redirect to order tracking page
-      // window.location.href = `/order/${data.id}`;
     } catch (err: any) {
       alert("Checkout failed: " + err.message);
     } finally {

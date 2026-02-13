@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 
 interface BreakingNewsTickerProps {
   happyHours:
@@ -38,37 +38,50 @@ const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({
 
   const currentHappyHour = activeHappyHours[currentMessageIndex];
 
-  // Memoize message creation to avoid recalculating on every render
-  const message = useMemo(
-    () =>
-      `${currentHappyHour.name} - ${currentHappyHour.multiplier}x POINTS & +${currentHappyHour.bonus_points} BONUS POINTS!`,
-    [currentHappyHour]
-  );
-
   return (
-    <div className="relative overflow-hidden bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white py-2 breaking-news-3d">
+    <div className="relative overflow-hidden bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white py-3 breaking-news-3d">
       {/* Animated background elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white to-transparent animate-pulse"></div>
       </div>
 
       <div className="relative z-10 flex items-center">
-        <div className="animate-pulse flex items-center px-4">
-          <span className="bg-yellow-400 text-red-800 font-black text-xs px-2 py-1 rounded mr-3 uppercase tracking-wider pulse-glow">
-            Happy Hours
-          </span>
-          <i className="fas fa-gift text-yellow-300 mr-3"></i>
+        {/* Happy Hours Badge - Larger and more visible */}
+        <div className="flex items-center px-4 bg-yellow-400 text-red-800 font-black text-sm px-4 py-2 rounded-r-xl shadow-lg">
+          <i className="fas fa-gift mr-2 text-lg"></i>
+          <span className="uppercase tracking-wider">Happy Hours</span>
         </div>
 
-        <div className="flex animate-marquee whitespace-nowrap">
-          <p className="font-bold text-sm tracking-wide breaking-news-glow">
-            {message}
+        {/* Message - Larger, bolder text with shadow */}
+        <div className="flex animate-marquee whitespace-nowrap ml-4">
+          <p className="font-black text-base md:text-lg tracking-wide text-white drop-shadow-md">
+            <span className="text-yellow-300">{currentHappyHour.name}</span>
+            <span className="mx-2">•</span>
+            <span className="text-yellow-300">
+              {currentHappyHour.multiplier}x
+            </span>{" "}
+            POINTS
+            <span className="mx-2">•</span>
+            <span className="text-green-300">
+              +{currentHappyHour.bonus_points}
+            </span>{" "}
+            BONUS!
           </p>
         </div>
 
         <div className="flex animate-marquee whitespace-nowrap ml-4">
-          <p className="font-bold text-sm tracking-wide breaking-news-glow">
-            {message}
+          <p className="font-black text-base md:text-lg tracking-wide text-white drop-shadow-md">
+            <span className="text-yellow-300">{currentHappyHour.name}</span>
+            <span className="mx-2">•</span>
+            <span className="text-yellow-300">
+              {currentHappyHour.multiplier}x
+            </span>{" "}
+            POINTS
+            <span className="mx-2">•</span>
+            <span className="text-green-300">
+              +{currentHappyHour.bonus_points}
+            </span>{" "}
+            BONUS!
           </p>
         </div>
       </div>

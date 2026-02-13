@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  startTransition,
+} from "react";
 import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 import { Language } from "../translations";
 
@@ -234,48 +240,64 @@ const AIChat: React.FC<AIChatProps> = ({ lang }) => {
     }
   }, [volume]);
 
-  const handleSendMessage = async (text: string) => {
-    if (!text.trim()) return;
-    const userMsg = { role: "user" as const, text };
-    setMessages((prev) => [...prev, userMsg]);
-    setInputText("");
-    setLoading(true);
+  const handleSendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim()) return;
+      const userMsg = { role: "user" as const, text };
 
-    try {
-      const ai = new GoogleGenAI({
-        apiKey:
-          import.meta.env.VITE_GEMINI_API_KEY ||
-          process.env.GEMINI_API_KEY ||
-          "",
+      startTransition(() => {
+        setMessages((prev) => [...prev, userMsg]);
+        setInputText("");
       });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [...messages, userMsg].map((m) => ({
-          parts: [{ text: m.text }],
-        })),
-        config: { systemInstruction, temperature: 0.8 },
-      });
-      setMessages((prev) => [
-        ...prev,
-        { role: "emilia", text: response.text || "تكرم عينك، عم بسمعك." },
-      ]);
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "emilia",
-          text: "صار في ضغط عالخط يا بيك، خليني جرب مرة تانية.",
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const toggleMinimize = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMinimized(!isMinimized);
-  };
+      setLoading(true);
+
+      try {
+        const ai = new GoogleGenAI({
+          apiKey:
+            import.meta.env.VITE_GEMINI_API_KEY ||
+            process.env.GEMINI_API_KEY ||
+            "",
+        });
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: [...messages, userMsg].map((m) => ({
+            parts: [{ text: m.text }],
+          })),
+          config: { systemInstruction, temperature: 0.8 },
+        });
+        startTransition(() => {
+          setMessages((prev) => [
+            ...prev,
+            { role: "emilia", text: response.text || "تكرم عينك، عم بسمعك." },
+          ]);
+        });
+      } catch (err) {
+        startTransition(() => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "emilia",
+              text: "صار في خطأ يا بيك، خليني جرب مرة تانية.",
+            },
+          ]);
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [messages, systemInstruction]
+  );
+
+  const toggleMinimize = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      startTransition(() => {
+        setIsMinimized(!isMinimized);
+      });
+    },
+    [isMinimized]
+  );
 
   return (
     <div
