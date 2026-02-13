@@ -213,6 +213,7 @@ begin
 end;
 $$ language plpgsql security definer;
 
+drop trigger if exists update_tier_trigger on profiles;
 create trigger update_tier_trigger
   after update of points on profiles
   for each row
@@ -380,3 +381,130 @@ create policy "Users Manage Own FCM Tokens" on user_fcm_tokens for all using (au
 
 drop policy if exists "Admin Read FCM Tokens" on user_fcm_tokens;
 create policy "Admin Read FCM Tokens" on user_fcm_tokens for select using (true);
+
+-- =============================================
+-- ORDER MANAGEMENT SYSTEM ENHANCEMENTS
+-- =============================================
+
+-- Add enhanced columns to orders table
+alter table public.orders add column if not exists full_name text;
+alter table public.orders add column if not exists phone text;
+alter table public.orders add column if not exists address text;
+alter table public.orders add column if not exists updated_at timestamptz;
+alter table public.orders add column if not exists admin_notes text;
+
+-- Create order status history table for timeline tracking
+create table if not exists public.order_status_history (
+  id uuid default gen_random_uuid() primary key,
+  order_id uuid references orders(id) on delete cascade not null,
+  status text not null,
+  note text,
+  created_by uuid references auth.users,
+  created_at timestamptz default now()
+);
+
+-- Enable RLS for order_status_history
+alter table public.order_status_history enable row level security;
+
+-- Order Status History Policies
+drop policy if exists "Users Read Own Order History" on order_status_history;
+create policy "Users Read Own Order History" on order_status_history for select using (
+  exists (
+    select 1 from orders 
+    where orders.id = order_status_history.order_id 
+    and orders.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "Admin Manage Order History" on order_status_history;
+create policy "Admin Manage Order History" on order_status_history for all using (true);
+
+-- Create indexes for performance
+create index if not exists idx_orders_status on orders(status);
+create index if not exists idx_orders_created_at on orders(created_at);
+create index if not exists idx_orders_user_id on orders(user_id);
+create index if not exists idx_order_status_history_order_id on order_status_history(order_id);
+
+-- Add updated_at trigger function
+create or replace function update_updated_at_column()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists update_orders_updated_at on orders;
+create trigger update_orders_updated_at
+  before update on orders
+  for each row
+  execute function update_updated_at_column();
+
+-- =============================================
+-- APP SETTINGS FOR WHATSAPP NOTIFICATION
+-- =============================================
+
+alter table public.app_settings add column if not exists whatsapp_notification_enabled boolean default true;
+alter table public.app_settings add column if not exists whatsapp_number text;
+
+-- =============================================
+-- IMPACT SYSTEM TABLES
+-- =============================================
+
+-- Impact Campaigns
+create table if not exists public.impact_campaigns (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  title text not null,
+  description text,
+  image_url text,
+  goal_amount numeric default 0,
+  current_amount numeric default 0,
+  goal_type text, -- trees, meals, donations, etc
+  impact_per_dollar numeric default 1, -- how many impact units per dollar
+  is_active boolean default true,
+  show_on_impact_page boolean default true
+);
+
+-- User Impact Contributions
+create table if not exists public.user_impact (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  user_id uuid references auth.users on delete cascade,
+  campaign_id uuid references impact_campaigns(id) on delete cascade,
+  order_id uuid references orders(id) on delete set null,
+  contribution_amount numeric default 0,
+  impact_units numeric default 0, -- trees planted, meals funded, etc
+  impact_type text -- trees, meals, donations
+);
+
+-- App Settings for Impact Configuration
+alter table public.app_settings add column if not exists impact_percentage numeric default 3; -- 3% of order goes to impact
+alter table public.app_settings add column if not exists impact_enabled boolean default true;
+
+-- RLS for Impact Tables
+alter table public.impact_campaigns enable row level security;
+alter table public.user_impact enable row level security;
+
+-- Impact Campaigns Policies
+drop policy if exists "Public Read Active Impact Campaigns" on impact_campaigns;
+create policy "Public Read Active Impact Campaigns" on impact_campaigns for select using (is_active = true);
+
+drop policy if exists "Admin Manage Impact Campaigns" on impact_campaigns;
+create policy "Admin Manage Impact Campaigns" on impact_campaigns for all using (true);
+
+-- User Impact Policies
+drop policy if exists "Users Read Own Impact" on user_impact;
+create policy "Users Read Own Impact" on user_impact for select using (auth.uid() = user_id);
+
+drop policy if exists "Users Insert Own Impact" on user_impact;
+create policy "Users Insert Own Impact" on user_impact for insert with check (auth.uid() = user_id);
+
+drop policy if exists "Admin Read All Impact" on user_impact;
+create policy "Admin Read All Impact" on user_impact for select using (true);
+
+-- Create indexes for performance
+create index if not exists idx_user_impact_user_id on user_impact(user_id);
+create index if not exists idx_user_impact_campaign_id on user_impact(campaign_id);
+create index if not exists idx_impact_campaigns_active on impact_campaigns(is_active);
+

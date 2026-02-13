@@ -89,23 +89,42 @@ export interface Reward {
 
 export type OrderStatus =
   | "pending"
-  | "confirmed"
+  | "approved"
   | "preparing"
-  | "delivering"
-  | "completed"
+  | "out_for_delivery"
+  | "delivered"
   | "cancelled";
 
 export interface Order {
   id: string;
+  user_id: string;
   userId: string;
   userName: string;
+  full_name: string;
+  phone: string;
+  address: string;
   items: CartItem[];
   total: number;
+  total_amount: number;
   status: OrderStatus;
   date: string;
-  created_at?: string;
+  created_at: string;
+  updated_at: string;
+  payment_method: string;
   paymentMethod: "cash" | "wallet" | "card";
+  delivery_zone: string;
   deliveryZone: string;
+  notes: string;
+  admin_notes: string;
+}
+
+export interface OrderStatusHistory {
+  id: string;
+  order_id: string;
+  status: OrderStatus;
+  note: string;
+  created_by: string;
+  created_at: string;
 }
 
 export interface AdminLog {
@@ -213,4 +232,40 @@ export interface DeliveryConfig {
   settings: DeliverySettings;
   zones: DeliveryZone[];
   schedule: DeliveryDay[];
+}
+
+// --- Impact System Types ---
+
+export interface ImpactCampaign {
+  id: string;
+  created_at: string;
+  title: string;
+  description: string;
+  image_url: string;
+  goal_amount: number;
+  current_amount: number;
+  goal_type: string;
+  impact_per_dollar: number;
+  is_active: boolean;
+  show_on_impact_page: boolean;
+}
+
+export interface UserImpact {
+  id: string;
+  created_at: string;
+  user_id: string;
+  campaign_id: string;
+  order_id: string;
+  contribution_amount: number;
+  impact_units: number;
+  impact_type: string;
+}
+
+export type ImpactBadgeLevel = "supporter" | "changemaker" | "hero";
+
+export interface UserImpactStats {
+  totalContributed: number;
+  totalImpactUnits: number;
+  badgeLevel: ImpactBadgeLevel;
+  campaignContributions: UserImpact[];
 }

@@ -41,7 +41,7 @@ const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({
   // Memoize message creation to avoid recalculating on every render
   const message = useMemo(
     () =>
-      `BREAKING: ${currentHappyHour.name} - ${currentHappyHour.multiplier}x POINTS & +${currentHappyHour.bonus_points} BONUS POINTS!`,
+      `${currentHappyHour.name} - ${currentHappyHour.multiplier}x POINTS & +${currentHappyHour.bonus_points} BONUS POINTS!`,
     [currentHappyHour]
   );
 
@@ -55,9 +55,9 @@ const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({
       <div className="relative z-10 flex items-center">
         <div className="animate-pulse flex items-center px-4">
           <span className="bg-yellow-400 text-red-800 font-black text-xs px-2 py-1 rounded mr-3 uppercase tracking-wider pulse-glow">
-            Breaking
+            Happy Hours
           </span>
-          <i className="fas fa-bullhorn text-yellow-300 mr-3"></i>
+          <i className="fas fa-gift text-yellow-300 mr-3"></i>
         </div>
 
         <div className="flex animate-marquee whitespace-nowrap">

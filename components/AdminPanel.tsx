@@ -5,6 +5,7 @@ import { useSettings } from "../contexts/SettingsContext";
 import { ADMIN_PASSWORD } from "../constants";
 import { Product, Order, UserTier, OrderStatus, CartItem } from "../types";
 import MounéClassesView from "./MounéClassesView";
+import { processOrderImpact } from "../services/impactService";
 
 type Tab =
   | "dashboard"
@@ -14,6 +15,7 @@ type Tab =
   | "customers"
   | "rewards"
   | "happyhour"
+  | "impact"
   | "settings";
 
 // Helper to upload images to Supabase Storage
@@ -193,6 +195,8 @@ const AdminPanel: React.FC = () => {
         return <RewardsView />;
       case "happyhour":
         return <HappyHourView />;
+      case "impact":
+        return <ImpactView />;
       case "settings":
         return <SettingsView />;
       default:
@@ -267,6 +271,13 @@ const AdminPanel: React.FC = () => {
             label="Happy Hours"
             active={activeTab === "happyhour"}
             onClick={() => setActiveTab("happyhour")}
+            isOpen={isSidebarOpen}
+          />
+          <SidebarItem
+            icon="fa-globe"
+            label="Impact"
+            active={activeTab === "impact"}
+            onClick={() => setActiveTab("impact")}
             isOpen={isSidebarOpen}
           />
           <div className="border-t border-slate-800 my-4 pt-4"></div>
@@ -498,102 +509,296 @@ const LogItem = ({ label, time, type }: any) => (
   </div>
 );
 
-/* Orders View with Details */
+/* Orders View with Details - Enhanced with Real-time & Filters */
 const OrdersView = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [orderHistory, setOrderHistory] = useState<any[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [adminNote, setAdminNote] = useState("");
+
+  const fetchOrders = async () => {
+    let query = supabase
+      .from("orders")
+      .select("*, profiles(full_name, phone)")
+      .order("created_at", { ascending: false });
+
+    if (statusFilter !== "all") {
+      query = query.eq("status", statusFilter);
+    }
+
+    const { data } = await query;
+    setOrders(data || []);
+  };
+
+  const fetchOrderHistory = async (orderId: string) => {
+    const { data } = await supabase
+      .from("order_status_history")
+      .select("*")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: true });
+    setOrderHistory(data || []);
+  };
 
   useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("*, profiles(full_name)")
-        .order("created_at", { ascending: false });
-      setOrders(data || []);
+    fetchOrders();
+
+    // Real-time subscription for new orders
+    const channel = supabase
+      .channel("orders-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+        },
+        (payload) => {
+          // Refresh orders on any change
+          fetchOrders();
+
+          // If selected order was updated, refresh it
+          if (
+            selectedOrder &&
+            payload.new &&
+            (payload.new as any).id === selectedOrder.id
+          ) {
+            setSelectedOrder(payload.new as any);
+            fetchOrderHistory((payload.new as any).id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
     };
-    fetch();
-  }, []);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    if (selectedOrder) {
+      fetchOrderHistory(selectedOrder.id);
+    }
+  }, [selectedOrder]);
 
   const updateStatus = async (id: string, newStatus: string) => {
-    await supabase.from("orders").update({ status: newStatus }).eq("id", id);
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o))
+    // Get order details before updating
+    const { data: order } = await supabase
+      .from("orders")
+      .select("user_id, total, total_amount, status")
+      .eq("id", id)
+      .single();
+
+    // Update order status
+    await supabase
+      .from("orders")
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    // Add to status history
+    await supabase.from("order_status_history").insert({
+      order_id: id,
+      status: newStatus,
+      note: adminNote || `Status changed to ${newStatus}`,
+    });
+
+    // Process impact when order is delivered
+    if (newStatus === "delivered" && order && order.user_id) {
+      const orderTotal = order.total_amount || order.total || 0;
+      if (orderTotal > 0) {
+        await processOrderImpact(id, order.user_id, orderTotal);
+      }
+    }
+
+    setAdminNote("");
+    fetchOrders();
+  };
+
+  const cancelOrder = async (id: string) => {
+    if (!confirm("Are you sure you want to cancel this order?")) return;
+    await updateStatus(id, "cancelled");
+  };
+
+  const addAdminNote = async (id: string) => {
+    if (!adminNote.trim()) return;
+    await supabase
+      .from("orders")
+      .update({ admin_notes: adminNote })
+      .eq("id", id);
+    await supabase.from("order_status_history").insert({
+      order_id: id,
+      status: selectedOrder?.status || "pending",
+      note: `Admin note: ${adminNote}`,
+    });
+    setAdminNote("");
+    fetchOrders();
+    if (selectedOrder?.id === id) {
+      setSelectedOrder({ ...selectedOrder, admin_notes: adminNote });
+    }
+  };
+
+  // Filter orders by search query
+  const filteredOrders = orders.filter((o) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      o.full_name?.toLowerCase().includes(query) ||
+      o.phone?.includes(query) ||
+      o.id.toLowerCase().includes(query) ||
+      o.profiles?.full_name?.toLowerCase().includes(query)
+    );
+  });
+
+  const statusOptions = [
+    {
+      value: "pending",
+      label: "Pending",
+      color: "bg-amber-100 text-amber-700",
+    },
+    {
+      value: "approved",
+      label: "Approved",
+      color: "bg-blue-100 text-blue-700",
+    },
+    {
+      value: "preparing",
+      label: "Preparing",
+      color: "bg-purple-100 text-purple-700",
+    },
+    {
+      value: "out_for_delivery",
+      label: "Out for Delivery",
+      color: "bg-orange-100 text-orange-700",
+    },
+    {
+      value: "delivered",
+      label: "Delivered",
+      color: "bg-green-100 text-green-700",
+    },
+    {
+      value: "cancelled",
+      label: "Cancelled",
+      color: "bg-red-100 text-red-700",
+    },
+  ];
+
+  const getStatusColor = (status: string) => {
+    return (
+      statusOptions.find((s) => s.value === status)?.color ||
+      "bg-gray-100 text-gray-700"
     );
   };
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
-          <h3 className="font-bold text-lg">Active Orders Pipeline</h3>
-          <button className="px-6 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg">
-            Refresh Feed
+      {/* Filters */}
+      <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm">
+        <div className="flex flex-wrap gap-4">
+          {/* Search */}
+          <div className="flex-1 min-w-[200px]">
+            <input
+              type="text"
+              placeholder="Search by name, phone, or order ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            />
+          </div>
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          >
+            <option value="all">All Status</option>
+            {statusOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          {/* Refresh */}
+          <button
+            onClick={fetchOrders}
+            className="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all"
+          >
+            <i className="fas fa-sync-alt mr-2"></i>
+            Refresh
           </button>
         </div>
+      </div>
+
+      {/* Orders Table */}
+      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-left text-sm border-collapse">
           <thead className="bg-gray-50/50 text-gray-400 uppercase text-[10px] font-black tracking-widest">
             <tr>
-              <th className="p-6">Reference</th>
-              <th className="p-6">Client</th>
-              <th className="p-6">Items</th>
-              <th className="p-6">Amount</th>
-              <th className="p-6 text-center">Status</th>
-              <th className="p-6"></th>
+              <th className="p-4">Reference</th>
+              <th className="p-4">Customer</th>
+              <th className="p-4">Phone</th>
+              <th className="p-4">Items</th>
+              <th className="p-4">Amount</th>
+              <th className="p-4 text-center">Status</th>
+              <th className="p-4 text-center">Date</th>
+              <th className="p-4"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {orders.map((o) => (
+            {filteredOrders.map((o) => (
               <tr key={o.id} className="hover:bg-gray-50/50 transition-colors">
-                <td className="p-6 font-mono text-[11px] text-primary font-bold">
+                <td className="p-4 font-mono text-[11px] text-primary font-bold">
                   #{o.id.slice(0, 8).toUpperCase()}
                 </td>
-                <td className="p-6 font-bold">
-                  {o.profiles?.full_name || "Guest User"}
+                <td className="p-4 font-bold">
+                  {o.full_name || o.profiles?.full_name || "Guest User"}
                 </td>
-                <td className="p-6 text-xs text-gray-500">
-                  {o.items ? `${o.items.length} items` : "No items data"}
+                <td className="p-4 text-xs text-gray-500">
+                  {o.phone || o.profiles?.phone || "-"}
                 </td>
-                <td className="p-6 font-black">
-                  ${Number(o.total).toFixed(2)}
+                <td className="p-4 text-xs text-gray-500">
+                  {o.items ? `${o.items.length} items` : "No items"}
                 </td>
-                <td className="p-6">
+                <td className="p-4 font-black">
+                  ${Number(o.total || o.total_amount).toFixed(2)}
+                </td>
+                <td className="p-4">
                   <div className="flex justify-center">
                     <select
                       value={o.status}
                       onChange={(e) => updateStatus(o.id, e.target.value)}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-none focus:ring-2 cursor-pointer ${
-                        o.status === "completed"
-                          ? "bg-green-100 text-green-700"
-                          : o.status === "cancelled"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-amber-100 text-amber-700"
-                      }`}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-none focus:ring-2 cursor-pointer ${getStatusColor(
+                        o.status
+                      )}`}
                     >
-                      <option value="pending">Pending</option>
-                      <option value="preparing">Preparing</option>
-                      <option value="delivering">Delivering</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
+                      {statusOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </td>
-                <td className="p-6 text-right">
+                <td className="p-4 text-xs text-gray-400">
+                  {new Date(o.created_at).toLocaleDateString()}
+                </td>
+                <td className="p-4 text-right">
                   <button
                     onClick={() => setSelectedOrder(o)}
-                    className="text-gray-400 hover:text-primary transition-colors"
+                    className="text-gray-400 hover:text-primary transition-colors p-2"
                   >
-                    <i className="fa-solid fa-eye"></i>
+                    <i className="fas fa-eye"></i>
                   </button>
                 </td>
               </tr>
             ))}
-            {orders.length === 0 && (
+            {filteredOrders.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={8}
                   className="p-20 text-center text-gray-300 font-bold uppercase tracking-widest"
                 >
-                  No orders found in ledger.
+                  No orders found.
                 </td>
               </tr>
             )}
@@ -608,9 +813,10 @@ const OrdersView = () => {
           onClick={() => setSelectedOrder(null)}
         >
           <div
-            className="bg-white rounded-[2rem] p-8 w-full max-w-2xl shadow-2xl relative overflow-hidden"
+            className="bg-white rounded-[2rem] p-8 w-full max-w-3xl shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">
@@ -621,59 +827,206 @@ const OrdersView = () => {
                 </p>
               </div>
               <span
-                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest ${
-                  selectedOrder.status === "completed"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-amber-100 text-amber-700"
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest ${getStatusColor(
+                  selectedOrder.status
+                )}`}
               >
                 {selectedOrder.status}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+            {/* Customer Info */}
+            <div className="grid grid-cols-2 gap-4 mb-6 p-6 bg-gray-50 rounded-2xl border border-gray-100">
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
                   Customer
                 </p>
-                <p className="font-bold">{selectedOrder.profiles?.full_name}</p>
+                <p className="font-bold">
+                  {selectedOrder.full_name ||
+                    selectedOrder.profiles?.full_name ||
+                    "Guest"}
+                </p>
               </div>
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                  Delivery Zone
+                  Phone
+                </p>
+                <a
+                  href={`tel:${
+                    selectedOrder.phone || selectedOrder.profiles?.phone
+                  }`}
+                  className="font-bold text-primary"
+                >
+                  {selectedOrder.phone ||
+                    selectedOrder.profiles?.phone ||
+                    "N/A"}
+                </a>
+              </div>
+              <div className="col-span-2">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                  Address
                 </p>
                 <p className="font-bold">
-                  {selectedOrder.delivery_zone || "Standard"}
+                  {selectedOrder.address ||
+                    selectedOrder.delivery_zone ||
+                    "Standard Delivery"}
                 </p>
               </div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                  Payment
+                </p>
+                <p className="font-bold capitalize">
+                  {selectedOrder.payment_method || "Cash"}
+                </p>
+              </div>
+              {selectedOrder.notes && (
+                <div className="col-span-2">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                    Customer Notes
+                  </p>
+                  <p className="font-medium text-gray-600">
+                    {selectedOrder.notes}
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div className="space-y-4 mb-8 max-h-60 overflow-y-auto pr-2">
+            {/* Items */}
+            <div className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2">
               <p className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">
                 Order Items
               </p>
               {selectedOrder.items?.map((item: CartItem, idx: number) => (
-                <div key={idx} className="flex gap-4 items-center">
-                  <img
-                    src={item.image}
-                    className="w-12 h-12 rounded-lg object-cover bg-gray-100"
-                  />
+                <div
+                  key={idx}
+                  className="flex gap-4 items-center p-3 bg-gray-50 rounded-xl"
+                >
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      className="w-12 h-12 rounded-lg object-cover bg-gray-100"
+                      alt=""
+                    />
+                  )}
                   <div className="flex-1">
                     <p className="font-bold text-sm">{item.name}</p>
                     <p className="text-xs text-gray-500">
                       ${item.price} x {item.quantity}
                     </p>
                   </div>
-                  <p className="font-bold">${item.price * item.quantity}</p>
+                  <p className="font-bold">
+                    ${Number(item.price * item.quantity).toFixed(2)}
+                  </p>
                 </div>
               ))}
+              {!selectedOrder.items && (
+                <p className="text-gray-400 text-sm">No items data</p>
+              )}
             </div>
 
+            {/* Admin Notes */}
+            <div className="mb-6">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                Admin Notes
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Add a note..."
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-200 rounded-xl text-sm"
+                />
+                <button
+                  onClick={() => addAdminNote(selectedOrder.id)}
+                  className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold"
+                >
+                  Add Note
+                </button>
+              </div>
+              {selectedOrder.admin_notes && (
+                <p className="mt-2 text-sm text-gray-600 bg-yellow-50 p-2 rounded-lg">
+                  <i className="fas fa-sticky-note text-yellow-500 mr-2"></i>
+                  {selectedOrder.admin_notes}
+                </p>
+              )}
+            </div>
+
+            {/* Timeline / Status History */}
+            {orderHistory.length > 0 && (
+              <div className="mb-6">
+                <p className="text-sm font-bold text-gray-900 mb-3">Timeline</p>
+                <div className="space-y-3">
+                  {orderHistory.map((event) => (
+                    <div key={event.id} className="flex gap-3 text-sm">
+                      <div
+                        className={`w-2 h-2 rounded-full mt-2 ${getStatusColor(
+                          event.status
+                        )}`}
+                      ></div>
+                      <div>
+                        <p className="font-medium capitalize">
+                          {event.status.replace(/_/g, " ")}
+                        </p>
+                        {event.note && (
+                          <p className="text-gray-500 text-xs">{event.note}</p>
+                        )}
+                        <p className="text-gray-400 text-xs">
+                          {new Date(event.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Total & Actions */}
             <div className="flex justify-between items-center pt-6 border-t border-gray-100">
-              <span className="text-gray-500 font-bold">Total Amount</span>
-              <span className="text-2xl font-black text-primary">
-                ${selectedOrder.total}
+              <span className="text-gray-900 font-bold text-lg">Total</span>
+              <span className="text-3xl font-black text-primary">
+                $
+                {Number(
+                  selectedOrder.total || selectedOrder.total_amount
+                ).toFixed(2)}
               </span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-6">
+              {selectedOrder.status !== "delivered" &&
+                selectedOrder.status !== "cancelled" && (
+                  <button
+                    onClick={() => updateStatus(selectedOrder.id, "delivered")}
+                    className="flex-1 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-colors"
+                  >
+                    <i className="fas fa-check mr-2"></i>
+                    Mark Delivered
+                  </button>
+                )}
+              {selectedOrder.status !== "cancelled" && (
+                <button
+                  onClick={() => cancelOrder(selectedOrder.id)}
+                  className="px-6 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-colors"
+                >
+                  <i className="fas fa-times mr-2"></i>
+                  Cancel
+                </button>
+              )}
+              {selectedOrder.phone || selectedOrder.profiles?.phone ? (
+                <a
+                  href={`https://wa.me/${(
+                    selectedOrder.phone || selectedOrder.profiles?.phone
+                  )?.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-colors"
+                >
+                  <i className="fab fa-whatsapp mr-2"></i>
+                  WhatsApp
+                </a>
+              ) : null}
             </div>
           </div>
         </div>
@@ -2484,6 +2837,398 @@ const HappyHourView = () => {
                   className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-colors"
                 >
                   Update Happy Hour
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* Impact Campaigns View - Admin */
+const ImpactView = () => {
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState<any>({
+    title: "",
+    description: "",
+    image_url: "",
+    goal_amount: 0,
+    goal_type: "trees",
+    impact_per_dollar: 1,
+    is_active: true,
+    show_on_impact_page: true,
+  });
+
+  const fetchCampaigns = async () => {
+    const { data } = await supabase
+      .from("impact_campaigns")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setCampaigns(data || []);
+  };
+
+  const fetchLeaderboard = async () => {
+    const { data: contributions } = await supabase
+      .from("user_impact")
+      .select("user_id, impact_units, created_at")
+      .order("impact_units", { ascending: false });
+
+    if (!contributions) return;
+
+    // Aggregate by user
+    const userTotals: Record<string, number> = {};
+    contributions.forEach((item) => {
+      if (!userTotals[item.user_id]) userTotals[item.user_id] = 0;
+      userTotals[item.user_id] += item.impact_units || 0;
+    });
+
+    const sorted = Object.entries(userTotals)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    // Get names
+    const userIds = sorted.map(([id]) => id);
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", userIds);
+
+    const nameMap = new Map(profiles?.map((p) => [p.id, p.full_name]) || []);
+
+    setLeaderboard(
+      sorted.map(([userId, impact], index) => ({
+        rank: index + 1,
+        name: nameMap.get(userId) || "Anonymous",
+        impact: Math.floor(impact),
+      }))
+    );
+  };
+
+  useEffect(() => {
+    fetchCampaigns();
+    fetchLeaderboard();
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await supabase.from("impact_campaigns").insert(formData);
+    setIsModalOpen(false);
+    setFormData({
+      title: "",
+      description: "",
+      image_url: "",
+      goal_amount: 0,
+      goal_type: "trees",
+      impact_per_dollar: 1,
+      is_active: true,
+      show_on_impact_page: true,
+    });
+    fetchCampaigns();
+  };
+
+  const toggleCampaign = async (id: string, isActive: boolean) => {
+    await supabase
+      .from("impact_campaigns")
+      .update({ is_active: !isActive })
+      .eq("id", id);
+    fetchCampaigns();
+  };
+
+  const deleteCampaign = async (id: string) => {
+    if (!confirm("Delete this campaign?")) return;
+    await supabase.from("impact_campaigns").delete().eq("id", id);
+    fetchCampaigns();
+  };
+
+  const getGoalTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      trees: "Trees",
+      meals: "Meals",
+      donations: "Donations",
+      water: "Water (L)",
+      books: "Books",
+      medicine: "Medicine Kits",
+    };
+    return labels[type] || type;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h3 className="font-bold text-xl">Impact Campaigns</h3>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-6 py-2 bg-green-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl"
+        >
+          <i className="fas fa-plus mr-2"></i>
+          New Campaign
+        </button>
+      </div>
+
+      {/* Campaign Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {campaigns.map((campaign) => {
+          const progress =
+            campaign.goal_amount > 0
+              ? Math.min(
+                  (campaign.current_amount / campaign.goal_amount) * 100,
+                  100
+                )
+              : 0;
+
+          return (
+            <div
+              key={campaign.id}
+              className={`bg-white rounded-[2rem] border shadow-sm overflow-hidden ${
+                !campaign.is_active ? "opacity-60" : ""
+              }`}
+            >
+              {campaign.image_url && (
+                <div className="h-40 bg-gray-100">
+                  <img
+                    src={campaign.image_url}
+                    alt={campaign.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-bold text-lg">{campaign.title}</h4>
+                  <span
+                    className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                      campaign.is_active
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    {campaign.is_active ? "ACTIVE" : "INACTIVE"}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500 mb-4 line-clamp-2">
+                  {campaign.description}
+                </p>
+
+                {/* Progress */}
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-500">Progress</span>
+                    <span className="font-bold">{progress.toFixed(1)}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    ${campaign.current_amount || 0} raised of $
+                    {campaign.goal_amount} goal
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      toggleCampaign(campaign.id, campaign.is_active)
+                    }
+                    className={`flex-1 py-2 rounded-xl text-sm font-bold ${
+                      campaign.is_active
+                        ? "bg-gray-100 text-gray-600"
+                        : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {campaign.is_active ? "Deactivate" : "Activate"}
+                  </button>
+                  <button
+                    onClick={() => deleteCampaign(campaign.id)}
+                    className="px-4 py-2 bg-red-100 text-red-600 rounded-xl text-sm font-bold"
+                  >
+                    <i className="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {campaigns.length === 0 && (
+          <div className="col-span-full text-center py-12 text-gray-400">
+            <i className="fas fa-globe text-4xl mb-4"></i>
+            <p>No campaigns yet. Create your first impact campaign!</p>
+          </div>
+        )}
+      </div>
+
+      {/* Leaderboard */}
+      <div className="bg-white rounded-[2rem] p-6 border shadow-sm">
+        <h4 className="font-bold text-lg mb-4">Top Contributors</h4>
+        <div className="space-y-3">
+          {leaderboard.map((entry) => (
+            <div
+              key={entry.rank}
+              className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl"
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                  entry.rank === 1
+                    ? "bg-yellow-400 text-yellow-900"
+                    : entry.rank === 2
+                    ? "bg-gray-300 text-gray-700"
+                    : entry.rank === 3
+                    ? "bg-amber-600 text-white"
+                    : "bg-gray-200 text-gray-500"
+                }`}
+              >
+                {entry.rank}
+              </div>
+              <div className="flex-1">
+                <p className="font-bold">{entry.name}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-green-600">{entry.impact}</p>
+                <p className="text-xs text-gray-500">impact units</p>
+              </div>
+            </div>
+          ))}
+          {leaderboard.length === 0 && (
+            <p className="text-center text-gray-400 py-4">
+              No contributors yet
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Create Modal */}
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-[2rem] p-8 w-full max-w-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold mb-6">New Impact Campaign</h3>
+            <form onSubmit={handleSave} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Campaign Title
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border rounded-xl"
+                  placeholder="e.g., Plant Trees for Gaza"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border rounded-xl"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Image URL
+                </label>
+                <input
+                  type="url"
+                  value={formData.image_url}
+                  onChange={(e) =>
+                    setFormData({ ...formData, image_url: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border rounded-xl"
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                    Goal Amount ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.goal_amount}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        goal_amount: parseFloat(e.target.value),
+                      })
+                    }
+                    className="w-full px-4 py-2 border rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                    Impact Type
+                  </label>
+                  <select
+                    value={formData.goal_type}
+                    onChange={(e) =>
+                      setFormData({ ...formData, goal_type: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border rounded-xl"
+                  >
+                    <option value="trees">Trees</option>
+                    <option value="meals">Meals</option>
+                    <option value="donations">Donations</option>
+                    <option value="water">Water (Liters)</option>
+                    <option value="books">Books</option>
+                    <option value="medicine">Medicine Kits</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Impact per Dollar
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={formData.impact_per_dollar}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      impact_per_dollar: parseFloat(e.target.value),
+                    })
+                  }
+                  className="w-full px-4 py-2 border rounded-xl"
+                  placeholder="e.g., 0.1 = 1 tree per $10"
+                />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold"
+                >
+                  Create Campaign
                 </button>
               </div>
             </form>
