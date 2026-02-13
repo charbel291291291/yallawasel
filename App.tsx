@@ -1367,7 +1367,7 @@ const Navbar = ({
         <div className="flex items-center gap-2 sm:gap-4">
           <button
             onClick={toggleLanguage}
-            className="hidden sm:flex items-center justify-center h-10 px-3 text-[10px] font-black text-gray-400 hover:text-primary transition-all rounded-xl hover:bg-white hover:shadow-sm"
+            className="hidden sm:flex items-center justify-center h-10 px-3 text-[10px] font-black text-gray-400 hover:text-primary transition-colors rounded-xl hover:bg-white hover:shadow-sm"
           >
             {lang === "en" ? "عربي" : "ENGLISH"}
           </button>
@@ -1599,9 +1599,9 @@ const PrivilegeItem = ({ icon, color, label, desc }: any) => (
 const ProfileLink = ({ icon, label, to }: any) => (
   <Link
     to={to}
-    className="flex items-center gap-5 p-5 rounded-2xl hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-white group shadow-sm"
+    className="flex items-center gap-5 p-5 rounded-2xl hover:bg-white hover:shadow-lg transition-colors border border-transparent hover:border-white group shadow-sm"
   >
-    <div className="w-12 h-12 rounded-xl bg-gray-50 text-gray-400 flex items-center justify-center text-xl group-hover:bg-primary/10 group-hover:text-primary transition-all shadow-inner">
+    <div className="w-12 h-12 rounded-xl bg-gray-50 text-gray-400 flex items-center justify-center text-xl group-hover:bg-primary/10 group-hover:text-primary transition-colors shadow-inner">
       <i className={`fa-solid ${icon}`}></i>
     </div>
     <span className="text-sm font-bold text-gray-900 uppercase tracking-widest">

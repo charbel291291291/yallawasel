@@ -572,13 +572,24 @@ const AIChat: React.FC<AIChatProps> = ({ lang }) => {
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}
-            className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.15)] border-4 border-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all group overflow-hidden relative float-animation"
+            className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.15)] border-4 border-white flex items-center justify-center hover:scale-110 active:scale-95 transition-transform group overflow-hidden relative float-animation"
+            style={{ willChange: "transform" }}
           >
             <img
               src={EMILIA_AVATAR}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              className="w-full h-full object-cover group-hover:scale-110"
+              style={{
+                transition: "transform 500ms ease",
+                willChange: "transform",
+              }}
             />
-            <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div
+              className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100"
+              style={{
+                transition: "opacity 150ms ease",
+                willChange: "opacity",
+              }}
+            ></div>
 
             {/* Notification Badge */}
             <span className="absolute top-2 right-2 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm"></span>
