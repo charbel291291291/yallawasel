@@ -35,6 +35,7 @@ import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import Image from "./components/Image";
 import OfflineIndicator from "./components/OfflineIndicator";
 import AnimatedSplash from "./components/AnimatedSplash";
+import BreakingNewsTicker from "./components/BreakingNewsTicker";
 
 function App() {
   const [splashComplete, setSplashComplete] = useState(false);
@@ -65,6 +66,7 @@ const AppShell = () => {
   const [lang, setLang] = useState<Language>("en");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [happyHours, setHappyHours] = useState<HappyHour[]>([]);
 
   const { settings, loading: settingsLoading, isReady } = useSettings();
   const location = useLocation();
@@ -78,6 +80,7 @@ const AppShell = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch products
         const { data: productsData } = await supabase
           .from("products")
           .select("*")
@@ -102,6 +105,16 @@ const AppShell = () => {
           );
         } else {
           setProducts(MOCK_PRODUCTS);
+        }
+
+        // Fetch active happy hours
+        const { data: happyHoursData } = await supabase
+          .from("happy_hours_schedule")
+          .select("*")
+          .eq("active", true)
+          .order("created_at", { ascending: false });
+        if (happyHoursData) {
+          setHappyHours(happyHoursData);
         }
       } catch (err) {
         setProducts(MOCK_PRODUCTS);
@@ -275,6 +288,7 @@ const AppShell = () => {
             onLogout={handleLogout}
             onOpenCart={() => setIsCartOpen(true)}
           />
+          <BreakingNewsTicker happyHours={happyHours} />
         </HiddenAdminAccess>
       )}
 
@@ -311,6 +325,10 @@ const AppShell = () => {
           <Route
             path="/services"
             element={<ServicesPage lang={lang} user={user} />}
+          />
+          <Route
+            path="/moune"
+            element={<MounéClassesSection lang={lang} addToCart={addToCart} />}
           />
           <Route
             path="/moune/:id"
@@ -782,6 +800,11 @@ const Navbar = ({
               to="/shop"
               label={t.kits}
               isActive={location.pathname === "/shop"}
+            />
+            <NavLink
+              to="/moune"
+              label="Mouné Classes"
+              isActive={location.pathname === "/moune"}
             />
             <NavLink
               to="/impact"
