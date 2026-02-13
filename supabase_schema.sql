@@ -195,6 +195,29 @@ begin
 end;
 $$ language plpgsql security definer;
 
+-- 17. Automatic Tier Upgrade Trigger
+create or replace function auto_update_tier()
+returns trigger as $$
+begin
+  -- Update tier based on points
+  if new.points >= 5000 then
+    update profiles set tier = 'VIP' where id = new.id;
+  elsif new.points >= 1500 then
+    update profiles set tier = 'Gold' where id = new.id;
+  elsif new.points >= 500 then
+    update profiles set tier = 'Silver' where id = new.id;
+  else
+    update profiles set tier = 'Bronze' where id = new.id;
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger update_tier_trigger
+  after update of points on profiles
+  for each row
+  execute function auto_update_tier();
+
 -- Mouné Classes Table
 create table if not exists public.moune_classes (
   id uuid default gen_random_uuid() primary key,
@@ -254,7 +277,57 @@ create policy "Public Read Mouné Components" on moune_class_components for sele
 drop policy if exists "Admin Write Mouné Components" on moune_class_components;
 create policy "Admin Write Mouné Components" on moune_class_components for all using (true);
 
--- 12. FCM Tokens Table for Push Notifications
+-- 12. Customer Transactions Table
+create table if not exists public.customer_transactions (
+  id uuid default gen_random_uuid() primary key,
+  customer_id uuid references auth.users on delete cascade not null,
+  type text not null, -- earn | redeem | adjust
+  points integer not null,
+  amount_spent numeric default 0,
+  note text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 13. Rewards Table
+create table if not exists public.rewards (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  title text not null,
+  description text,
+  points_required integer not null,
+  reward_type text not null, -- discount | free_item | cashback | custom
+  value numeric,
+  stock_limit integer,
+  active boolean default true,
+  expires_at timestamp with time zone
+);
+
+-- 14. Reward Redemptions Table
+create table if not exists public.reward_redemptions (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  customer_id uuid references auth.users on delete cascade not null,
+  reward_id uuid references rewards on delete cascade not null,
+  status text default 'pending', -- pending | approved | rejected | used
+  approved_by uuid references auth.users,
+  used_at timestamp with time zone,
+  note text
+);
+
+-- 15. Happy Hours System Table
+create table if not exists public.happy_hours_schedule (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  name text not null,
+  start_time time not null,
+  end_time time not null,
+  days_of_week integer[], -- 0=Sun, 1=Mon, ..., 6=Sat
+  multiplier numeric default 1, -- e.g., 2x points
+  bonus_points integer default 0,
+  active boolean default true
+);
+
+-- 16. FCM Tokens Table for Push Notifications
 create table if not exists public.user_fcm_tokens (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users on delete cascade not null,
@@ -263,8 +336,43 @@ create table if not exists public.user_fcm_tokens (
   unique(user_id, fcm_token)
 );
 
--- Enable RLS for FCM tokens table
+-- Enable RLS for new tables
+alter table customer_transactions enable row level security;
+alter table rewards enable row level security;
+alter table reward_redemptions enable row level security;
+alter table happy_hours_schedule enable row level security;
 alter table user_fcm_tokens enable row level security;
+
+-- Customer Transactions Policies
+drop policy if exists "Users Read Own Transactions" on customer_transactions;
+create policy "Users Read Own Transactions" on customer_transactions for select using (auth.uid() = customer_id);
+
+drop policy if exists "Admin Manage Transactions" on customer_transactions;
+create policy "Admin Manage Transactions" on customer_transactions for all using (true);
+
+-- Rewards Policies
+drop policy if exists "Public Read Active Rewards" on rewards;
+create policy "Public Read Active Rewards" on rewards for select using (active = true);
+
+drop policy if exists "Admin Manage Rewards" on rewards;
+create policy "Admin Manage Rewards" on rewards for all using (true);
+
+-- Reward Redemptions Policies
+drop policy if exists "Users Read Own Redemptions" on reward_redemptions;
+create policy "Users Read Own Redemptions" on reward_redemptions for select using (auth.uid() = customer_id);
+
+drop policy if exists "Users Create Redemptions" on reward_redemptions;
+create policy "Users Create Redemptions" on reward_redemptions for insert with check (auth.uid() = customer_id);
+
+drop policy if exists "Admin Manage Redemptions" on reward_redemptions;
+create policy "Admin Manage Redemptions" on reward_redemptions for all using (true);
+
+-- Happy Hours Schedule Policies
+drop policy if exists "Public Read Active Happy Hours" on happy_hours_schedule;
+create policy "Public Read Active Happy Hours" on happy_hours_schedule for select using (active = true);
+
+drop policy if exists "Admin Manage Happy Hours" on happy_hours_schedule;
+create policy "Admin Manage Happy Hours" on happy_hours_schedule for all using (true);
 
 -- FCM Tokens Policies
 drop policy if exists "Users Manage Own FCM Tokens" on user_fcm_tokens;
