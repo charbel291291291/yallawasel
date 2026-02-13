@@ -34,15 +34,23 @@ import MounéDetail from "./components/MounéDetail";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import Image from "./components/Image";
 import OfflineIndicator from "./components/OfflineIndicator";
-import SplashScreen from "./components/SplashScreen";
+import AnimatedSplash from "./components/AnimatedSplash";
 
 function App() {
+  const [splashComplete, setSplashComplete] = useState(false);
+
+  const handleSplashComplete = () => {
+    setSplashComplete(true);
+  };
+
   return (
     <SettingsProvider>
       <HashRouter>
         <>
-          <SplashScreen />
-          <AppShell />
+          {!splashComplete && (
+            <AnimatedSplash onComplete={handleSplashComplete} />
+          )}
+          {splashComplete && <AppShell />}
         </>
       </HashRouter>
     </SettingsProvider>

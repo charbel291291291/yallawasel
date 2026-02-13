@@ -1,3 +1,28 @@
+// Service Worker for Yalla Wasel PWA
+
+const CACHE_NAME = "yalla-wasel-v1.0.0";
+const urlsToCache = [
+  "/",
+  "/index.html",
+  "/assets/logo.png",
+  "/assets/logo-dark.png",
+  "/assets/logo-light.png",
+  "/assets/logo.svg",
+  "/icons/favicon.ico",
+  "/icons/favicon-16x16.png",
+  "/icons/favicon-32x32.png",
+];
+
+// Install event - cache static assets
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log("Opened cache");
+      return cache.addAll(urlsToCache);
+    })
+  );
+});
+
 // Fetch event - handle network requests
 self.addEventListener("fetch", (event) => {
   // Handle POST requests for sync operations
@@ -242,3 +267,58 @@ function removeFromSyncQueue(id) {
     };
   });
 }
+
+// Push notification handler
+self.addEventListener("push", (event) => {
+  if (!(self.Notification && self.Notification.permission === "granted")) {
+    return;
+  }
+
+  const payload = event.data ? event.data.json() : {};
+
+  const options = {
+    body: payload.body || "",
+    icon: payload.icon || "/icons/icon-512x512.png",
+    badge: payload.badge || "/icons/icon-512x512.png",
+    data: {
+      url: payload.url || "/",
+    },
+    vibrate: [200, 100, 200],
+    actions: payload.actions || [],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title || "Yalla Wasel", options)
+  );
+});
+
+// Notification click handler
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  if (
+    event.action === "open_url" &&
+    event.notification.data &&
+    event.notification.data.url
+  ) {
+    event.waitUntil(clients.openWindow(event.notification.data.url));
+  } else if (event.notification.data && event.notification.data.url) {
+    event.waitUntil(clients.openWindow(event.notification.data.url));
+  }
+});
+
+// Activate event - clean up old caches
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log("Deleting old cache:", cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
