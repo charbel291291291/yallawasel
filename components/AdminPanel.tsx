@@ -206,53 +206,38 @@ const AdminPanel: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] font-sans text-gray-800 pb-20 md:pb-0">
-      {/* Mobile Bottom Tab Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 text-white z-50 flex justify-around items-center h-16 shadow-2xl">
-        <button
-          onClick={() => setActiveTab("dashboard")}
-          className={`flex flex-col items-center p-2 ${
-            activeTab === "dashboard" ? "text-red-500" : "text-gray-400"
-          }`}
-        >
-          <i className="fa-solid fa-chart-pie text-xl"></i>
-          <span className="text-[10px] mt-1">Home</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("orders")}
-          className={`flex flex-col items-center p-2 ${
-            activeTab === "orders" ? "text-red-500" : "text-gray-400"
-          }`}
-        >
-          <i className="fa-solid fa-shopping-cart text-xl"></i>
-          <span className="text-[10px] mt-1">Orders</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("products")}
-          className={`flex flex-col items-center p-2 ${
-            activeTab === "products" ? "text-red-500" : "text-gray-400"
-          }`}
-        >
-          <i className="fa-solid fa-box text-xl"></i>
-          <span className="text-[10px] mt-1">Kits</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("moune")}
-          className={`flex flex-col items-center p-2 ${
-            activeTab === "moune" ? "text-red-500" : "text-gray-400"
-          }`}
-        >
-          <i className="fa-solid fa-utensils text-xl"></i>
-          <span className="text-[10px] mt-1">Mouné</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("settings")}
-          className={`flex flex-col items-center p-2 ${
-            activeTab === "settings" ? "text-red-500" : "text-gray-400"
-          }`}
-        >
-          <i className="fa-solid fa-cog text-xl"></i>
-          <span className="text-[10px] mt-1">More</span>
-        </button>
+      {/* Mobile Bottom Tab Bar - Scrollable */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg text-white z-50 flex justify-start items-center h-14 shadow-2xl border-t border-slate-700 overflow-x-auto hide-scrollbar">
+        {/* Red top line */}
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-500 via-red-600 to-red-500"></div>
+
+        {[
+          { id: "dashboard", icon: "fa-chart-pie", label: "Home" },
+          { id: "orders", icon: "fa-shopping-cart", label: "Orders" },
+          { id: "products", icon: "fa-box", label: "Kits" },
+          { id: "moune", icon: "fa-utensils", label: "Mouné" },
+          { id: "customers", icon: "fa-users", label: "Users" },
+          { id: "happyhour", icon: "fa-clock", label: "Happy" },
+          { id: "rewards", icon: "fa-gift", label: "Rewards" },
+          { id: "impact", icon: "fa-globe", label: "Impact" },
+          { id: "settings", icon: "fa-cog", label: "More" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as Tab)}
+            className={`flex flex-col items-center justify-center flex-shrink-0 min-w-[60px] h-full px-3 transition-all duration-150 active:scale-95 ${
+              activeTab === tab.id
+                ? "text-red-500 bg-slate-800/50"
+                : "text-gray-400 hover:text-gray-200 hover:bg-slate-800/30"
+            }`}
+          >
+            <i className={`fa-solid ${tab.icon} text-lg`}></i>
+            <span className="text-[8px] mt-0.5 font-medium">{tab.label}</span>
+            {activeTab === tab.id && (
+              <div className="absolute bottom-0 w-6 h-0.5 bg-red-500 rounded-full"></div>
+            )}
+          </button>
+        ))}
       </div>
 
       <aside
