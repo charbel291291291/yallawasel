@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+
+// Store deferredPrompt at module level
+let deferredPrompt: any = null;
 
 const InstallLanding: React.FC = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
+  const [canInstall, setCanInstall] = useState(false);
 
   useEffect(() => {
     // Detect iOS
@@ -12,23 +15,29 @@ const InstallLanding: React.FC = () => {
     // Capture beforeinstallprompt event
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      deferredPrompt = e;
+      setCanInstall(true);
     };
-    window.addEventListener("beforeinstallprompt", handleBeforeInstall as any);
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
 
     return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstall as any
-      );
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
     };
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      console.log("No deferredPrompt available");
+      return;
+    }
 
     try {
       await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === "accepted") {
+        console.log("App installed successfully");
+      }
     } catch (error) {
       console.error("Install error:", error);
     }
@@ -36,17 +45,11 @@ const InstallLanding: React.FC = () => {
 
   return (
     <div
+      className="fixed inset-0 flex flex-col items-center justify-center"
       style={{
-        position: "fixed",
-        inset: 0,
         width: "100vw",
         height: "100vh",
-        background:
-          "linear-gradient(135deg, #8a1c1c 0%, #6b1515 50%, #4a0f0f 100%)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+        background: "linear-gradient(135deg, #8a1c1c 0%, #6b1515 50%, #4a0f0f 100%)",
         padding: "2rem",
         boxSizing: "border-box",
         overflow: "hidden",
@@ -64,20 +67,15 @@ const InstallLanding: React.FC = () => {
       `}</style>
 
       <div
-        className="fade-in"
-        style={{ textAlign: "center", maxWidth: "320px" }}
+        className="fade-in flex flex-col items-center justify-center text-center"
+        style={{ maxWidth: "320px" }}
       >
-        {/* Logo */}
-        <div style={{ marginBottom: "1.5rem" }}>
+        {/* Logo - Larger and centered */}
+        <div className="flex justify-center items-center mb-8">
           <img
             src="/assets/logo.png"
             alt="Yalla Wasel"
-            style={{
-              width: "96px",
-              height: "96px",
-              objectFit: "contain",
-              borderRadius: "24px",
-            }}
+            className="w-40 h-40 object-contain"
           />
         </div>
 
@@ -178,63 +176,42 @@ const InstallLanding: React.FC = () => {
           </div>
         </div>
 
-        {/* Install Button */}
-        {deferredPrompt && !isIOS && (
-          <button
-            onClick={handleInstall}
+        {/* Install Button - Clickable */}
+        <button
+          onClick={handleInstall}
+          className="mt-8 bg-white text-primary font-bold px-8 py-3 rounded-xl shadow-md transition hover:scale-105"
+          style={{
+            width: "100%",
+            maxWidth: "280px",
+          }}
+        >
+          Install the App
+        </button>
+
+        {/* iOS Fallback - Show when no deferredPrompt */}
+        {!canInstall && isIOS && (
+          <p
             style={{
-              width: "100%",
-              padding: "1rem 2rem",
-              background: "white",
-              color: "#8a1c1c",
-              fontWeight: 900,
-              fontSize: "1rem",
-              border: "none",
-              borderRadius: "16px",
-              cursor: "pointer",
-              boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-              marginBottom: "1rem",
-              transition: "transform 0.2s, box-shadow 0.2s",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = "scale(1.02)";
-              e.currentTarget.style.boxShadow = "0 15px 35px rgba(0,0,0,0.3)";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.2)";
+              color: "rgba(255,255,255,0.6)",
+              fontSize: "0.75rem",
+              marginTop: "1rem",
             }}
           >
-            Install the App
-          </button>
+            For iPhone: Tap Share → Add to Home Screen
+          </p>
         )}
 
-        {/* iOS Instructions */}
-        {isIOS && (
-          <div
+        {/* Android fallback hint */}
+        {!canInstall && !isIOS && (
+          <p
             style={{
-              background: "rgba(255,255,255,0.1)",
-              backdropFilter: "blur(8px)",
-              borderRadius: "16px",
-              padding: "1rem",
-              marginBottom: "1rem",
-              border: "1px solid rgba(255,255,255,0.2)",
+              color: "rgba(255,255,255,0.6)",
+              fontSize: "0.75rem",
+              marginTop: "1rem",
             }}
           >
-            <p
-              style={{
-                color: "white",
-                fontWeight: 600,
-                marginBottom: "0.5rem",
-                fontSize: "0.9rem",
-              }}
-            >
-              To install on iPhone/iPad:
-            </p>
-            <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.8rem" }}>
-              Tap Share → Add to Home Screen
-            </p>
-          </div>
+            To install: Use browser menu or bookmark this page
+          </p>
         )}
       </div>
 
