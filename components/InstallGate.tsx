@@ -31,12 +31,7 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
   const [isMobile] = useState(isMobileDevice());
 
   useEffect(() => {
-    // Prevent bypass via dev tools - clear body content
-    if (isMobile && !isStandalone()) {
-      document.body.innerHTML = "";
-    }
-
-    // Initial check
+    // Initial check - use startTransition to prevent blocking
     startTransition(() => {
       setIsInstalled(isStandalone());
     });
@@ -135,40 +130,16 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
     setDeferredPrompt(null);
   };
 
-  // Show loading while checking - render nothing until verified
-  if (isInstalled === null) {
-    return (
-      <div
-        className="fixed inset-0 z-[99999]"
-        style={{
-          background:
-            "linear-gradient(135deg, #8a1c1c 0%, #6b1515 50%, #4a0f0f 100%)",
-        }}
-      >
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-pulse">
-            <img
-              src="/assets/icon-192.png"
-              alt="Yalla Wasel"
-              className="w-20 h-20 rounded-2xl"
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // While checking, show install screen (never return null/blank)
+  // This ensures no blank page ever
+  const showInstallScreen = isInstalled === null || !isMobile || !isInstalled;
 
-  // Desktop - allow access
-  if (!isMobile) {
+  // Desktop or installed - render children
+  if (!isMobile || isInstalled) {
     return <>{children}</>;
   }
 
-  // Mobile + Installed - allow access
-  if (isInstalled) {
-    return <>{children}</>;
-  }
-
-  // Mobile + NOT installed - STRICT BLOCK (no children rendered)
+  // Mobile + NOT installed - Show install landing page
   return (
     <div
       className="fixed inset-0 z-[99999] flex flex-col items-center justify-center"
@@ -188,45 +159,49 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-400/10 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative z-10 text-center px-8 max-w-md">
-        {/* Logo using new PWA icon */}
-        <div className="mb-8">
+      <div className="relative z-10 text-center px-8 max-w-md animate-fade-in">
+        {/* Logo */}
+        <div className="mb-6">
           <img
             src="/assets/icon-192.png"
             alt="Yalla Wasel"
-            className="w-28 h-28 mx-auto rounded-3xl shadow-2xl border-2 border-white/20"
+            className="w-24 h-24 mx-auto rounded-3xl shadow-2xl border-2 border-white/20"
           />
         </div>
 
-        {/* Title */}
-        <h1 className="text-3xl font-black text-white mb-4 tracking-tight">
-          Install App to Continue
+        {/* Headline */}
+        <h1 className="text-4xl font-black text-white mb-3 tracking-tight">
+          Yalla Wasel <span className="text-3xl">🚀</span>
         </h1>
 
         {/* Subtitle */}
-        <p className="text-white/80 text-lg mb-8 leading-relaxed">
-          Yalla Wasel requires installation for the best experience.
+        <p className="text-yellow-300 text-xl font-bold mb-6">
+          وصّل طلباتك أسرع، أذكى، وأسهل
+        </p>
+
+        {/* Description */}
+        <p className="text-white/80 text-base mb-8 leading-relaxed">
+          حمّل التطبيق واستمتع بتجربة أسرع،
+          <br />
+          عروض حصرية،
+          <br />
+          وتتبع مباشر لطلباتك.
         </p>
 
         {/* Benefits */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-white/20 text-left">
-          <h3 className="text-white font-bold text-sm mb-3">Why install?</h3>
-          <ul className="space-y-2 text-white/80 text-sm">
-            <li className="flex items-center gap-2">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-white/20 text-right">
+          <ul className="space-y-2 text-white/90 text-sm">
+            <li className="flex items-center gap-2 justify-end">
+              تجربة أسرع وأسهل
               <i className="fas fa-check text-green-400"></i>
-              Faster loading & smooth experience
             </li>
-            <li className="flex items-center gap-2">
+            <li className="flex items-center gap-2 justify-end">
+              عروض حصرية
               <i className="fas fa-check text-green-400"></i>
-              Offline access to content
             </li>
-            <li className="flex items-center gap-2">
+            <li className="flex items-center gap-2 justify-end">
+              تتبع مباشر لطلباتك
               <i className="fas fa-check text-green-400"></i>
-              Full-screen app experience
-            </li>
-            <li className="flex items-center gap-2">
-              <i className="fas fa-check text-green-400"></i>
-              Receive notifications
             </li>
           </ul>
         </div>
@@ -237,7 +212,7 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
             onClick={handleInstall}
             className="w-full py-4 px-8 bg-white text-red-900 font-black text-lg rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 mb-4"
           >
-            Install Now
+            ثبت التطبيق الآن
           </button>
         )}
 
@@ -245,41 +220,38 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
         {isIOSDevice && (
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-4 border border-white/20">
             <div className="text-white font-bold text-lg mb-3">
-              iPhone/iPad Installation
+              طريقة التثبيت على iPhone/iPad
             </div>
-            <ol className="text-white/80 text-left space-y-3 text-sm">
-              <li className="flex items-start gap-2">
+            <ol className="text-white/80 text-right space-y-3 text-sm">
+              <li className="flex items-start gap-2 flex-row-reverse">
                 <span className="bg-white/20 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
                   1
                 </span>
-                Tap the <span className="font-bold text-white">Share</span>{" "}
-                button below
+                اضغط على زر <span className="font-bold text-white">مشاركة</span>
               </li>
-              <li className="flex items-start gap-2">
+              <li className="flex items-start gap-2 flex-row-reverse">
                 <span className="bg-white/20 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
                   2
                 </span>
-                Scroll down and tap{" "}
-                <span className="font-bold text-white">Add to Home Screen</span>
+                مرر للأسفل واختر{" "}
+                <span className="font-bold text-white">
+                  أضف إلى الشاشة الرئيسية
+                </span>
               </li>
-              <li className="flex items-start gap-2">
+              <li className="flex items-start gap-2 flex-row-reverse">
                 <span className="bg-white/20 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
                   3
                 </span>
-                Tap <span className="font-bold text-white">Add</span> to install
+                اضغط <span className="font-bold text-white">إضافة</span>
               </li>
             </ol>
           </div>
         )}
 
-        {/* Strict message - NO bypass option */}
-        <div className="mt-6 p-4 bg-red-900/50 rounded-xl border border-red-700">
-          <p className="text-white font-bold text-sm">
-            <i className="fas fa-lock mr-2"></i>
-            Installation is required to access this platform
-          </p>
-          <p className="text-white/60 text-xs mt-2">
-            Please install the app and reopen to continue
+        {/* Small note */}
+        <div className="mt-4 p-3 bg-red-900/30 rounded-xl">
+          <p className="text-white/60 text-xs">
+            التطبيق يعمل بأفضل أداء عند التثبيت
           </p>
         </div>
       </div>
@@ -288,7 +260,7 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
       <div className="absolute bottom-8 left-0 right-0 text-center">
         <div className="inline-flex items-center gap-2 text-white/40 text-sm">
           <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-          Secure • Fast • Reliable
+          آمن • سريع • موثوق
         </div>
       </div>
     </div>
