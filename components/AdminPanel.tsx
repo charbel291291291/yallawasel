@@ -345,9 +345,7 @@ const AdminPanel: React.FC = () => {
         </div>
       </aside>
 
-      <main
-        className="flex-1 transition-all duration-300 md:pt-0 pt-0"
-      >
+      <main className="flex-1 transition-all duration-300 md:pt-0 pt-0">
         {/* Mobile Header */}
         <header className="md:hidden h-14 bg-white/90 backdrop-blur-md shadow-sm flex items-center justify-between px-4 sticky top-0 z-40 border-b border-gray-100">
           <div className="flex items-center gap-3">
