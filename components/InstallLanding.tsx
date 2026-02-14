@@ -1,45 +1,42 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
-// Store deferredPrompt at module level - persists across renders
+// Global prompt handler
 let deferredPromptGlobal: any = null;
 
 const InstallLanding: React.FC = () => {
   const [isIOS, setIsIOS] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
-  const [showInstallToast, setShowInstallToast] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
 
+  // Check for install support on mount
   useEffect(() => {
     // Detect iOS
     const iOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     setIsIOS(iOS);
 
     // Check if already installed
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone === true;
-
+    const isStandalone = 
+      window.matchMedia?.("(display-mode: standalone)")?.matches ||
+      (window.navigator as any)?.standalone === true;
+    
     if (isStandalone) {
-      // App is already installed, redirect to main app
+      // Already installed - reload to go to app
       window.location.reload();
       return;
     }
 
-    // Capture beforeinstallprompt event - this is the key to native install!
+    // Listen for beforeinstallprompt
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
-      // Store the event for later use
       deferredPromptGlobal = e;
       setCanInstall(true);
-      console.log("beforeinstallprompt captured!");
     };
-
+    
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
 
     // Listen for app installed
     const handleAppInstalled = () => {
-      console.log("App installed successfully");
       window.location.reload();
     };
     window.addEventListener("appinstalled", handleAppInstalled);
@@ -50,145 +47,61 @@ const InstallLanding: React.FC = () => {
     };
   }, []);
 
-  // Handle the Install button click
-  const handleInstallClick = async () => {
-    console.log(
-      "Install clicked, canInstall:",
-      canInstall,
-      "deferredPrompt:",
-      !!deferredPromptGlobal
-    );
+  // Handle install button click - IMMEDIATE action
+  const handleInstallClick = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log("Install button clicked!");
+    setIsInstalling(true);
 
-    // If we have the deferred prompt, try native install first
+    // Try native install first
     if (deferredPromptGlobal) {
-      setIsInstalling(true);
       try {
         const { outcome } = await deferredPromptGlobal.prompt();
         console.log("Install outcome:", outcome);
-
+        
         if (outcome === "accepted") {
-          // App will install, page will reload
-          console.log("Installing...");
-        } else {
-          // User dismissed, show the manual instructions
+          // App will install
           setIsInstalling(false);
-          setShowInstallToast(true);
+          return;
         }
-      } catch (error) {
-        console.error("Install error:", error);
-        setIsInstalling(false);
-        setShowInstallToast(true);
+      } catch (err) {
+        console.error("Install error:", err);
       }
-    } else {
-      // No deferred prompt - show install instructions anyway
-      console.log("No deferred prompt, showing instructions");
-      setShowInstallToast(true);
     }
-  };
+    
+    // If we get here, show the manual instructions modal
+    setIsInstalling(false);
+    setShowModal(true);
+  }, []);
 
-  // Close the instruction popup
-  const closeToast = () => {
-    setShowInstallToast(false);
-  };
-
-  // Dismiss the top banner
-  const dismissBanner = () => {
-    setBannerDismissed(true);
-  };
-
-  // Determine if we should show the top banner
-  const showTopBanner = canInstall && !bannerDismissed && !isIOS;
+  // Close modal
+  const closeModal = useCallback(() => {
+    setShowModal(false);
+  }, []);
 
   return (
     <>
-      {/* Top Install Banner - Shows when browser supports PWA install */}
-      {showTopBanner && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 99998,
-            background: "rgba(0, 0, 0, 0.9)",
-            backdropFilter: "blur(10px)",
-            padding: "0.75rem 1rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "1rem",
-          }}
-        >
-          <div
-            style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
-          >
-            <img
-              src="/assets/logo.png"
-              alt="Yalla Wasel"
-              style={{ width: "32px", height: "32px", borderRadius: "8px" }}
-            />
-            <div>
-              <div
-                style={{ color: "white", fontWeight: 600, fontSize: "0.9rem" }}
-              >
-                Install Yalla Wasel App
-              </div>
-              <div
-                style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.75rem" }}
-              >
-                Add to home screen for best experience
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <button
-              onClick={handleInstallClick}
-              style={{
-                padding: "0.5rem 1rem",
-                background: "#3b82f6",
-                color: "white",
-                fontWeight: 600,
-                fontSize: "0.85rem",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-              }}
-            >
-              Install
-            </button>
-            <button
-              onClick={dismissBanner}
-              style={{
-                padding: "0.5rem",
-                background: "transparent",
-                color: "rgba(255,255,255,0.6)",
-                fontSize: "1.25rem",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Main Landing Page */}
+      {/* Full screen landing page */}
       <div
-        className="fixed inset-0 flex flex-col items-center justify-center"
         style={{
+          position: "fixed",
+          inset: 0,
           width: "100vw",
           height: "100vh",
-          background:
-            "linear-gradient(135deg, #8a1c1c 0%, #6b1515 50%, #4a0f0f 100%)",
+          background: "linear-gradient(135deg, #8a1c1c 0%, #6b1515 50%, #4a0f0f 100%)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
           padding: "2rem",
-          paddingTop: showTopBanner ? "5rem" : "2rem",
           boxSizing: "border-box",
           overflow: "auto",
+          zIndex: 9999,
         }}
       >
-        {/* Fade in animation */}
+        {/* Animation styles */}
         <style>{`
           @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
@@ -197,332 +110,200 @@ const InstallLanding: React.FC = () => {
           .fade-in {
             animation: fadeIn 0.6s ease-out forwards;
           }
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+          }
+          .install-btn:active {
+            transform: scale(0.98) !important;
+          }
         `}</style>
 
         <div
-          className="fade-in flex flex-col items-center justify-center text-center"
-          style={{ maxWidth: "320px" }}
+          className="fade-in"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+            maxWidth: "320px",
+          }}
         >
           {/* Logo */}
-          <div className="flex justify-center items-center mb-8">
+          <div style={{ marginBottom: "2rem" }}>
             <img
               src="/assets/logo.png"
               alt="Yalla Wasel"
-              className="w-40 h-40 object-contain"
+              style={{
+                width: "160px",
+                height: "160px",
+                objectFit: "contain",
+              }}
             />
           </div>
 
-          {/* Headline */}
-          <h1
-            style={{
-              fontSize: "2rem",
-              fontWeight: 900,
-              color: "white",
-              marginBottom: "0.5rem",
-              lineHeight: 1.2,
-            }}
-          >
-            Yalla Wasel <span style={{ fontSize: "1.5rem" }}>🚀</span>
+          {/* Title */}
+          <h1 style={{ fontSize: "2rem", fontWeight: 900, color: "white", marginBottom: "0.5rem" }}>
+            Yalla Wasel 🚀
           </h1>
 
-          {/* Subheadline */}
-          <p
-            style={{
-              color: "#fbbf24",
-              fontSize: "1.125rem",
-              fontWeight: 600,
-              marginBottom: "1rem",
-            }}
-          >
+          {/* Subtitle */}
+          <p style={{ color: "#fbbf24", fontSize: "1.125rem", fontWeight: 600, marginBottom: "1rem" }}>
             Deliver Smarter. Faster. Better.
           </p>
 
           {/* Description */}
-          <p
-            style={{
-              color: "rgba(255,255,255,0.8)",
-              fontSize: "0.9rem",
-              marginBottom: "1.5rem",
-              lineHeight: 1.6,
-            }}
-          >
-            Install the app for a smoother experience,
-            <br />
-            exclusive offers,
-            <br />
+          <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.9rem", marginBottom: "1.5rem", lineHeight: 1.6 }}>
+            Install the app for a smoother experience,<br/>
+            exclusive offers,<br/>
             and real-time order tracking.
           </p>
 
-          {/* Bullet points */}
+          {/* Benefits box */}
           <div
             style={{
               background: "rgba(255,255,255,0.1)",
-              backdropFilter: "blur(8px)",
               borderRadius: "16px",
               padding: "1rem",
               marginBottom: "1.5rem",
               border: "1px solid rgba(255,255,255,0.2)",
             }}
           >
-            <div
-              style={{
-                color: "white",
-                fontSize: "0.875rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                <span style={{ color: "#4ade80" }}>✔</span>
-                <span>Faster performance</span>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                <span style={{ color: "#4ade80" }}>✔</span>
-                <span>Exclusive deals</span>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                <span style={{ color: "#4ade80" }}>✔</span>
-                <span>Live order tracking</span>
-              </div>
-            </div>
+            <p style={{ color: "white", fontSize: "0.875rem" }}>
+              <span style={{ color: "#4ade80" }}>✔</span> Faster performance<br/>
+              <span style={{ color: "#4ade80" }}>✔</span> Exclusive deals<br/>
+              <span style={{ color: "#4ade80" }}>✔</span> Live order tracking
+            </p>
           </div>
 
-          {/* MAIN INSTALL BUTTON - Always clickable */}
+          {/* INSTALL BUTTON - FULLY FUNCTIONAL */}
           <button
+            type="button"
             onClick={handleInstallClick}
-            className="mt-8 bg-white text-primary font-bold px-8 py-3 rounded-xl shadow-md transition hover:scale-105 active:scale-95"
+            className="install-btn"
             style={{
               width: "100%",
               maxWidth: "280px",
+              padding: "1rem 2rem",
+              background: "white",
+              color: "#8a1c1c",
+              fontWeight: 900,
+              fontSize: "1.1rem",
+              border: "none",
+              borderRadius: "16px",
+              cursor: "pointer",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
+              transition: "all 0.2s ease",
+              animation: isInstalling ? "pulse 1s infinite" : "none",
             }}
           >
-            {isInstalling ? "Installing..." : "Install the App"}
+            {isInstalling ? "Installing..." : "📲 Install the App"}
           </button>
 
-          {/* Hint text */}
-          <p
-            style={{
-              color: "rgba(255,255,255,0.5)",
-              fontSize: "0.7rem",
-              marginTop: "1rem",
-            }}
-          >
-            Tap to install or get setup instructions
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", marginTop: "1rem" }}>
+            Tap to install • Works on all devices
           </p>
         </div>
 
-        {/* Bottom text */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "2rem",
-            left: 0,
-            right: 0,
-            textAlign: "center",
-          }}
-        >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              color: "rgba(255,255,255,0.4)",
-              fontSize: "0.75rem",
-            }}
-          >
-            <div
-              style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                background: "#4ade80",
-              }}
-            ></div>
-            Secure • Fast • Reliable
-          </div>
+        {/* Bottom */}
+        <div style={{ position: "absolute", bottom: "2rem", textAlign: "center" }}>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem" }}>
+            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4ade80", display: "inline-block" }}></span> Secure • Fast • Reliable
+          </p>
         </div>
       </div>
 
-      {/* Install Instructions Popup */}
-      {showInstallToast && (
+      {/* Instructions Modal */}
+      {showModal && (
         <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.6)" }}
-          onClick={closeToast}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 99999,
+            background: "rgba(0,0,0,0.7)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1rem",
+          }}
+          onClick={closeModal}
         >
           <div
             style={{
               background: "white",
               borderRadius: "20px",
-              maxWidth: "320px",
+              maxWidth: "340px",
               width: "100%",
               overflow: "hidden",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
+            {/* Modal Header */}
             <div
               style={{
                 background: "linear-gradient(135deg, #8a1c1c 0%, #6b1515 100%)",
-                padding: "1.25rem",
+                padding: "1.5rem",
                 textAlign: "center",
               }}
             >
               <div
                 style={{
-                  width: "50px",
-                  height: "50px",
+                  width: "60px",
+                  height: "60px",
                   margin: "0 auto 0.5rem",
                   background: "white",
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  fontSize: "2rem",
                 }}
               >
-                <span style={{ fontSize: "1.5rem" }}>📱</span>
+                📱
               </div>
-              <h3
-                style={{
-                  color: "white",
-                  fontWeight: 800,
-                  fontSize: "1.1rem",
-                  margin: 0,
-                }}
-              >
+              <h3 style={{ color: "white", fontWeight: 800, fontSize: "1.25rem", margin: 0 }}>
                 How to Install
               </h3>
             </div>
 
-            {/* Content */}
-            <div style={{ padding: "1.25rem" }}>
+            {/* Modal Body */}
+            <div style={{ padding: "1.5rem" }}>
               {isIOS ? (
-                <div>
-                  <p
-                    style={{
-                      color: "#374151",
-                      fontSize: "0.9rem",
-                      marginBottom: "1rem",
-                      textAlign: "center",
-                      fontWeight: 600,
-                    }}
-                  >
-                    iPhone / iPad Installation
+                <>
+                  <p style={{ color: "#1f2937", fontWeight: 600, marginBottom: "1rem", textAlign: "center" }}>
+                    iPhone / iPad
                   </p>
-                  <ol
-                    style={{
-                      color: "#4b5563",
-                      fontSize: "0.85rem",
-                      paddingLeft: "1.25rem",
-                      lineHeight: 2,
-                      margin: 0,
-                    }}
-                  >
-                    <li>
-                      <strong style={{ color: "#8a1c1c" }}>Tap</strong> the
-                      Share button below
-                    </li>
-                    <li>
-                      <strong style={{ color: "#8a1c1c" }}>Scroll down</strong>{" "}
-                      and tap "Add to Home Screen"
-                    </li>
-                    <li>
-                      <strong style={{ color: "#8a1c1c" }}>Tap</strong> "Add" in
-                      top right
-                    </li>
+                  <ol style={{ color: "#4b5563", fontSize: "0.9rem", paddingLeft: "1.25rem", lineHeight: 2, margin: 0 }}>
+                    <li>Tap the <strong style={{ color: "#8a1c1c" }}>Share</strong> button</li>
+                    <li>Scroll down and tap <strong style={{ color: "#8a1c1c" }}>Add to Home Screen</strong></li>
+                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Add</strong> in top right</li>
                   </ol>
-                </div>
+                </>
               ) : (
-                <div>
-                  <p
-                    style={{
-                      color: "#374151",
-                      fontSize: "0.9rem",
-                      marginBottom: "1rem",
-                      textAlign: "center",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Android / Chrome Installation
+                <>
+                  <p style={{ color: "#1f2937", fontWeight: 600, marginBottom: "1rem", textAlign: "center" }}>
+                    Android / Chrome
                   </p>
-                  <ol
-                    style={{
-                      color: "#4b5563",
-                      fontSize: "0.85rem",
-                      paddingLeft: "1.25rem",
-                      lineHeight: 2,
-                      margin: 0,
-                    }}
-                  >
-                    <li>
-                      <strong style={{ color: "#8a1c1c" }}>Tap</strong> the menu
-                      (three dots) in browser
-                    </li>
-                    <li>
-                      <strong style={{ color: "#8a1c1c" }}>Select</strong> "Add
-                      to Home Screen"
-                    </li>
-                    <li>
-                      <strong style={{ color: "#8a1c1c" }}>Tap</strong> "Add" to
-                      confirm
-                    </li>
+                  <ol style={{ color: "#4b5563", fontSize: "0.9rem", paddingLeft: "1.25rem", lineHeight: 2, margin: 0 }}>
+                    <li>Tap the <strong style={{ color: "#8a1c1c" }}>menu</strong> (three dots) in browser</li>
+                    <li>Select <strong style={{ color: "#8a1c1c" }}>Add to Home Screen</strong></li>
+                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Add</strong> to confirm</li>
                   </ol>
-                  {canInstall && (
-                    <button
-                      onClick={handleInstallClick}
-                      style={{
-                        marginTop: "1rem",
-                        width: "100%",
-                        padding: "0.75rem",
-                        background: "#8a1c1c",
-                        color: "white",
-                        fontWeight: 700,
-                        fontSize: "0.9rem",
-                        border: "none",
-                        borderRadius: "12px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Or tap here to install directly
-                    </button>
-                  )}
-                </div>
+                </>
               )}
 
               {/* Close button */}
               <button
-                onClick={closeToast}
+                type="button"
+                onClick={closeModal}
                 style={{
-                  marginTop: "1.25rem",
+                  marginTop: "1.5rem",
                   width: "100%",
-                  padding: "0.75rem",
-                  background: "#f3f4f6",
-                  color: "#4b5563",
-                  fontWeight: 600,
-                  fontSize: "0.9rem",
+                  padding: "0.875rem",
+                  background: "#8a1c1c",
+                  color: "white",
+                  fontWeight: 700,
+                  fontSize: "0.95rem",
                   border: "none",
                   borderRadius: "12px",
                   cursor: "pointer",
