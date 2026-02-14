@@ -48,15 +48,33 @@ import Image from "./components/Image";
 import OfflineIndicator from "./components/OfflineIndicator";
 import AnimatedSplash from "./components/AnimatedSplash";
 import InstallGate from "./components/InstallGate";
+import InstallLanding from "./components/InstallLanding";
 import BreakingNewsTicker from "./components/BreakingNewsTicker";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   const [splashComplete, setSplashComplete] = useState(false);
+  const [showLanding, setShowLanding] = useState<boolean | null>(null);
+
+  // Check if mobile and standalone on mount
+  useEffect(() => {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+
+    // Show landing only on mobile browser (not installed)
+    setShowLanding(isMobile && !isStandalone);
+  }, []);
 
   const handleSplashComplete = () => {
     setSplashComplete(true);
   };
+
+  // While checking, show nothing (prevent flash)
+  if (showLanding === null) {
+    return null;
+  }
 
   return (
     <SettingsProvider>
@@ -66,9 +84,15 @@ function App() {
             <AnimatedSplash onComplete={handleSplashComplete} />
           )}
           {splashComplete && (
-            <InstallGate>
-              <AppShell />
-            </InstallGate>
+            <>
+              {showLanding ? (
+                <InstallLanding />
+              ) : (
+                <InstallGate>
+                  <AppShell />
+                </InstallGate>
+              )}
+            </>
           )}
         </>
       </HashRouter>
