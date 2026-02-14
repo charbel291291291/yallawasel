@@ -36,31 +36,49 @@ const HiddenAdminAccess: React.FC<HiddenAdminAccessProps> = ({ children }) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [openTerminal]);
 
-  // 5 clicks on logo
+  // 5 clicks on logo - works on any click, not just links
   useEffect(() => {
     let clickCount = 0;
     let lastClickTime = 0;
+    // Store ref to persist across renders
+    const clickData = { count: 0, lastTime: 0 };
 
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const anchor = target.closest('a[href="/"]');
-      if (anchor) {
-        const now = Date.now();
-        if (now - lastClickTime < 500) {
-          clickCount++;
-          if (clickCount >= 5) {
-            clickCount = 0;
-            openTerminal();
-          }
+      // Look for logo click anywhere in the app
+      const logoElement =
+        target.closest('[data-logo="true"]') ||
+        target.closest('a[href="/"]') ||
+        target.closest('a[href="#/"]') ||
+        target.closest(".logo-container") ||
+        target.closest(".brand-logo");
+
+      // Also detect rapid taps anywhere (for PWA)
+      const now = Date.now();
+
+      if (logoElement || clickData.count > 0) {
+        if (now - clickData.lastTime < 400) {
+          clickData.count++;
         } else {
-          clickCount = 1;
+          clickData.count = 1;
         }
-        lastClickTime = now;
+        clickData.lastTime = now;
+
+        if (clickData.count >= 5) {
+          clickData.count = 0;
+          openTerminal();
+        }
       }
     };
 
     document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
+    // Also listen for touch events for mobile/PWA
+    document.addEventListener("touchstart", handleClick);
+
+    return () => {
+      document.removeEventListener("click", handleClick);
+      document.removeEventListener("touchstart", handleClick);
+    };
   }, [openTerminal]);
 
   // Close terminal after 3 failed attempts

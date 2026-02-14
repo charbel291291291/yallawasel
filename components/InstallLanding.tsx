@@ -8,22 +8,34 @@ const InstallLanding: React.FC = () => {
   const [canInstall, setCanInstall] = useState(false);
   const [showInstallToast, setShowInstallToast] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
+  const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
     // Detect iOS
     const iOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     setIsIOS(iOS);
 
-    // Capture beforeinstallprompt event
+    // Capture beforeinstallprompt event - this triggers the native browser banner!
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
       deferredPrompt = e;
       setCanInstall(true);
+      // Show the native browser banner indicator
+      setShowBanner(true);
     };
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
 
+    // Listen for app installed
+    const handleAppInstalled = () => {
+      console.log("App installed successfully");
+      setCanInstall(false);
+      setShowBanner(false);
+    };
+    window.addEventListener("appinstalled", handleAppInstalled);
+
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("appinstalled", handleAppInstalled);
     };
   }, []);
 
@@ -34,13 +46,13 @@ const InstallLanding: React.FC = () => {
 
   const handleInstallNow = async () => {
     setIsInstalling(true);
-    
-    // Try native install prompt
+
+    // Try native install prompt - this shows the browser's native install dialog
     if (deferredPrompt) {
       try {
         await deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        
+
         if (outcome === "accepted") {
           console.log("App installed successfully");
         }
@@ -48,7 +60,7 @@ const InstallLanding: React.FC = () => {
         console.error("Install error:", error);
       }
     }
-    
+
     setIsInstalling(false);
     setShowInstallToast(false);
   };
@@ -57,16 +69,96 @@ const InstallLanding: React.FC = () => {
     setShowInstallToast(false);
   };
 
+  const dismissBanner = () => {
+    setShowBanner(false);
+  };
+
   return (
     <>
+      {/* Native Browser Install Banner - Shows at top like in the image */}
+      {showBanner && canInstall && !isIOS && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 99998,
+            background: "rgba(0, 0, 0, 0.85)",
+            backdropFilter: "blur(10px)",
+            padding: "0.75rem 1rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "1rem",
+          }}
+        >
+          <div
+            style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
+          >
+            {/* App Icon */}
+            <img
+              src="/assets/logo.png"
+              alt="Yalla Wasel"
+              style={{ width: "32px", height: "32px", borderRadius: "8px" }}
+            />
+            <div>
+              <div
+                style={{ color: "white", fontWeight: 600, fontSize: "0.9rem" }}
+              >
+                Install Yalla Wasel
+              </div>
+              <div
+                style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.75rem" }}
+              >
+                Get the app for faster access
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <button
+              onClick={handleInstallNow}
+              style={{
+                padding: "0.5rem 1rem",
+                background: "#3b82f6",
+                color: "white",
+                fontWeight: 600,
+                fontSize: "0.85rem",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
+            >
+              Install
+            </button>
+            <button
+              onClick={dismissBanner}
+              style={{
+                padding: "0.5rem",
+                background: "transparent",
+                color: "rgba(255,255,255,0.6)",
+                fontSize: "1.25rem",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Landing Page */}
       <div
         className="fixed inset-0 flex flex-col items-center justify-center"
         style={{
           width: "100vw",
           height: "100vh",
-          background: "linear-gradient(135deg, #8a1c1c 0%, #6b1515 50%, #4a0f0f 100%)",
+          background:
+            "linear-gradient(135deg, #8a1c1c 0%, #6b1515 50%, #4a0f0f 100%)",
           padding: "2rem",
+          paddingTop: showBanner && canInstall && !isIOS ? "5rem" : "2rem",
           boxSizing: "border-box",
           overflow: "hidden",
         }}
@@ -296,22 +388,66 @@ const InstallLanding: React.FC = () => {
             <div style={{ padding: "1.25rem" }}>
               {isIOS ? (
                 <div>
-                  <p style={{ color: "#374151", fontSize: "0.85rem", marginBottom: "1rem", textAlign: "center" }}>
+                  <p
+                    style={{
+                      color: "#374151",
+                      fontSize: "0.85rem",
+                      marginBottom: "1rem",
+                      textAlign: "center",
+                    }}
+                  >
                     <strong>Quick Install:</strong>
                   </p>
-                  <ol style={{ color: "#4b5563", fontSize: "0.8rem", paddingLeft: "1rem", lineHeight: 1.8, margin: 0 }}>
-                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Share</strong> button below</li>
-                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Add to Home Screen</strong></li>
-                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Add</strong> to confirm</li>
+                  <ol
+                    style={{
+                      color: "#4b5563",
+                      fontSize: "0.8rem",
+                      paddingLeft: "1rem",
+                      lineHeight: 1.8,
+                      margin: 0,
+                    }}
+                  >
+                    <li>
+                      Tap <strong style={{ color: "#8a1c1c" }}>Share</strong>{" "}
+                      button below
+                    </li>
+                    <li>
+                      Tap{" "}
+                      <strong style={{ color: "#8a1c1c" }}>
+                        Add to Home Screen
+                      </strong>
+                    </li>
+                    <li>
+                      Tap <strong style={{ color: "#8a1c1c" }}>Add</strong> to
+                      confirm
+                    </li>
                   </ol>
                 </div>
               ) : (
                 <div>
-                  <p style={{ color: "#374151", fontSize: "0.85rem", marginBottom: "1rem", textAlign: "center" }}>
+                  <p
+                    style={{
+                      color: "#374151",
+                      fontSize: "0.85rem",
+                      marginBottom: "1rem",
+                      textAlign: "center",
+                    }}
+                  >
                     <strong>Quick Install:</strong>
                   </p>
-                  <ol style={{ color: "#4b5563", fontSize: "0.8rem", paddingLeft: "1rem", lineHeight: 1.8, margin: 0 }}>
-                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Install</strong> button below</li>
+                  <ol
+                    style={{
+                      color: "#4b5563",
+                      fontSize: "0.8rem",
+                      paddingLeft: "1rem",
+                      lineHeight: 1.8,
+                      margin: 0,
+                    }}
+                  >
+                    <li>
+                      Tap <strong style={{ color: "#8a1c1c" }}>Install</strong>{" "}
+                      button below
+                    </li>
                     <li>Wait for download to complete</li>
                     <li>App will appear on your home screen</li>
                   </ol>
@@ -319,7 +455,9 @@ const InstallLanding: React.FC = () => {
               )}
 
               {/* Action Buttons */}
-              <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.25rem" }}>
+              <div
+                style={{ display: "flex", gap: "0.5rem", marginTop: "1.25rem" }}
+              >
                 {/* Install Button - FUNCTIONAL */}
                 <button
                   onClick={handleInstallNow}
@@ -337,7 +475,11 @@ const InstallLanding: React.FC = () => {
                     opacity: isInstalling ? 0.7 : 1,
                   }}
                 >
-                  {isInstalling ? "Installing..." : canInstall ? "📲 Install Now" : "Install Unavailable"}
+                  {isInstalling
+                    ? "Installing..."
+                    : canInstall
+                    ? "📲 Install Now"
+                    : "Install Unavailable"}
                 </button>
 
                 {/* Cancel Button */}
@@ -360,7 +502,15 @@ const InstallLanding: React.FC = () => {
 
               {/* Fallback hint */}
               {!canInstall && !isIOS && (
-                <p style={{ color: "#9ca3af", fontSize: "0.7rem", textAlign: "center", marginTop: "0.75rem", margin: "0.75rem 0 0" }}>
+                <p
+                  style={{
+                    color: "#9ca3af",
+                    fontSize: "0.7rem",
+                    textAlign: "center",
+                    marginTop: "0.75rem",
+                    margin: "0.75rem 0 0",
+                  }}
+                >
                   If no install prompt appears, use your browser menu
                 </p>
               )}

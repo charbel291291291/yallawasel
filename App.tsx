@@ -1480,6 +1480,7 @@ const Navbar = ({
             to="/"
             className="flex items-center gap-2 group"
             onClick={onLogoClick || undefined}
+            data-logo="true"
           >
             {settings.logo_url ? (
               <img
