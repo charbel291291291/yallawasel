@@ -241,7 +241,7 @@ const AdminPanel: React.FC = () => {
       </div>
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-slate-900 text-white transition-all duration-300 ${
+        className={`hidden md:flex fixed inset-y-0 left-0 z-50 bg-slate-900 text-white transition-all duration-300 ${
           isSidebarOpen ? "w-64" : "w-20"
         } overflow-hidden shadow-2xl flex flex-col`}
       >
@@ -346,9 +346,7 @@ const AdminPanel: React.FC = () => {
       </aside>
 
       <main
-        className={`flex-1 transition-all duration-300 md:${
-          isSidebarOpen ? "ml-64" : "ml-20"
-        }`}
+        className="flex-1 transition-all duration-300 md:pt-0 pt-0"
       >
         {/* Mobile Header */}
         <header className="md:hidden h-14 bg-white/90 backdrop-blur-md shadow-sm flex items-center justify-between px-4 sticky top-0 z-40 border-b border-gray-100">
