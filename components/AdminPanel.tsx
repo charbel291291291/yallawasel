@@ -205,13 +205,62 @@ const AdminPanel: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fc] flex font-sans text-gray-800">
+    <div className="min-h-screen bg-[#f8f9fc] font-sans text-gray-800 pb-20 md:pb-0">
+      {/* Mobile Bottom Tab Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 text-white z-50 flex justify-around items-center h-16 shadow-2xl">
+        <button
+          onClick={() => setActiveTab("dashboard")}
+          className={`flex flex-col items-center p-2 ${
+            activeTab === "dashboard" ? "text-red-500" : "text-gray-400"
+          }`}
+        >
+          <i className="fa-solid fa-chart-pie text-xl"></i>
+          <span className="text-[10px] mt-1">Home</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("orders")}
+          className={`flex flex-col items-center p-2 ${
+            activeTab === "orders" ? "text-red-500" : "text-gray-400"
+          }`}
+        >
+          <i className="fa-solid fa-shopping-cart text-xl"></i>
+          <span className="text-[10px] mt-1">Orders</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("products")}
+          className={`flex flex-col items-center p-2 ${
+            activeTab === "products" ? "text-red-500" : "text-gray-400"
+          }`}
+        >
+          <i className="fa-solid fa-box text-xl"></i>
+          <span className="text-[10px] mt-1">Kits</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("moune")}
+          className={`flex flex-col items-center p-2 ${
+            activeTab === "moune" ? "text-red-500" : "text-gray-400"
+          }`}
+        >
+          <i className="fa-solid fa-utensils text-xl"></i>
+          <span className="text-[10px] mt-1">Mouné</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("settings")}
+          className={`flex flex-col items-center p-2 ${
+            activeTab === "settings" ? "text-red-500" : "text-gray-400"
+          }`}
+        >
+          <i className="fa-solid fa-cog text-xl"></i>
+          <span className="text-[10px] mt-1">More</span>
+        </button>
+      </div>
+
       <aside
         className={`fixed inset-y-0 left-0 z-50 bg-slate-900 text-white transition-all duration-300 ${
           isSidebarOpen ? "w-64" : "w-20"
         } overflow-hidden shadow-2xl flex flex-col`}
       >
-        <div className="h-20 flex items-center justify-center border-b border-slate-800 flex-shrink-0">
+        <div className="h-16 md:h-20 flex items-center justify-center border-b border-slate-800 flex-shrink-0">
           <div className="flex items-center gap-3 font-bold text-xl">
             <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
               Y
@@ -312,12 +361,31 @@ const AdminPanel: React.FC = () => {
       </aside>
 
       <main
-        className={`flex-1 transition-all duration-300 ${
+        className={`flex-1 transition-all duration-300 md:${
           isSidebarOpen ? "ml-64" : "ml-20"
         }`}
       >
-        <header className="h-20 bg-white/80 backdrop-blur-md shadow-sm flex items-center justify-between px-8 sticky top-0 z-40 border-b border-gray-100">
-          <div className="flex items-center gap-6">
+        {/* Mobile Header */}
+        <header className="md:hidden h-14 bg-white/90 backdrop-blur-md shadow-sm flex items-center justify-between px-4 sticky top-0 z-40 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">Y</span>
+            </div>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-700">
+              {activeTab}
+            </h2>
+          </div>
+          <Link
+            to="/"
+            className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center"
+          >
+            <i className="fa-solid fa-home text-sm"></i>
+          </Link>
+        </header>
+
+        {/* Desktop Header */}
+        <header className="hidden md:flex h-16 bg-white/80 backdrop-blur-md shadow-sm items-center justify-between px-6 sticky top-0 z-40 border-b border-gray-100">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(!isSidebarOpen)}
               className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:text-slate-900 transition-colors border border-gray-100"
@@ -325,7 +393,7 @@ const AdminPanel: React.FC = () => {
               <i className="fa-solid fa-bars-staggered"></i>
             </button>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-gray-400">
-              {activeTab} Terminal
+              {activeTab} Panel
             </h2>
           </div>
           <div className="flex items-center gap-4">
@@ -390,7 +458,7 @@ const DashboardView = () => {
         .select("*", { count: "exact", head: true });
       const orders = oData || [];
       const revenue = orders
-        .filter((o) => o.status === "completed")
+        .filter((o) => o.status === "delivered")
         .reduce((s, o) => s + (Number(o.total) || 0), 0);
       setStats({
         revenue,
@@ -517,19 +585,34 @@ const OrdersView = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [adminNote, setAdminNote] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const fetchOrders = async () => {
+    setLoading(true);
+    // Build query based on status filter
     let query = supabase
       .from("orders")
-      .select("*, profiles(full_name, phone)")
+      .select("*")
       .order("created_at", { ascending: false });
 
     if (statusFilter !== "all") {
       query = query.eq("status", statusFilter);
     }
 
-    const { data } = await query;
-    setOrders(data || []);
+    const { data: ordersData, error: ordersError } = await query;
+
+    if (ordersError) {
+      console.error("Error fetching orders:", ordersError);
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
+
+    console.log("Orders fetched:", ordersData?.length || 0, ordersData);
+
+    // Just use orders directly
+    setOrders(ordersData || []);
+    setLoading(false);
   };
 
   const fetchOrderHistory = async (orderId: string) => {
@@ -730,81 +813,91 @@ const OrdersView = () => {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-left text-sm border-collapse">
-          <thead className="bg-gray-50/50 text-gray-400 uppercase text-[10px] font-black tracking-widest">
-            <tr>
-              <th className="p-4">Reference</th>
-              <th className="p-4">Customer</th>
-              <th className="p-4">Phone</th>
-              <th className="p-4">Items</th>
-              <th className="p-4">Amount</th>
-              <th className="p-4 text-center">Status</th>
-              <th className="p-4 text-center">Date</th>
-              <th className="p-4"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {filteredOrders.map((o) => (
-              <tr key={o.id} className="hover:bg-gray-50/50 transition-colors">
-                <td className="p-4 font-mono text-[11px] text-primary font-bold">
-                  #{o.id.slice(0, 8).toUpperCase()}
-                </td>
-                <td className="p-4 font-bold">
-                  {o.full_name || o.profiles?.full_name || "Guest User"}
-                </td>
-                <td className="p-4 text-xs text-gray-500">
-                  {o.phone || o.profiles?.phone || "-"}
-                </td>
-                <td className="p-4 text-xs text-gray-500">
-                  {o.items ? `${o.items.length} items` : "No items"}
-                </td>
-                <td className="p-4 font-black">
-                  ${Number(o.total).toFixed(2)}
-                </td>
-                <td className="p-4">
-                  <div className="flex justify-center">
-                    <select
-                      value={o.status}
-                      onChange={(e) => updateStatus(o.id, e.target.value)}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-none focus:ring-2 cursor-pointer ${getStatusColor(
-                        o.status
-                      )}`}
-                    >
-                      {statusOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </td>
-                <td className="p-4 text-xs text-gray-400">
-                  {new Date(o.created_at).toLocaleDateString()}
-                </td>
-                <td className="p-4 text-right">
-                  <button
-                    onClick={() => setSelectedOrder(o)}
-                    className="text-gray-400 hover:text-primary transition-colors p-2"
-                  >
-                    <i className="fas fa-eye"></i>
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {filteredOrders.length === 0 && (
+      {loading ? (
+        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-20 text-center">
+          <i className="fas fa-spinner fa-spin text-4xl text-primary mb-4"></i>
+          <p className="text-gray-400 font-medium">Loading orders...</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+          <table className="w-full text-left text-sm border-collapse">
+            <thead className="bg-gray-50/50 text-gray-400 uppercase text-[10px] font-black tracking-widest">
               <tr>
-                <td
-                  colSpan={8}
-                  className="p-20 text-center text-gray-300 font-bold uppercase tracking-widest"
-                >
-                  No orders found.
-                </td>
+                <th className="p-4">Reference</th>
+                <th className="p-4">Customer</th>
+                <th className="p-4">Phone</th>
+                <th className="p-4">Items</th>
+                <th className="p-4">Amount</th>
+                <th className="p-4 text-center">Status</th>
+                <th className="p-4 text-center">Date</th>
+                <th className="p-4"></th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredOrders.map((o) => (
+                <tr
+                  key={o.id}
+                  className="hover:bg-gray-50/50 transition-colors"
+                >
+                  <td className="p-4 font-mono text-[11px] text-primary font-bold">
+                    #{o.id.slice(0, 8).toUpperCase()}
+                  </td>
+                  <td className="p-4 font-bold">
+                    {o.full_name || o.profiles?.full_name || "Guest User"}
+                  </td>
+                  <td className="p-4 text-xs text-gray-500">
+                    {o.phone || o.profiles?.phone || "-"}
+                  </td>
+                  <td className="p-4 text-xs text-gray-500">
+                    {o.items ? `${o.items.length} items` : "No items"}
+                  </td>
+                  <td className="p-4 font-black">
+                    ${Number(o.total).toFixed(2)}
+                  </td>
+                  <td className="p-4">
+                    <div className="flex justify-center">
+                      <select
+                        value={o.status}
+                        onChange={(e) => updateStatus(o.id, e.target.value)}
+                        className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-none focus:ring-2 cursor-pointer ${getStatusColor(
+                          o.status
+                        )}`}
+                      >
+                        {statusOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </td>
+                  <td className="p-4 text-xs text-gray-400">
+                    {new Date(o.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="p-4 text-right">
+                    <button
+                      onClick={() => setSelectedOrder(o)}
+                      className="text-gray-400 hover:text-primary transition-colors p-2"
+                    >
+                      <i className="fas fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredOrders.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="p-20 text-center text-gray-300 font-bold uppercase tracking-widest"
+                  >
+                    No orders found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Order Details Modal */}
       {selectedOrder && (

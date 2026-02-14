@@ -38,8 +38,12 @@ create table if not exists public.orders (
   id uuid default gen_random_uuid() primary key,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   user_id uuid references auth.users not null,
+  full_name text,
+  phone text,
+  address text,
   total numeric not null,
-  status text default 'pending'
+  status text default 'pending',
+  updated_at timestamp with time zone default timezone('utc'::text, now())
 );
 
 -- CRITICAL FIX: Ensure these columns exist for Checkout to work
@@ -47,6 +51,8 @@ alter table public.orders add column if not exists items jsonb;
 alter table public.orders add column if not exists payment_method text;
 alter table public.orders add column if not exists delivery_zone text;
 alter table public.orders add column if not exists notes text;
+alter table public.orders add column if not exists delivery_fee numeric default 0;
+alter table public.orders add column if not exists admin_notes text;
 
 -- 4. Create App Settings (Singleton)
 create table if not exists public.app_settings (
@@ -138,17 +144,14 @@ drop policy if exists "Public Write Products" on products;
 create policy "Public Write Products" on products for all using (true);
 
 -- Orders
-drop policy if exists "Users Read Own Orders" on orders;
-create policy "Users Read Own Orders" on orders for select using (auth.uid() = user_id);
+-- Allow anyone to create orders (public write)
+drop policy if exists "Public Read Orders" on orders;
+drop policy if exists "Public Create Orders" on orders;
+drop policy if exists "Admin Manage Orders" on orders;
 
-drop policy if exists "Users Create Orders" on orders;
-create policy "Users Create Orders" on orders for insert with check (auth.uid() = user_id);
-
-drop policy if exists "Admin Read Orders" on orders;
-create policy "Admin Read Orders" on orders for select using (true);
-
-drop policy if exists "Admin Write Orders" on orders;
-create policy "Admin Write Orders" on orders for all using (true);
+create policy "Public Read Orders" on orders for select using (true);
+create policy "Public Create Orders" on orders for insert with check (true);
+create policy "Admin Manage Orders" on orders for all using (true);
 
 -- App Settings
 drop policy if exists "Public Read Settings" on app_settings;
@@ -507,4 +510,5 @@ create policy "Admin Read All Impact" on user_impact for select using (true);
 create index if not exists idx_user_impact_user_id on user_impact(user_id);
 create index if not exists idx_user_impact_campaign_id on user_impact(campaign_id);
 create index if not exists idx_impact_campaigns_active on impact_campaigns(is_active);
+
 

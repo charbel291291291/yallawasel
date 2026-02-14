@@ -24,6 +24,7 @@ import {
   HappyHour,
   AppSettings,
   Order,
+  MounéClass,
 } from "./types";
 import { MOCK_PRODUCTS, MOCK_SERVICES } from "./constants";
 import WalletCard from "./components/WalletCard";
@@ -37,7 +38,11 @@ import { supabase } from "./services/supabaseClient";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import MounéClassesSection from "./components/MounéClassesSection";
 import OrderTrackingPage from "./components/OrderTrackingPage";
-import { sendWhatsAppNotification } from "./services/whatsappNotification";
+import {
+  sendWhatsAppNotification,
+  getWhatsAppUrl,
+  OrderNotificationData,
+} from "./services/whatsappNotification";
 import MounéDetail from "./components/MounéDetail";
 import Image from "./components/Image";
 import OfflineIndicator from "./components/OfflineIndicator";
@@ -76,11 +81,16 @@ const AppShell = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [mounéClasses, setMounéClasses] = useState<MounéClass[]>([]);
   const [lang, setLang] = useState<Language>("en");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [happyHours, setHappyHours] = useState<HappyHour[]>([]);
   const [happyHoursLoaded, setHappyHoursLoaded] = useState(false);
+  const [lastOrder, setLastOrder] = useState<OrderNotificationData | null>(
+    null
+  );
+  const [showOrderSuccess, setShowOrderSuccess] = useState(false);
 
   const { settings, loading: settingsLoading, isReady } = useSettings();
   const location = useLocation();
@@ -123,15 +133,45 @@ const AppShell = () => {
         }
         // Only use MOCK_PRODUCTS if no products in database
 
+        // Fetch Mouné classes
+        const { data: mounéData } = await supabase
+          .from("moune_classes")
+          .select("*")
+          .eq("is_active", true)
+          .order("price", { ascending: true });
+
+        if (mounéData && mounéData.length > 0) {
+          setMounéClasses(
+            mounéData.map((m: any) => ({
+              id: m.id,
+              name: m.name,
+              nameAr: m.name_ar || m.name,
+              description: m.description,
+              descriptionAr: m.description_ar || m.description,
+              totalWeight: m.total_weight || "",
+              mealsCount: m.meals_count || 0,
+              price: Number(m.price),
+              cost: Number(m.cost) || 0,
+              image: m.image,
+              category: m.category || "",
+              classType: m.class_type || "classic",
+              isActive: m.is_active,
+            }))
+          );
+        } else {
+          // Set empty array so component shows its default classes
+          setMounéClasses([]);
+        }
+
         // Fetch active happy hours
         const { data: happyHoursData } = await supabase
           .from("happy_hours_schedule")
           .select("*")
           .eq("active", true)
           .order("created_at", { ascending: false });
-        if (happyHoursData) {
-          setHappyHours(happyHoursData);
-        }
+
+        // Always set happy hours (empty array if none found)
+        setHappyHours(happyHoursData || []);
       } catch (err) {
         console.error("Error fetching data:", err);
         // Products will remain empty, happy hours will remain empty
@@ -205,16 +245,54 @@ const AppShell = () => {
         "postgres_changes",
         { event: "*", schema: "public", table: "moune_classes" },
         () => {
-          // Trigger Mouné classes refresh - the component will handle its own refetch
-          // This is handled by the component's own subscription
+          // Refetch Mouné classes when database changes
+          supabase
+            .from("moune_classes")
+            .select("*")
+            .eq("is_active", true)
+            .order("price", { ascending: true })
+            .then(({ data }) => {
+              if (data && data.length > 0) {
+                setMounéClasses(
+                  data.map((m: any) => ({
+                    id: m.id,
+                    name: m.name,
+                    nameAr: m.name_ar || m.name,
+                    description: m.description,
+                    descriptionAr: m.description_ar || m.description,
+                    totalWeight: m.total_weight || "",
+                    mealsCount: m.meals_count || 0,
+                    price: Number(m.price),
+                    cost: Number(m.cost) || 0,
+                    image: m.image,
+                    category: m.category || "",
+                    classType: m.class_type || "classic",
+                    isActive: m.is_active,
+                  }))
+                );
+              }
+            });
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(happyHoursChannel);
-      supabase.removeChannel(productsChannel);
-      supabase.removeChannel(mouneChannel);
+      // Safely remove channels with error handling
+      try {
+        if (happyHoursChannel) supabase.removeChannel(happyHoursChannel);
+      } catch (e) {
+        /* channel already removed */
+      }
+      try {
+        if (productsChannel) supabase.removeChannel(productsChannel);
+      } catch (e) {
+        /* channel already removed */
+      }
+      try {
+        if (mouneChannel) supabase.removeChannel(mouneChannel);
+      } catch (e) {
+        /* channel already removed */
+      }
     };
   }, []);
 
@@ -337,6 +415,7 @@ const AppShell = () => {
           phone: profile?.phone || user.phone || "",
           address: profile?.address || "",
           total: total,
+          delivery_fee: deliveryFee,
           status: "pending",
           payment_method: "cash",
           delivery_zone: "Adonis",
@@ -345,7 +424,12 @@ const AppShell = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Order insert error:", error);
+        throw error;
+      }
+
+      console.log("Order created successfully:", data);
 
       // Create initial status history entry
       if (data) {
@@ -356,17 +440,18 @@ const AppShell = () => {
           created_by: user.id,
         });
 
-        // Trigger WhatsApp notification for admin (defer to avoid blocking)
-        setTimeout(() => {
-          sendWhatsAppNotification({
-            full_name: data.full_name,
-            phone: data.phone,
-            address: data.address,
-            total_amount: data.total,
-            items: data.items,
-            order_id: data.id,
-          });
-        }, 100);
+        // Store order data for WhatsApp notification (show modal instead of auto-open)
+        const orderData: OrderNotificationData = {
+          full_name: data.full_name,
+          phone: data.phone,
+          address: data.address,
+          total: data.total,
+          items: data.items,
+          order_id: data.id,
+          adminPhone: settings?.contact_phone,
+        };
+        setLastOrder(orderData);
+        setShowOrderSuccess(true);
       }
 
       // Update User Points (10 points per dollar)
@@ -397,12 +482,8 @@ const AppShell = () => {
         setIsCartOpen(false);
       });
 
-      // Show success message
-      alert(
-        lang === "ar"
-          ? "تم استلام طلبك بنجاح!"
-          : `Order received successfully! Track it at: /order/${data.id}`
-      );
+      // Show success modal instead of alert
+      // (showOrderSuccess is already set above)
     } catch (err: any) {
       alert("Checkout failed: " + err.message);
     } finally {
@@ -434,8 +515,9 @@ const AppShell = () => {
               toggleLanguage={toggleLanguage}
               onLogout={handleLogout}
               onOpenCart={() => setIsCartOpen(true)}
+              mounéClasses={mounéClasses}
             />
-            {happyHoursLoaded && <BreakingNewsTicker happyHours={happyHours} />}
+            <BreakingNewsTicker happyHours={happyHours} lang={lang} />
           </HiddenAdminAccess>
         </ErrorBoundary>
       )}
@@ -557,6 +639,66 @@ const AppShell = () => {
         checkoutLoading={checkoutLoading}
       />
 
+      {/* Order Success Modal */}
+      {showOrderSuccess && lastOrder && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-bounce-in">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">✅</span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                {lang === "ar" ? "تم استلام طلبك!" : "Order Received!"}
+              </h2>
+              <p className="text-gray-600 mb-4">
+                {lang === "ar"
+                  ? `طلبك #${lastOrder.order_id
+                      .slice(0, 8)
+                      .toUpperCase()} قيد التجهيز`
+                  : `Order #${lastOrder.order_id
+                      .slice(0, 8)
+                      .toUpperCase()} is being prepared`}
+              </p>
+
+              {/* WhatsApp Button */}
+              <a
+                href={getWhatsAppUrl(lastOrder)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors mb-3"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg>
+                {lang === "ar"
+                  ? "إرسال إشعار واتساب"
+                  : "Send WhatsApp Notification"}
+              </a>
+
+              <button
+                onClick={() => {
+                  setShowOrderSuccess(false);
+                  setLastOrder(null);
+                }}
+                className="w-full py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                {lang === "ar" ? "إغلاق" : "Close"}
+              </button>
+
+              <p className="text-xs text-gray-400 mt-4">
+                {lang === "ar"
+                  ? `الإجمالي: $${Number(lastOrder.total).toFixed(2)}`
+                  : `Total: $${Number(lastOrder.total).toFixed(2)}`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!isAdminRoute && (
         <MobileTabBar
           lang={lang}
@@ -657,7 +799,7 @@ const ShopPage = ({ products, addToCart, lang }: any) => {
         </p>
       </div>
       <div className="flex justify-center gap-4 overflow-x-auto pb-4 hide-scrollbar">
-        {["all", "essential", "themed", "emergency"].map((id) => (
+        {["all", "essential", "themed", "emergency", "moune"].map((id) => (
           <button
             key={id}
             onClick={() => setFilter(id)}
@@ -1295,9 +1437,16 @@ const Navbar = ({
   onLogout,
   onOpenCart,
   onLogoClick,
+  mounéClasses = [],
 }: any) => {
   const t = translations[lang];
   const location = useLocation();
+
+  // Build dropdown items from database classes
+  const mounéDropdownItems = mounéClasses.map((m: any) => ({
+    to: `/moune/${m.id}`,
+    label: lang === "ar" ? m.nameAr : m.name,
+  }));
 
   return (
     <header className="absolute top-4 left-4 right-4 z-40 glass-panel rounded-2xl border border-white/40 shadow-2xl py-2 px-4 sm:px-6 animate-3d-entrance">
@@ -1341,14 +1490,24 @@ const Navbar = ({
                 location.pathname === "/moune" ||
                 location.pathname.startsWith("/moune/")
               }
-              items={[
-                { to: "/moune/mini-moune", label: "Mini Mouné (Budget Smart)" },
-                {
-                  to: "/moune/classic-moune",
-                  label: "Classic Mouné (Best Value)",
-                },
-                { to: "/moune/premium-village", label: "Premium Village" },
-              ]}
+              items={
+                mounéDropdownItems.length > 0
+                  ? mounéDropdownItems
+                  : [
+                      {
+                        to: "/moune/mini-moune",
+                        label: "Mini Mouné (Budget Smart)",
+                      },
+                      {
+                        to: "/moune/classic-moune",
+                        label: "Classic Mouné (Best Value)",
+                      },
+                      {
+                        to: "/moune/premium-village",
+                        label: "Premium Village",
+                      },
+                    ]
+              }
             />
             <NavLink
               to="/impact"
@@ -1518,6 +1677,16 @@ const MobileTabBar = ({ lang, onOpenCart, cartCount }: any) => {
           iconOutline="fa-box"
           label={t.kits}
           isActive={location.pathname === "/shop"}
+        />
+        <MobileTab
+          to="/moune"
+          icon="fa-utensils"
+          iconOutline="fa-utensils"
+          label={lang === "ar" ? "موني" : "Mouné"}
+          isActive={
+            location.pathname === "/moune" ||
+            location.pathname.startsWith("/moune/")
+          }
         />
         <MobileTab
           to="/impact"

@@ -1,5 +1,5 @@
 // WhatsApp Notification Service
-// Triggers WhatsApp redirect for order notifications
+// Prepares WhatsApp message for order notifications
 
 export interface OrderNotificationData {
   full_name: string;
@@ -8,22 +8,19 @@ export interface OrderNotificationData {
   total: number;
   items: any[];
   order_id: string;
+  adminPhone?: string;
 }
 
-export const sendWhatsAppNotification = async (
-  orderData: OrderNotificationData
-): Promise<void> => {
-  try {
-    // Format items list
-    const itemsList = orderData.items
-      .map(
-        (item: any) =>
-          `${item.quantity}x ${item.name || item.productName || "Item"}`
-      )
-      .join("\n  • ");
+// Build the WhatsApp message
+const buildWhatsAppMessage = (orderData: OrderNotificationData): string => {
+  const itemsList = orderData.items
+    .map(
+      (item: any) =>
+        `${item.quantity}x ${item.name || item.productName || "Item"}`
+    )
+    .join("\n  • ");
 
-    // Build message
-    const message = `🛒 *New Order Received*
+  return `🛒 *New Order Received*
 
 ━━━━━━━━━━━━━━━━━━━━
 📋 *Order #${orderData.order_id.slice(0, 8).toUpperCase()}*
@@ -43,23 +40,31 @@ View in Admin Panel for details.
 
 ---
 Yalla Wasel Admin`;
+};
 
-    // Encode message for WhatsApp URL
-    const encodedMessage = encodeURIComponent(message);
+// Get formatted WhatsApp URL (ready to open)
+export const getWhatsAppUrl = (orderData: OrderNotificationData): string => {
+  const adminPhone = orderData.adminPhone || "0096170126177";
+  const formattedAdminPhone = formatPhoneForWhatsApp(adminPhone);
+  const message = buildWhatsAppMessage(orderData);
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/${formattedAdminPhone}?text=${encodedMessage}`;
+};
 
-    // WhatsApp API URL (using wa.me for direct redirect)
-    const whatsappUrl = `https://wa.me/009670126177?text=${encodedMessage}`;
+// Open WhatsApp with pre-filled message
+export const openWhatsAppNotification = (
+  orderData: OrderNotificationData
+): void => {
+  const url = getWhatsAppUrl(orderData);
+  window.open(url, "_blank");
+  console.log("WhatsApp notification ready for order:", orderData.order_id);
+};
 
-    // Open WhatsApp in new tab
-    window.open(whatsappUrl, "_blank");
-
-    console.log(
-      "WhatsApp notification triggered for order:",
-      orderData.order_id
-    );
-  } catch (error) {
-    console.error("Error sending WhatsApp notification:", error);
-  }
+// Legacy function - still works but now just prepares URL
+export const sendWhatsAppNotification = async (
+  orderData: OrderNotificationData
+): Promise<void> => {
+  openWhatsAppNotification(orderData);
 };
 
 // Format phone number for WhatsApp (remove non-digits)

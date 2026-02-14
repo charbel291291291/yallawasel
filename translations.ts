@@ -26,6 +26,7 @@ export const translations = {
     essential: "Essential",
     themed: "Themed",
     emergency: "Emergency",
+    moune: "Mouné",
     servicesComing: "Services Coming Later",
     servicesDesc:
       "We are personally vetting the top 1% of electricians and plumbers in Adonis to ensure the luxury standard you deserve.",
@@ -122,6 +123,7 @@ export const translations = {
     essential: "أساسي",
     themed: "مناسبات",
     emergency: "طوارئ",
+    moune: "موني",
     servicesComing: "الخدمات قادمة قريباً",
     servicesDesc:
       "نحن نقوم حالياً باختيار أفضل 1% من الكهربائيين والسباكين في أدونيس لضمان معايير الرفاهية التي تستحقها.",
