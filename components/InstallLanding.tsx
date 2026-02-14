@@ -6,7 +6,8 @@ let deferredPrompt: any = null;
 const InstallLanding: React.FC = () => {
   const [isIOS, setIsIOS] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(false);
+  const [showInstallToast, setShowInstallToast] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
 
   useEffect(() => {
     // Detect iOS
@@ -26,13 +27,20 @@ const InstallLanding: React.FC = () => {
     };
   }, []);
 
-  const handleInstall = async () => {
-    // If we have deferredPrompt, try native install
+  const handleInstallClick = () => {
+    // Show the small install window
+    setShowInstallToast(true);
+  };
+
+  const handleInstallNow = async () => {
+    setIsInstalling(true);
+    
+    // Try native install prompt
     if (deferredPrompt) {
       try {
         await deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-
+        
         if (outcome === "accepted") {
           console.log("App installed successfully");
         }
@@ -40,20 +48,24 @@ const InstallLanding: React.FC = () => {
         console.error("Install error:", error);
       }
     }
+    
+    setIsInstalling(false);
+    setShowInstallToast(false);
+  };
 
-    // Show instructions anyway (for all browsers)
-    setShowInstructions(true);
+  const closeToast = () => {
+    setShowInstallToast(false);
   };
 
   return (
     <>
+      {/* Main Landing Page */}
       <div
         className="fixed inset-0 flex flex-col items-center justify-center"
         style={{
           width: "100vw",
           height: "100vh",
-          background:
-            "linear-gradient(135deg, #8a1c1c 0%, #6b1515 50%, #4a0f0f 100%)",
+          background: "linear-gradient(135deg, #8a1c1c 0%, #6b1515 50%, #4a0f0f 100%)",
           padding: "2rem",
           boxSizing: "border-box",
           overflow: "hidden",
@@ -180,9 +192,9 @@ const InstallLanding: React.FC = () => {
             </div>
           </div>
 
-          {/* Install Button - Always Clickable */}
+          {/* Install Button - Opens the small window */}
           <button
-            onClick={handleInstall}
+            onClick={handleInstallClick}
             className="mt-8 bg-white text-primary font-bold px-8 py-3 rounded-xl shadow-md transition hover:scale-105"
             style={{
               width: "100%",
@@ -225,171 +237,134 @@ const InstallLanding: React.FC = () => {
         </div>
       </div>
 
-      {/* Installation Instructions Notification Modal */}
-      {showInstructions && (
+      {/* Small Install Window / Toast Notification */}
+      {showInstallToast && (
         <div
           className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
           style={{
-            background: "rgba(0,0,0,0.7)",
+            background: "rgba(0,0,0,0.5)",
           }}
-          onClick={() => setShowInstructions(false)}
+          onClick={closeToast}
         >
+          {/* Small Window */}
           <div
-            className="bg-white rounded-2xl max-w-sm w-full p-6 text-center"
             style={{
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              background: "white",
+              borderRadius: "20px",
+              maxWidth: "300px",
+              width: "100%",
+              overflow: "hidden",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
-            <button
-              onClick={() => setShowInstructions(false)}
-              style={{
-                position: "absolute",
-                top: "1rem",
-                right: "1rem",
-                background: "none",
-                border: "none",
-                fontSize: "1.5rem",
-                color: "#6b7280",
-                cursor: "pointer",
-              }}
-            >
-              ×
-            </button>
-
-            {/* Icon */}
+            {/* Header with icon */}
             <div
               style={{
-                width: "64px",
-                height: "64px",
-                margin: "0 auto 1rem",
-                background: "#8a1c1c",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                background: "linear-gradient(135deg, #8a1c1c 0%, #6b1515 100%)",
+                padding: "1.25rem",
+                textAlign: "center",
               }}
             >
-              <span style={{ fontSize: "2rem" }}>📱</span>
+              <div
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  margin: "0 auto 0.5rem",
+                  background: "white",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span style={{ fontSize: "1.5rem" }}>📲</span>
+              </div>
+              <h3
+                style={{
+                  color: "white",
+                  fontWeight: 800,
+                  fontSize: "1.1rem",
+                  margin: 0,
+                }}
+              >
+                Install Yalla Wasel
+              </h3>
             </div>
 
-            {/* Title */}
-            <h2
-              style={{
-                fontSize: "1.25rem",
-                fontWeight: 800,
-                color: "#1f2937",
-                marginBottom: "1rem",
-              }}
-            >
-              How to Install
-            </h2>
+            {/* Content */}
+            <div style={{ padding: "1.25rem" }}>
+              {isIOS ? (
+                <div>
+                  <p style={{ color: "#374151", fontSize: "0.85rem", marginBottom: "1rem", textAlign: "center" }}>
+                    <strong>Quick Install:</strong>
+                  </p>
+                  <ol style={{ color: "#4b5563", fontSize: "0.8rem", paddingLeft: "1rem", lineHeight: 1.8, margin: 0 }}>
+                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Share</strong> button below</li>
+                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Add to Home Screen</strong></li>
+                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Add</strong> to confirm</li>
+                  </ol>
+                </div>
+              ) : (
+                <div>
+                  <p style={{ color: "#374151", fontSize: "0.85rem", marginBottom: "1rem", textAlign: "center" }}>
+                    <strong>Quick Install:</strong>
+                  </p>
+                  <ol style={{ color: "#4b5563", fontSize: "0.8rem", paddingLeft: "1rem", lineHeight: 1.8, margin: 0 }}>
+                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Install</strong> button below</li>
+                    <li>Wait for download to complete</li>
+                    <li>App will appear on your home screen</li>
+                  </ol>
+                </div>
+              )}
 
-            {/* iOS Instructions */}
-            {isIOS ? (
-              <div style={{ textAlign: "left" }}>
-                <p
+              {/* Action Buttons */}
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.25rem" }}>
+                {/* Install Button - FUNCTIONAL */}
+                <button
+                  onClick={handleInstallNow}
+                  disabled={isInstalling}
                   style={{
-                    color: "#4b5563",
-                    fontSize: "0.9rem",
-                    marginBottom: "1rem",
+                    flex: 1,
+                    padding: "0.75rem",
+                    background: canInstall ? "#8a1c1c" : "#9ca3af",
+                    color: "white",
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    border: "none",
+                    borderRadius: "12px",
+                    cursor: canInstall ? "pointer" : "not-allowed",
+                    opacity: isInstalling ? 0.7 : 1,
                   }}
                 >
-                  Follow these steps to install on your iPhone/iPad:
-                </p>
-                <ol
-                  style={{
-                    color: "#374151",
-                    fontSize: "0.875rem",
-                    paddingLeft: "1.25rem",
-                    lineHeight: 1.8,
-                  }}
-                >
-                  <li style={{ marginBottom: "0.5rem" }}>
-                    <strong>Tap</strong> the{" "}
-                    <span style={{ color: "#8a1c1c", fontWeight: 600 }}>
-                      Share
-                    </span>{" "}
-                    button below
-                  </li>
-                  <li style={{ marginBottom: "0.5rem" }}>
-                    <strong>Scroll down</strong> and tap{" "}
-                    <span style={{ color: "#8a1c1c", fontWeight: 600 }}>
-                      Add to Home Screen
-                    </span>
-                  </li>
-                  <li style={{ marginBottom: "0.5rem" }}>
-                    <strong>Tap</strong>{" "}
-                    <span style={{ color: "#8a1c1c", fontWeight: 600 }}>
-                      Add
-                    </span>{" "}
-                    in the top right
-                  </li>
-                </ol>
-              </div>
-            ) : (
-              /* Android Instructions */
-              <div style={{ textAlign: "left" }}>
-                <p
-                  style={{
-                    color: "#4b5563",
-                    fontSize: "0.9rem",
-                    marginBottom: "1rem",
-                  }}
-                >
-                  Follow these steps to install on your Android:
-                </p>
-                <ol
-                  style={{
-                    color: "#374151",
-                    fontSize: "0.875rem",
-                    paddingLeft: "1.25rem",
-                    lineHeight: 1.8,
-                  }}
-                >
-                  <li style={{ marginBottom: "0.5rem" }}>
-                    <strong>Tap</strong> the{" "}
-                    <span style={{ color: "#8a1c1c", fontWeight: 600 }}>
-                      three dots
-                    </span>{" "}
-                    (⋮) in the top right
-                  </li>
-                  <li style={{ marginBottom: "0.5rem" }}>
-                    <strong>Tap</strong>{" "}
-                    <span style={{ color: "#8a1c1c", fontWeight: 600 }}>
-                      Add to Home Screen
-                    </span>
-                  </li>
-                  <li style={{ marginBottom: "0.5rem" }}>
-                    <strong>Tap</strong>{" "}
-                    <span style={{ color: "#8a1c1c", fontWeight: 600 }}>
-                      Add
-                    </span>{" "}
-                    to confirm
-                  </li>
-                </ol>
-              </div>
-            )}
+                  {isInstalling ? "Installing..." : canInstall ? "📲 Install Now" : "Install Unavailable"}
+                </button>
 
-            {/* Done button */}
-            <button
-              onClick={() => setShowInstructions(false)}
-              style={{
-                marginTop: "1.5rem",
-                width: "100%",
-                padding: "0.75rem",
-                background: "#8a1c1c",
-                color: "white",
-                fontWeight: 700,
-                fontSize: "0.9rem",
-                border: "none",
-                borderRadius: "12px",
-                cursor: "pointer",
-              }}
-            >
-              Got it!
-            </button>
+                {/* Cancel Button */}
+                <button
+                  onClick={closeToast}
+                  style={{
+                    padding: "0.75rem 1rem",
+                    background: "#f3f4f6",
+                    color: "#4b5563",
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    border: "none",
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+
+              {/* Fallback hint */}
+              {!canInstall && !isIOS && (
+                <p style={{ color: "#9ca3af", fontSize: "0.7rem", textAlign: "center", marginTop: "0.75rem", margin: "0.75rem 0 0" }}>
+                  If no install prompt appears, use your browser menu
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
