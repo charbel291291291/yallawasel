@@ -28,7 +28,7 @@ import { MOCK_PRODUCTS } from "./constants";
 import WalletCard from "./components/WalletCard";
 import AdminPanel from "./components/AdminPanel";
 import LoginPage from "./components/LoginPage";
-import AIChat from "./components/AIChat";
+
 import CartDrawer from "./components/CartDrawer";
 import HiddenAdminAccess from "./components/HiddenAdminAccess";
 import { translations, Language } from "./translations";
@@ -63,6 +63,8 @@ function App() {
 
     // Show landing only on mobile browser (not installed)
     setShowLanding(isMobile && !isStandalone);
+
+    console.log("App Version: 2.1 - AI Agent Removed");
   }, []);
 
   const handleSplashComplete = () => {
@@ -636,11 +638,7 @@ const AppShell = () => {
           cartCount={cart.length}
         />
       )}
-      {!isAdminRoute && !isLoginPage && (
-        <ErrorBoundary>
-          <AIChat lang={lang} />
-        </ErrorBoundary>
-      )}
+
       <OfflineIndicator />
     </div>
   );
@@ -728,20 +726,7 @@ const ShopPage = ({ products, addToCart, lang }: any) => {
           {t.collectionDesc}
         </p>
       </div>
-      <div className="flex justify-center gap-4 overflow-x-auto pb-4 hide-scrollbar">
-        {["all", "essential", "themed", "emergency"].map((id) => (
-          <button
-            key={id}
-            onClick={() => setFilter(id)}
-            className={`btn-3d px-8 py-4 rounded-2xl text-sm font-bold whitespace-nowrap border ${filter === id
-              ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-              : "bg-white text-gray-500 border-gray-100"
-              }`}
-          >
-            {t[id as keyof typeof t] || id}
-          </button>
-        ))}
-      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
         {filtered.map((p: Product, i: number) => (
           <div
@@ -1348,7 +1333,7 @@ const Navbar = ({
                 Y
               </div>
             )}
-            <h1 className="font-luxury text-lg sm:text-xl font-bold text-gray-900 hidden lg:block tracking-tight">
+            <h1 className="font-luxury text-lg sm:text-xl font-bold text-primary hidden lg:block tracking-tight">
               {settings.store_name || "YALLA WASEL"}
             </h1>
           </Link>

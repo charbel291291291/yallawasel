@@ -1,177 +1,138 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface AnimatedSplashProps {
   onComplete: () => void;
 }
 
 const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const [audioLoaded, setAudioLoaded] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const animationRef = useRef<number>(0);
+  const [show, setShow] = useState(true);
 
-  // Initialize wind sound
   useEffect(() => {
-    const audio = new Audio("/assets/sounds/wind.mp3");
-    audio.volume = 0.1;
-    audio.loop = true;
-    audioRef.current = audio;
+    // 1. Play Sound (Synthesized "Flash" effect)
+    const playFlashSound = () => {
+      try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContext) return;
 
-    audio.addEventListener("canplaythrough", () => {
-      setAudioLoaded(true);
-    });
+        const ctx = new AudioContext();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
 
-    // Clean up on unmount
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(800, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.3);
+
+        gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + 0.4);
+      } catch (e) {
+        // Autoplay policy might block this, ignore
       }
     };
-  }, []);
 
-  // Handle user interaction to start audio (browser autoplay policy)
-  const handleUserInteraction = () => {
-    if (audioRef.current && audioLoaded) {
-      audioRef.current
-        .play()
-        .catch((e) => console.log("Audio play failed:", e));
-    }
-  };
+    playFlashSound();
 
-  // Start splash animation
-  useEffect(() => {
+    // 2. Timeline
     const timer = setTimeout(() => {
-      // Fade out audio
-      if (audioRef.current) {
-        const fadeOut = () => {
-          if (audioRef.current && audioRef.current.volume > 0) {
-            audioRef.current.volume = Math.max(
-              0,
-              audioRef.current.volume - 0.02
-            );
-            setTimeout(fadeOut, 50);
-          } else if (audioRef.current) {
-            audioRef.current.pause();
-          }
-        };
-        fadeOut();
-      }
-
-      // Hide splash and notify completion
-      setIsVisible(false);
-      setTimeout(onComplete, 300); // Wait for fade out animation
-    }, 2500); // Show for 2.5 seconds
-
-    // Start wind particles animation
-    startWindAnimation();
+      setShow(false);
+      setTimeout(onComplete, 500); // Allow exit animation
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, [onComplete]);
 
-  // Wind particles animation
-  const startWindAnimation = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const particles: {
-      x: number;
-      y: number;
-      size: number;
-      speed: number;
-      opacity: number;
-    }[] = [];
-
-    // Create particles
-    for (let i = 0; i < 50; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 2 + 1,
-        speed: Math.random() * 0.5 + 0.2,
-        opacity: Math.random() * 0.3 + 0.1,
-      });
-    }
-
-    const animate = () => {
-      if (!ctx || !canvas) return;
-
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw particles
-      particles.forEach((particle, index) => {
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
-        ctx.fill();
-
-        // Move particles
-        particle.x += particle.speed;
-        particle.y += Math.sin(particle.x * 0.01) * 0.5;
-
-        // Reset particles that go off screen
-        if (particle.x > canvas.width) {
-          particle.x = -5;
-          particle.y = Math.random() * canvas.height;
-        }
-      });
-
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    animate();
-  };
-
-  if (!isVisible) return null;
+  if (!show) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900 via-primary/20 to-slate-900 overflow-hidden"
-      onClick={handleUserInteraction}
-    >
-      {/* Wind particles canvas */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950 overflow-hidden isolate">
+      <style>{`
+        @keyframes flash-intro {
+          0% { opacity: 0; transform: scale(1.5); filter: blur(20px); }
+          20% { opacity: 1; transform: scale(1); filter: blur(0px); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes slide-up {
+          0% { opacity: 0; transform: translateY(20px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes speed-line {
+          0% { transform: translateX(-100%) skewX(-45deg); opacity: 0; }
+          50% { opacity: 0.5; }
+          100% { transform: translateX(200%) skewX(-45deg); opacity: 0; }
+        }
+        .animate-flash-intro {
+          animation: flash-intro 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+        .animate-shimmer-text {
+          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          animation: shimmer 2s infinite linear;
+        }
+        .animate-slide-up-delay {
+          animation: slide-up 0.8s ease-out 0.4s forwards;
+          opacity: 0;
+        }
+        .speed-streak {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+          transform: skewX(-45deg);
+          animation: speed-line 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+      `}</style>
 
-      {/* Logo container with animations */}
-      <div className="relative z-10 flex flex-col items-center">
-        {/* Logo with floating animation */}
-        <div className="animate-float">
-          <img
-            src="/assets/logo.png"
-            alt="Yalla Wasel Logo"
-            className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-2xl animate-pulse-slow"
-          />
-        </div>
+      {/* Background Ambience */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-black opacity-80"></div>
 
-        {/* Brand name with fade-in */}
-        <div className="mt-6 text-center animate-fade-in">
-          <h1 className="text-3xl md:text-4xl font-luxury font-bold text-white tracking-wider">
-            Yalla Wasel
-          </h1>
-          <p className="mt-2 text-sm md:text-base text-white/80 font-medium">
-            Luxury Lebanese Super-Kit
-          </p>
-        </div>
+      {/* Speed Streaks */}
+      <div className="absolute inset-0 overflow-hidden opacity-30 pointer-events-none">
+        <div className="speed-streak" style={{ animationDelay: "0s", top: "-20%" }}></div>
+        <div className="speed-streak" style={{ animationDelay: "0.5s", top: "20%" }}></div>
+        <div className="speed-streak" style={{ animationDelay: "1s", top: "50%" }}></div>
       </div>
 
-      {/* Click to start hint */}
-      <div className="absolute bottom-8 text-center animate-pulse">
-        <p className="text-white/60 text-sm font-medium">
-          Click to experience the luxury
-        </p>
-        <div className="mt-2 w-8 h-8 mx-auto border-2 border-white/40 rounded-full flex items-center justify-center">
-          <div className="w-2 h-2 bg-white/60 rounded-full animate-ping"></div>
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col items-center">
+
+        {/* Glow behind logo */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/30 rounded-full blur-[60px] animate-pulse"></div>
+
+        {/* Logo */}
+        <div className="animate-flash-intro relative bg-slate-950 rounded-3xl p-6 border border-white/5 shadow-2xl">
+          <img
+            src="/assets/logo.png"
+            alt="Yalla Wasel"
+            className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-xl relative z-10"
+          />
+          {/* Shimmer overlay on logo container */}
+          <div className="absolute inset-0 rounded-3xl overflow-hidden">
+            <div className="w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer-text" style={{ backgroundSize: '200% 100%', animationDuration: '1.5s' }}></div>
+          </div>
+        </div>
+
+        {/* Text */}
+        <div className="mt-8 text-center animate-slide-up-delay">
+          <h1 className="text-4xl md:text-5xl font-luxury font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-wider">
+            Yalla Wasel
+          </h1>
+          <div className="h-0.5 w-24 bg-primary mx-auto my-3 rounded-full"></div>
+          <p className="text-sm md:text-base text-gray-400 font-medium tracking-[0.2em] uppercase">
+            Adonis Luxury Services
+          </p>
         </div>
       </div>
     </div>

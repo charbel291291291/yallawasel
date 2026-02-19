@@ -6,11 +6,13 @@ import { ADMIN_PASSWORD } from "../constants";
 import { Product, Order, UserTier, OrderStatus, CartItem } from "../types";
 
 import { processOrderImpact } from "../services/impactService";
+import SmartKitBuilder from "./smart-kit-builder/SmartKitBuilder";
 
 type Tab =
   | "dashboard"
   | "orders"
   | "products"
+  | "kit_builder"
 
   | "customers"
   | "rewards"
@@ -119,16 +121,16 @@ const AdminPanel: React.FC = () => {
                   <div
                     key={i}
                     className={`w-3 h-3 rounded-full transition-all duration-300 ${i < pin.length
-                        ? "bg-red-500 shadow-[0_0_10px_#ef4444] scale-110"
-                        : "bg-slate-900 shadow-inner scale-90"
+                      ? "bg-red-500 shadow-[0_0_10px_#ef4444] scale-110"
+                      : "bg-slate-900 shadow-inner scale-90"
                       }`}
                   ></div>
                 ))}
               </div>
               <div
                 className={`absolute bottom-2 left-0 right-0 text-center text-[9px] font-black uppercase tracking-widest transition-opacity duration-300 ${error
-                    ? "text-red-500 opacity-100 animate-pulse"
-                    : "text-slate-700 opacity-0"
+                  ? "text-red-500 opacity-100 animate-pulse"
+                  : "text-slate-700 opacity-0"
                   }`}
               >
                 {error || "Locked"}
@@ -185,6 +187,8 @@ const AdminPanel: React.FC = () => {
         return <OrdersView />;
       case "products":
         return <ProductsView />;
+      case "kit_builder":
+        return <SmartKitBuilder />;
 
       case "customers":
         return <CustomersView />;
@@ -212,6 +216,7 @@ const AdminPanel: React.FC = () => {
           { id: "dashboard", icon: "fa-chart-pie", label: "Home" },
           { id: "orders", icon: "fa-shopping-cart", label: "Orders" },
           { id: "products", icon: "fa-box", label: "Kits" },
+          { id: "kit_builder", icon: "fa-wand-magic-sparkles", label: "AI Kit" },
 
           { id: "customers", icon: "fa-users", label: "Users" },
           { id: "happyhour", icon: "fa-clock", label: "Happy" },
@@ -223,8 +228,8 @@ const AdminPanel: React.FC = () => {
             key={tab.id}
             onClick={() => setActiveTab(tab.id as Tab)}
             className={`flex flex-col items-center justify-center flex-shrink-0 min-w-[60px] h-full px-3 transition-all duration-150 active:scale-95 ${activeTab === tab.id
-                ? "text-red-500 bg-slate-800/50"
-                : "text-gray-400 hover:text-gray-200 hover:bg-slate-800/30"
+              ? "text-red-500 bg-slate-800/50"
+              : "text-gray-400 hover:text-gray-200 hover:bg-slate-800/30"
               }`}
           >
             <i className={`fa-solid ${tab.icon} text-lg`}></i>
@@ -272,6 +277,13 @@ const AdminPanel: React.FC = () => {
             label="Kits (Products)"
             active={activeTab === "products"}
             onClick={() => setActiveTab("products")}
+            isOpen={isSidebarOpen}
+          />
+          <SidebarItem
+            icon="fa-wand-magic-sparkles"
+            label="Smart Kit AI"
+            active={activeTab === "kit_builder"}
+            onClick={() => setActiveTab("kit_builder")}
             isOpen={isSidebarOpen}
           />
 
@@ -392,8 +404,8 @@ const SidebarItem = ({ icon, label, active, onClick, isOpen }: any) => (
   <button
     onClick={onClick}
     className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all ${active
-        ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02] border-b-4 border-primary-dark translate-y-[-1px]"
-        : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
+      ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02] border-b-4 border-primary-dark translate-y-[-1px]"
+      : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
       } ${!isOpen ? "justify-center" : ""}`}
   >
     <i className={`fa-solid ${icon} w-6 text-center text-lg`}></i>
@@ -1118,15 +1130,50 @@ const ProductsView = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { id, ...data } = formData;
-    if (id) {
-      await supabase.from("products").update(data).eq("id", id);
-    } else {
-      await supabase.from("products").insert(data);
+    try {
+      const { id, ...data } = formData;
+      let error;
+
+      console.log("Saving kit:", { id, data }); // Debug log
+
+      // Map frontend camelCase to backend snake_case
+      const dbData = {
+        category: data.category,
+        cost: data.cost,
+        description: data.description,
+        description_ar: data.descriptionAr, // Map descriptionAr -> description_ar
+        image: data.image,
+        is_active: data.isActive, // Map isActive -> is_active
+        name: data.name,
+        name_ar: data.nameAr, // Map nameAr -> name_ar
+        price: data.price,
+        stock: data.stock,
+      };
+
+      if (id) {
+        const result = await supabase.from("products").update(dbData).eq("id", id);
+        error = result.error;
+      } else {
+        const result = await supabase.from("products").insert(dbData);
+        error = result.error;
+      }
+
+      if (error) {
+        console.error("Error saving kit:", error);
+        alert(`Failed to save kit: ${error.message}`);
+        return; // Stop execution on error
+      }
+
+      console.log("Kit saved successfully");
+      setIsModalOpen(false);
+      await fetchProducts(); // Wait for fetch to complete
+      setFormData({ category: "essential" });
+      alert("Saved successfully"); // Show success only if it actually worked
+
+    } catch (err: any) {
+      console.error("Unexpected error in handleSave:", err);
+      alert(`An unexpected error occurred: ${err.message || err}`);
     }
-    setIsModalOpen(false);
-    fetchProducts();
-    setFormData({ category: "essential" });
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1222,32 +1269,17 @@ const ProductsView = () => {
                 }
                 className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 text-right"
               />
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="number"
-                  required
-                  placeholder="Price ($)"
-                  value={formData.price || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price: Number(e.target.value) })
-                  }
-                  className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200"
-                />
-                <select
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      category: e.target.value as any,
-                    })
-                  }
-                  className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200"
-                >
-                  <option value="essential">Essential</option>
-                  <option value="themed">Themed</option>
-                  <option value="emergency">Emergency</option>
-                </select>
-              </div>
+
+              <input
+                type="number"
+                required
+                placeholder="Price ($)"
+                value={formData.price || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, price: Number(e.target.value) })
+                }
+                className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200"
+              />
 
               {/* Image Upload */}
               <div className="space-y-2">
@@ -1323,9 +1355,9 @@ const ProductsView = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div >
       )}
-    </div>
+    </div >
   );
 };
 
@@ -1543,8 +1575,8 @@ const CustomersView = () => {
                   </div>
                   <span
                     className={`font-bold ${transaction.points >= 0
-                        ? "text-green-600"
-                        : "text-red-600"
+                      ? "text-green-600"
+                      : "text-red-600"
                       }`}
                   >
                     {transaction.points >= 0 ? "+" : ""}
@@ -1643,8 +1675,8 @@ const CustomersView = () => {
                       </div>
                       <span
                         className={`font-bold text-lg ${transaction.points >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
+                          ? "text-green-600"
+                          : "text-red-600"
                           }`}
                       >
                         {transaction.points >= 0 ? "+" : ""}
@@ -1931,8 +1963,8 @@ const RewardsView = () => {
           <button
             onClick={() => setActiveTab("rewards")}
             className={`px-6 py-2 rounded-xl font-bold text-sm ${activeTab === "rewards"
-                ? "bg-primary text-white"
-                : "bg-gray-100 text-gray-600"
+              ? "bg-primary text-white"
+              : "bg-gray-100 text-gray-600"
               }`}
           >
             Rewards
@@ -1940,8 +1972,8 @@ const RewardsView = () => {
           <button
             onClick={() => setActiveTab("redemptions")}
             className={`px-6 py-2 rounded-xl font-bold text-sm ${activeTab === "redemptions"
-                ? "bg-primary text-white"
-                : "bg-gray-100 text-gray-600"
+              ? "bg-primary text-white"
+              : "bg-gray-100 text-gray-600"
               }`}
           >
             Redemptions
@@ -2015,8 +2047,8 @@ const RewardsView = () => {
                           handleToggleActive(reward.id, reward.active)
                         }
                         className={`px-3 py-1 rounded-full text-xs font-bold ${reward.active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-600"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-600"
                           }`}
                       >
                         {reward.active ? "Active" : "Inactive"}
@@ -2709,8 +2741,8 @@ const HappyHourView = () => {
                       type="button"
                       onClick={() => toggleDay(day)}
                       className={`p-2 rounded-lg text-sm font-bold ${formData.days_of_week.includes(day)
-                          ? "bg-primary text-white"
-                          : "bg-gray-100 text-gray-600"
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-600"
                         }`}
                     >
                       {getDayName(day)}
@@ -2825,8 +2857,8 @@ const HappyHourView = () => {
                       type="button"
                       onClick={() => toggleDay(day)}
                       className={`p-2 rounded-lg text-sm font-bold ${formData.days_of_week.includes(day)
-                          ? "bg-primary text-white"
-                          : "bg-gray-100 text-gray-600"
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-600"
                         }`}
                     >
                       {getDayName(day)}
@@ -3050,8 +3082,8 @@ const ImpactView = () => {
                   <h4 className="font-bold text-lg">{campaign.title}</h4>
                   <span
                     className={`px-2 py-1 rounded-full text-[10px] font-bold ${campaign.is_active
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-500"
                       }`}
                   >
                     {campaign.is_active ? "ACTIVE" : "INACTIVE"}
@@ -3086,8 +3118,8 @@ const ImpactView = () => {
                       toggleCampaign(campaign.id, campaign.is_active)
                     }
                     className={`flex-1 py-2 rounded-xl text-sm font-bold ${campaign.is_active
-                        ? "bg-gray-100 text-gray-600"
-                        : "bg-green-100 text-green-700"
+                      ? "bg-gray-100 text-gray-600"
+                      : "bg-green-100 text-green-700"
                       }`}
                   >
                     {campaign.is_active ? "Deactivate" : "Activate"}
@@ -3123,12 +3155,12 @@ const ImpactView = () => {
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${entry.rank === 1
-                    ? "bg-yellow-400 text-yellow-900"
-                    : entry.rank === 2
-                      ? "bg-gray-300 text-gray-700"
-                      : entry.rank === 3
-                        ? "bg-amber-600 text-white"
-                        : "bg-gray-200 text-gray-500"
+                  ? "bg-yellow-400 text-yellow-900"
+                  : entry.rank === 2
+                    ? "bg-gray-300 text-gray-700"
+                    : entry.rank === 3
+                      ? "bg-amber-600 text-white"
+                      : "bg-gray-200 text-gray-500"
                   }`}
               >
                 {entry.rank}
@@ -3389,8 +3421,8 @@ const SettingsView = () => {
                     })
                   }
                   className={`w-12 h-6 rounded-full transition-colors relative ${localSettings.maintenance_mode
-                      ? "bg-red-500"
-                      : "bg-gray-300"
+                    ? "bg-red-500"
+                    : "bg-gray-300"
                     }`}
                 >
                   <div
