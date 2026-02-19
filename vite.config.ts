@@ -12,8 +12,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     server: {
-      port: 3000,
-      strictPort: true,
+      port: 3001,
+      strictPort: false,
       host: "0.0.0.0",
     },
     plugins: [
