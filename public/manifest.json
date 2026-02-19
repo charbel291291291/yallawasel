@@ -5,27 +5,31 @@
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#8a1c1c",
+  "background_color": "#ffffff",
   "theme_color": "#8a1c1c",
   "icons": [
     {
-      "src": "/assets/icon-512.jpg",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/jpeg"
+      "type": "image/png"
     },
     {
-      "src": "/assets/icon-512.jpg",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/png"
     },
     {
-      "src": "/assets/icon-maskable.jpg",
+      "src": "/icons/icon-maskable-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "maskable"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "categories": ["shopping", "food", "utilities"],
+  "categories": [
+    "shopping",
+    "food",
+    "utilities"
+  ],
   "lang": "en-US",
   "dir": "ltr",
   "scope": "/"

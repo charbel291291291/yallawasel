@@ -1,12 +1,16 @@
+@import "tailwindcss";
+
 /* Custom Animations for Yalla Wasel Animated Splash */
 
 @keyframes float {
   0% {
     transform: translateY(0px) rotate(0deg);
   }
+
   50% {
     transform: translateY(-15px) rotate(2deg);
   }
+
   100% {
     transform: translateY(0px) rotate(0deg);
   }
@@ -17,10 +21,12 @@
     transform: scale(1);
     opacity: 0.9;
   }
+
   50% {
     transform: scale(1.05);
     opacity: 1;
   }
+
   100% {
     transform: scale(1);
     opacity: 0.9;
@@ -32,6 +38,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -43,6 +50,7 @@
     transform: translateY(100%);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0);
     opacity: 1;
@@ -53,6 +61,7 @@
   from {
     transform: rotate(360deg);
   }
+
   to {
     transform: rotate(0deg);
   }
@@ -63,12 +72,15 @@
     transform: translateX(-100%);
     opacity: 0;
   }
+
   10% {
     opacity: 0.3;
   }
+
   90% {
     opacity: 0.3;
   }
+
   100% {
     transform: translateX(100vw);
     opacity: 0;
@@ -83,7 +95,8 @@
   animation: pulse-slow 3s ease-in-out infinite;
 }
 
-.animate-fade-in, .animate-fadeIn {
+.animate-fade-in,
+.animate-fadeIn {
   animation: fade-in 0.8s ease-out forwards;
 }
 
@@ -131,6 +144,7 @@
     opacity: 0;
     transform: translateY(30px) scale(0.95);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -173,13 +187,14 @@
   0% {
     transform: translateX(100%);
   }
+
   100% {
     transform: translateX(-100%);
   }
 }
 
 .animate-marquee {
-  animation: marquee 15s linear infinite;
+  animation: marquee 30s linear infinite;
   display: inline-block;
 }
 
@@ -197,10 +212,12 @@
 
 /* Pulsing animation */
 @keyframes pulse-glow {
+
   0%,
   100% {
     box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
   }
+
   50% {
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.6);
   }
@@ -212,12 +229,15 @@
 
 /* Hide scrollbar but allow scrolling */
 .hide-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .hide-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 /* Custom Scrollbar for Content Areas */
@@ -236,6 +256,176 @@
   border-radius: 10px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(138, 28, 28, 0.5);
+/* Modern Design System - Admin Theme */
+:root {
+  --admin-bg: #f3f4f6;
+  --admin-surface: #ffffff;
+  --admin-primary: #1e293b;
+  /* Slate 800 */
+  --admin-primary-hover: #0f172a;
+  /* Slate 900 */
+  --admin-accent: #ef4444;
+  /* Red 500 */
+  --admin-border: #e2e8f0;
+  /* Slate 200 */
+  --admin-text: #334155;
+  /* Slate 700 */
+  --admin-text-muted: #64748b;
+  /* Slate 500 */
+}
+
+/* Modern Card Style */
+.admin-card {
+  background-color: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.admin-card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  border-color: #cbd5e1;
+}
+
+/* Modern Button Styles */
+.btn-admin {
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-admin-primary {
+  background-color: var(--admin-primary);
+  color: white;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.btn-admin-primary:hover {
+  background-color: var(--admin-primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-admin-secondary {
+  background-color: white;
+  color: var(--admin-text);
+  border: 1px solid var(--admin-border);
+}
+
+.btn-admin-secondary:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.btn-admin-danger {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fee2e2;
+}
+
+.btn-admin-danger:hover {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Modern Input Fields */
+.admin-input {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--admin-border);
+  background-color: white;
+  color: var(--admin-text);
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.admin-input:focus {
+  outline: none;
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+}
+
+.admin-select {
+  padding-right: 2.5rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
+/* Status Badges */
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.badge-success {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.badge-warning {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.badge-danger {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.badge-neutral {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.badge-primary {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+/* Table Styles */
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-table th {
+  background-color: #f8fafc;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--admin-border);
+  text-align: left;
+}
+
+.admin-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--admin-border);
+  color: var(--admin-text);
+  font-size: 0.875rem;
+}
+
+.admin-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
 }

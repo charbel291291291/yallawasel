@@ -1,0 +1,63 @@
+import { useState, useEffect } from "react";
+
+interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+const DriverInstallPrompt = () => {
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const [showPrompt, setShowPrompt] = useState(false);
+
+    useEffect(() => {
+        const handler = (e: Event) => {
+            e.preventDefault();
+            setDeferredPrompt(e as BeforeInstallPromptEvent);
+            setShowPrompt(true);
+        };
+
+        window.addEventListener("beforeinstallprompt", handler);
+        return () => window.removeEventListener("beforeinstallprompt", handler);
+    }, []);
+
+    const handleInstall = async () => {
+        if (!deferredPrompt) return;
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") {
+            setShowPrompt(false);
+        }
+        setDeferredPrompt(null);
+    };
+
+    if (!showPrompt) return null;
+
+    return (
+        <div className="fixed top-4 left-4 right-4 z-[9999] animate-slideDown">
+            <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-4 shadow-2xl border border-gray-700 flex flex-col gap-3">
+                <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg">
+                        <i className="fa-solid fa-truck-fast text-xl" />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-white font-bold text-sm">Install Driver App 🚀</h3>
+                        <p className="text-gray-400 text-xs mt-1 leading-snug">
+                            Boost your performance with faster access, offline mode, and real-time orders.
+                        </p>
+                    </div>
+                    <button onClick={() => setShowPrompt(false)} className="text-gray-500 hover:text-white transition-colors">
+                        <i className="fa-solid fa-xmark" />
+                    </button>
+                </div>
+                <button
+                    onClick={handleInstall}
+                    className="w-full bg-white text-gray-900 font-bold py-2.5 rounded-lg text-sm hover:bg-gray-100 transition-colors shadow-md active:scale-95 flex items-center justify-center gap-2"
+                >
+                    <i className="fa-solid fa-download" /> Install Now
+                </button>
+            </div>
+        </div>
+    );
+};
+
+export default DriverInstallPrompt;
