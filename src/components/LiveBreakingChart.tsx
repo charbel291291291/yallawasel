@@ -1,8 +1,5 @@
-
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    LineChart,
-    Line,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -44,8 +41,16 @@ const LiveBreakingChart: React.FC = () => {
 
     // Load Initial Settings & Data
     useEffect(() => {
-        fetchSettings();
-        fetchMarketData();
+        const loadInitialData = async () => {
+            const s = await ChartService.getSettings();
+            if (s) setSettings(s);
+
+            const activeOffers = await ChartService.getLiveOffers();
+            setOffers(activeOffers);
+            updateChartData(activeOffers);
+        };
+
+        loadInitialData();
 
         // Realtime Subscriptions
         const settingsSub = supabase
@@ -58,7 +63,11 @@ const LiveBreakingChart: React.FC = () => {
         const offersSub = supabase
             .channel('live-offers-update')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'live_offers' }, () => {
-                fetchMarketData(); // Refresh data on any offer change
+                // Refresh data on any offer change
+                ChartService.getLiveOffers().then(activeOffers => {
+                    setOffers(activeOffers);
+                    updateChartData(activeOffers);
+                });
             })
             .subscribe();
 
@@ -68,34 +77,28 @@ const LiveBreakingChart: React.FC = () => {
         };
     }, []);
 
-    const fetchSettings = async () => {
-        const s = await ChartService.getSettings();
-        if (s) setSettings(s);
-    };
-
-    const fetchMarketData = async () => {
-        const activeOffers = await ChartService.getLiveOffers();
-        setOffers(activeOffers);
-
-        // Simulate/Calculate Market Index History
-        // In a real app, we'd fetch historical aggregates.
-        // Here we'll generate a live point based on current average.
+    const updateChartData = (activeOffers: LiveOffer[]) => {
         const avgPrice = activeOffers.length > 0
             ? activeOffers.reduce((sum, o) => sum + o.current_price, 0) / activeOffers.length
             : 0;
 
         setData(prev => {
             const newData = [...prev, { time: new Date().toLocaleTimeString(), value: avgPrice }];
-            return newData.slice(-settings.max_data_points); // Keep window size
-        });
 
-        // Determine trend
-        if (data.length > 1) {
-            const last = data[data.length - 1].value;
-            const prev = data[data.length - 2].value;
-            setMarketTrend(last > prev ? 'up' : last < prev ? 'down' : 'neutral');
-        }
+            // Determine trend within the setter to access latest state if needed, 
+            // or we can do it after. Ideally, we need the PREVIOUS data point.
+            // Since `prev` is available here, let's use it.
+            if (prev.length > 0) {
+                const prevVal = prev[prev.length - 1].value;
+                setMarketTrend(avgPrice > prevVal ? 'up' : avgPrice < prevVal ? 'down' : 'neutral');
+            }
+
+            // Limit max points to avoid memory leak if settings.max_data_points is huge
+            return newData.slice(-(50));
+        });
     };
+
+
 
     // Dynamic Styles
     const containerStyle = {

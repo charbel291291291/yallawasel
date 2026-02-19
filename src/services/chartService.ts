@@ -44,16 +44,21 @@ export const ChartService = {
     // --- Settings ---
 
     async getSettings(): Promise<ChartSettings | null> {
-        const { data, error } = await supabase
-            .from('chart_settings')
-            .select('*')
-            .single();
+        try {
+            const { data, error } = await supabase
+                .from('chart_settings')
+                .select('*')
+                .maybeSingle(); // Use maybeSingle to avoid error on 0 rows
 
-        if (error) {
-            console.error('Error fetching chart settings:', error);
+            if (error) {
+                console.warn('Chart settings not found (using defaults):', error.message);
+                return null; // Component will use DEFAULT_SETTINGS
+            }
+            return data;
+        } catch (err) {
+            console.error('Unexpected error fetching chart settings:', err);
             return null;
         }
-        return data;
     },
 
     async updateSettings(updates: Partial<ChartSettings>): Promise<boolean> {
@@ -72,16 +77,21 @@ export const ChartService = {
     // --- Live Offers ---
 
     async getLiveOffers(): Promise<LiveOffer[]> {
-        const { data, error } = await supabase
-            .from('live_offers')
-            .select('*')
-            .order('updated_at', { ascending: false });
+        try {
+            const { data, error } = await supabase
+                .from('live_offers')
+                .select('*')
+                .order('updated_at', { ascending: false });
 
-        if (error) {
-            console.error('Error fetching live offers:', error);
+            if (error) {
+                console.warn('Live offers fetch error:', error.message);
+                return [];
+            }
+            return data || [];
+        } catch (err) {
+            console.error('Unexpected error fetching live offers:', err);
             return [];
         }
-        return data || [];
     },
 
     async getOfferHistory(offerId: string, limit = 50): Promise<LiveOfferHistory[]> {

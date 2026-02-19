@@ -21,13 +21,19 @@ const ChartSettingsView: React.FC = () => {
 
     const loadData = async () => {
         setLoading(true);
-        const [s, o] = await Promise.all([
-            ChartService.getSettings(),
-            ChartService.getLiveOffers()
-        ]);
-        if (s) setSettings(s);
-        setOffers(o);
-        setLoading(false);
+        try {
+            const [s, o] = await Promise.all([
+                ChartService.getSettings(),
+                ChartService.getLiveOffers()
+            ]);
+            if (s) setSettings(s);
+            setOffers(o);
+        } catch (e) {
+            console.error("Failed to load chart data", e);
+            // Don't leave user stuck, allow render with defaults/empty state
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleUpdateSetting = async (key: keyof ChartSettings, value: any) => {
@@ -57,12 +63,35 @@ const ChartSettingsView: React.FC = () => {
         loadData();
     };
 
-    if (loading || !settings) return <div className="p-8 text-center">Loading Settings...</div>;
+    if (loading) return <div className="p-8 text-center animate-pulse">Loading Chart Capabilities...</div>;
+
+    // Safety fallback
+    const currentSettings = settings || {
+        id: 1,
+        primary_color: '#10b981',
+        positive_color: '#10b981',
+        negative_color: '#ef4444',
+        background_color: '#ffffff',
+        grid_color: '#e5e7eb',
+        text_color: '#374151',
+        tooltip_bg_color: '#1f2937',
+        line_thickness: 3,
+        animation_speed: 1000,
+        show_smooth_curves: true,
+        show_shadow_glow: true,
+        dark_mode_enabled: false,
+        rounded_edges: true,
+        time_range: '24h',
+        refresh_interval: 5000,
+        max_data_points: 50,
+        realtime_enabled: true,
+    } as ChartSettings;
 
     return (
         <div className="space-y-8 animate-fade-in">
             <header className="flex justify-between items-center mb-6">
                 <div>
+                    {!settings && <div className="text-amber-500 text-xs font-bold mb-1">OFFLINE MODE: Using Defaults</div>}
                     <h2 className="text-2xl font-bold flex items-center gap-2">
                         <Activity className="text-primary" /> Live Chart Control Center
                     </h2>
@@ -101,19 +130,19 @@ const ChartSettingsView: React.FC = () => {
                     {/* SETTINGS PANELS */}
                     {activeTab === 'visuals' && (
                         <div className="bg-white p-6 rounded-2xl border shadow-sm grid grid-cols-2 gap-6">
-                            <ColorInput label="Primary Color" value={settings.primary_color} onChange={(v) => handleUpdateSetting('primary_color', v)} />
-                            <ColorInput label="Background" value={settings.background_color} onChange={(v) => handleUpdateSetting('background_color', v)} />
-                            <ColorInput label="Positive Trend" value={settings.positive_color} onChange={(v) => handleUpdateSetting('positive_color', v)} />
-                            <ColorInput label="Negative Trend" value={settings.negative_color} onChange={(v) => handleUpdateSetting('negative_color', v)} />
-                            <ColorInput label="Grid Lines" value={settings.grid_color} onChange={(v) => handleUpdateSetting('grid_color', v)} />
-                            <ColorInput label="Text Color" value={settings.text_color} onChange={(v) => handleUpdateSetting('text_color', v)} />
+                            <ColorInput label="Primary Color" value={currentSettings.primary_color} onChange={(v) => handleUpdateSetting('primary_color', v)} />
+                            <ColorInput label="Background" value={currentSettings.background_color} onChange={(v) => handleUpdateSetting('background_color', v)} />
+                            <ColorInput label="Positive Trend" value={currentSettings.positive_color} onChange={(v) => handleUpdateSetting('positive_color', v)} />
+                            <ColorInput label="Negative Trend" value={currentSettings.negative_color} onChange={(v) => handleUpdateSetting('negative_color', v)} />
+                            <ColorInput label="Grid Lines" value={currentSettings.grid_color} onChange={(v) => handleUpdateSetting('grid_color', v)} />
+                            <ColorInput label="Text Color" value={currentSettings.text_color} onChange={(v) => handleUpdateSetting('text_color', v)} />
 
                             <div className="col-span-2 border-t pt-4 mt-2">
                                 <label className="flex items-center justify-between mb-4 cursor-pointer">
-                                    <span className="font-medium">Line Thickness ({settings.line_thickness}px)</span>
+                                    <span className="font-medium">Line Thickness ({currentSettings.line_thickness}px)</span>
                                     <input
                                         type="range" min="1" max="10"
-                                        value={settings.line_thickness}
+                                        value={currentSettings.line_thickness}
                                         onChange={(e) => handleUpdateSetting('line_thickness', Number(e.target.value))}
                                         className="w-48 accent-primary"
                                     />
@@ -122,7 +151,7 @@ const ChartSettingsView: React.FC = () => {
                                     <span className="font-medium">Show Smooth Curves</span>
                                     <input
                                         type="checkbox"
-                                        checked={settings.show_smooth_curves}
+                                        checked={currentSettings.show_smooth_curves}
                                         onChange={(e) => handleUpdateSetting('show_smooth_curves', e.target.checked)}
                                         className="toggle"
                                     />
@@ -131,7 +160,7 @@ const ChartSettingsView: React.FC = () => {
                                     <span className="font-medium">Shadow Glow Effect</span>
                                     <input
                                         type="checkbox"
-                                        checked={settings.show_shadow_glow}
+                                        checked={currentSettings.show_shadow_glow}
                                         onChange={(e) => handleUpdateSetting('show_shadow_glow', e.target.checked)}
                                         className="toggle"
                                     />
