@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { HashRouter } from "react-router-dom";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -18,18 +18,20 @@ function App() {
     return sessionStorage.getItem("splashShown") === "true";
   });
 
-  const [showLanding, setShowLanding] = useState<boolean | null>(null);
+  const [showLanding] = useState<boolean>(() => {
+    // Mobile-first environment detection (synchronous check)
+    if (typeof window === 'undefined') return false; // Server-side guard
 
-  useEffect(() => {
-    // Mobile-first environment detection
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as any).standalone === true;
 
-    // Show landing page only if mobile and not yet installed/standalone
-    setShowLanding(isMobile && !isStandalone);
-  }, []);
+    return isMobile && !isStandalone;
+  });
+
+  // Effect not needed anymore for initialization, but kept if we need to listen for resize/installation changes
+  // For now, static check on mount is enough as PWA mode doesn't change mid-session usually.
 
   const handleSplashComplete = () => {
     sessionStorage.setItem("splashShown", "true");
