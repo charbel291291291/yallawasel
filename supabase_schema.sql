@@ -97,13 +97,7 @@ create table if not exists public.delivery_schedule (
 );
 
 -- 6. Create Helper Tables
-create table if not exists public.leads (
-  id uuid default gen_random_uuid() primary key,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  service_type text,
-  user_id uuid references auth.users,
-  status text default 'new'
-);
+
 
 create table if not exists public.admin_logs (
   id uuid default gen_random_uuid() primary key,
@@ -185,8 +179,7 @@ drop policy if exists "Admin Read Profiles" on profiles;
 create policy "Admin Read Profiles" on profiles for select using (true);
 
 -- Leads
-drop policy if exists "Public Write Leads" on leads;
-create policy "Public Write Leads" on leads for insert with check (true);
+
 
 -- 9. Create RPC Function for Points (Called by App.tsx)
 create or replace function increment_points(user_id uuid, amount int)
@@ -223,34 +216,7 @@ create trigger update_tier_trigger
   execute function auto_update_tier();
 
 -- Mouné Classes Table
-create table if not exists public.moune_classes (
-  id uuid default gen_random_uuid() primary key,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  name text not null,
-  name_ar text,
-  description text,
-  description_ar text,
-  total_weight text,
-  meals_count integer,
-  price numeric not null,
-  cost numeric default 0,
-  image text,
-  category text,
-  is_active boolean default true,
-  class_type text -- 'mini', 'classic', 'premium'
-);
 
--- Mouné Class Components Table
-create table if not exists public.moune_class_components (
-  id uuid default gen_random_uuid() primary key,
-  moune_class_id uuid references moune_classes(id) on delete cascade,
-  product_id uuid references products(id),
-  product_name text,
-  product_name_ar text,
-  quantity integer default 1,
-  unit text,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
 
 -- 10. Storage Setup
 insert into storage.buckets (id, name, public)
@@ -263,23 +229,7 @@ create policy "Public Access Images" on storage.objects for select using ( bucke
 drop policy if exists "Public Upload Images" on storage.objects;
 create policy "Public Upload Images" on storage.objects for insert with check ( bucket_id = 'images' );
 
--- 11. Enable RLS for Mouné tables
-alter table moune_classes enable row level security;
-alter table moune_class_components enable row level security;
 
--- Mouné Classes Policies
-drop policy if exists "Public Read Mouné Classes" on moune_classes;
-create policy "Public Read Mouné Classes" on moune_classes for select using (true);
-
-drop policy if exists "Admin Write Mouné Classes" on moune_classes;
-create policy "Admin Write Mouné Classes" on moune_classes for all using (true);
-
--- Mouné Components Policies
-drop policy if exists "Public Read Mouné Components" on moune_class_components;
-create policy "Public Read Mouné Components" on moune_class_components for select using (true);
-
-drop policy if exists "Admin Write Mouné Components" on moune_class_components;
-create policy "Admin Write Mouné Components" on moune_class_components for all using (true);
 
 -- 12. Customer Transactions Table
 create table if not exists public.customer_transactions (

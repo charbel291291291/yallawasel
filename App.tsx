@@ -19,14 +19,12 @@ import {
   User,
   UserTier,
   ViewState,
-  Service,
   Reward,
   HappyHour,
   AppSettings,
   Order,
-  MounéClass,
 } from "./types";
-import { MOCK_PRODUCTS, MOCK_SERVICES } from "./constants";
+import { MOCK_PRODUCTS } from "./constants";
 import WalletCard from "./components/WalletCard";
 import AdminPanel from "./components/AdminPanel";
 import LoginPage from "./components/LoginPage";
@@ -36,14 +34,14 @@ import HiddenAdminAccess from "./components/HiddenAdminAccess";
 import { translations, Language } from "./translations";
 import { supabase } from "./services/supabaseClient";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
-import MounéClassesSection from "./components/MounéClassesSection";
+
 import OrderTrackingPage from "./components/OrderTrackingPage";
 import {
   sendWhatsAppNotification,
   getWhatsAppUrl,
   OrderNotificationData,
 } from "./services/whatsappNotification";
-import MounéDetail from "./components/MounéDetail";
+
 import Image from "./components/Image";
 import OfflineIndicator from "./components/OfflineIndicator";
 import AnimatedSplash from "./components/AnimatedSplash";
@@ -105,7 +103,7 @@ const AppShell = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [mounéClasses, setMounéClasses] = useState<MounéClass[]>([]);
+
   const [lang, setLang] = useState<Language>("en");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -157,35 +155,7 @@ const AppShell = () => {
         }
         // Only use MOCK_PRODUCTS if no products in database
 
-        // Fetch Mouné classes
-        const { data: mounéData } = await supabase
-          .from("moune_classes")
-          .select("*")
-          .eq("is_active", true)
-          .order("price", { ascending: true });
 
-        if (mounéData && mounéData.length > 0) {
-          setMounéClasses(
-            mounéData.map((m: any) => ({
-              id: m.id,
-              name: m.name,
-              nameAr: m.name_ar || m.name,
-              description: m.description,
-              descriptionAr: m.description_ar || m.description,
-              totalWeight: m.total_weight || "",
-              mealsCount: m.meals_count || 0,
-              price: Number(m.price),
-              cost: Number(m.cost) || 0,
-              image: m.image,
-              category: m.category || "",
-              classType: m.class_type || "classic",
-              isActive: m.is_active,
-            }))
-          );
-        } else {
-          // Set empty array so component shows its default classes
-          setMounéClasses([]);
-        }
 
         // Fetch active happy hours
         const { data: happyHoursData } = await supabase
@@ -263,42 +233,7 @@ const AppShell = () => {
       )
       .subscribe();
 
-    const mouneChannel = supabase
-      .channel("moune_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "moune_classes" },
-        () => {
-          // Refetch Mouné classes when database changes
-          supabase
-            .from("moune_classes")
-            .select("*")
-            .eq("is_active", true)
-            .order("price", { ascending: true })
-            .then(({ data }) => {
-              if (data && data.length > 0) {
-                setMounéClasses(
-                  data.map((m: any) => ({
-                    id: m.id,
-                    name: m.name,
-                    nameAr: m.name_ar || m.name,
-                    description: m.description,
-                    descriptionAr: m.description_ar || m.description,
-                    totalWeight: m.total_weight || "",
-                    mealsCount: m.meals_count || 0,
-                    price: Number(m.price),
-                    cost: Number(m.cost) || 0,
-                    image: m.image,
-                    category: m.category || "",
-                    classType: m.class_type || "classic",
-                    isActive: m.is_active,
-                  }))
-                );
-              }
-            });
-        }
-      )
-      .subscribe();
+
 
     return () => {
       // Safely remove channels with error handling
@@ -312,11 +247,7 @@ const AppShell = () => {
       } catch (e) {
         /* channel already removed */
       }
-      try {
-        if (mouneChannel) supabase.removeChannel(mouneChannel);
-      } catch (e) {
-        /* channel already removed */
-      }
+
     };
   }, []);
 
@@ -524,9 +455,8 @@ const AppShell = () => {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-500 pb-24 sm:pb-0 ${
-        isAdminRoute ? "" : "pt-24"
-      }`}
+      className={`min-h-screen transition-colors duration-500 pb-24 sm:pb-0 ${isAdminRoute ? "" : "pt-24"
+        }`}
     >
       {!isAdminRoute && (
         <ErrorBoundary>
@@ -539,7 +469,6 @@ const AppShell = () => {
               toggleLanguage={toggleLanguage}
               onLogout={handleLogout}
               onOpenCart={() => setIsCartOpen(true)}
-              mounéClasses={mounéClasses}
             />
             <BreakingNewsTicker happyHours={happyHours} lang={lang} />
           </HiddenAdminAccess>
@@ -584,30 +513,7 @@ const AppShell = () => {
               </ErrorBoundary>
             }
           />
-          <Route
-            path="/services"
-            element={
-              <ErrorBoundary>
-                <ServicesPage lang={lang} user={user} />
-              </ErrorBoundary>
-            }
-          />
-          <Route
-            path="/moune"
-            element={
-              <ErrorBoundary>
-                <MounéClassesSection lang={lang} addToCart={addToCart} />
-              </ErrorBoundary>
-            }
-          />
-          <Route
-            path="/moune/:id"
-            element={
-              <ErrorBoundary>
-                <MounéDetail lang={lang} addToCart={addToCart} />
-              </ErrorBoundary>
-            }
-          />
+
           <Route
             path="/profile"
             element={
@@ -677,11 +583,11 @@ const AppShell = () => {
               <p className="text-gray-600 mb-4">
                 {lang === "ar"
                   ? `طلبك #${lastOrder.order_id
-                      .slice(0, 8)
-                      .toUpperCase()} قيد التجهيز`
+                    .slice(0, 8)
+                    .toUpperCase()} قيد التجهيز`
                   : `Order #${lastOrder.order_id
-                      .slice(0, 8)
-                      .toUpperCase()} is being prepared`}
+                    .slice(0, 8)
+                    .toUpperCase()} is being prepared`}
               </p>
 
               {/* WhatsApp Button */}
@@ -800,7 +706,7 @@ const HomePage = ({ products, addToCart, lang, settings }: any) => {
         </div>
       </section>
 
-      <MounéClassesSection lang={lang} addToCart={addToCart} />
+
     </div>
   );
 };
@@ -823,15 +729,14 @@ const ShopPage = ({ products, addToCart, lang }: any) => {
         </p>
       </div>
       <div className="flex justify-center gap-4 overflow-x-auto pb-4 hide-scrollbar">
-        {["all", "essential", "themed", "emergency", "moune"].map((id) => (
+        {["all", "essential", "themed", "emergency"].map((id) => (
           <button
             key={id}
             onClick={() => setFilter(id)}
-            className={`btn-3d px-8 py-4 rounded-2xl text-sm font-bold whitespace-nowrap border ${
-              filter === id
-                ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                : "bg-white text-gray-500 border-gray-100"
-            }`}
+            className={`btn-3d px-8 py-4 rounded-2xl text-sm font-bold whitespace-nowrap border ${filter === id
+              ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+              : "bg-white text-gray-500 border-gray-100"
+              }`}
           >
             {t[id as keyof typeof t] || id}
           </button>
@@ -866,9 +771,8 @@ const ProductCard = ({ product, onAdd, lang }: any) => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
         <div
-          className={`absolute top-6 ${
-            lang === "ar" ? "right-6" : "left-6"
-          } glass-panel px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-white/50 shadow-sm`}
+          className={`absolute top-6 ${lang === "ar" ? "right-6" : "left-6"
+            } glass-panel px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-white/50 shadow-sm`}
         >
           {product.category}
         </div>
@@ -901,49 +805,7 @@ const ProductCard = ({ product, onAdd, lang }: any) => {
   );
 };
 
-const ServicesPage = ({ lang, user }: any) => {
-  const t = translations[lang];
-  const [notified, setNotified] = useState(false);
 
-  const handleNotify = async () => {
-    if (!user) {
-      alert(lang === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please sign in first");
-      return;
-    }
-    await supabase.from("leads").insert({
-      user_id: user.id,
-      service_type: "general_interest",
-    });
-    setNotified(true);
-  };
-
-  return (
-    <div className="text-center py-24 animate-3d-entrance max-w-2xl mx-auto">
-      <div className="depth-card w-32 h-32 text-primary rounded-[2.5rem] flex items-center justify-center mx-auto mb-12 text-5xl shadow-2xl animate-float">
-        <i className="fa-solid fa-screwdriver-wrench"></i>
-      </div>
-      <h1 className="font-luxury text-5xl font-bold mb-6 text-gray-900 tracking-tight">
-        {t.servicesComing}
-      </h1>
-      <p className="text-gray-500 text-xl leading-relaxed mb-12">
-        {t.servicesDesc}
-      </p>
-      {notified ? (
-        <div className="p-4 bg-green-50 text-green-700 rounded-2xl font-bold border border-green-100 inline-block animate-fadeIn">
-          <i className="fa-solid fa-check mr-2"></i>{" "}
-          {lang === "ar" ? "تم تسجيل اهتمامك!" : "You are on the list!"}
-        </div>
-      ) : (
-        <button
-          onClick={handleNotify}
-          className="btn-3d bg-primary text-white px-12 py-5 rounded-[2rem] font-black shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-        >
-          {t.notifyMe}
-        </button>
-      )}
-    </div>
-  );
-};
 
 const ProfilePage = ({ user, lang, onLogout }: any) => {
   const t = translations[lang];
@@ -1266,22 +1128,19 @@ const ImpactPage = ({ lang, settings, user }: any) => {
         <div className="mb-12 bg-gradient-to-r from-green-50 to-emerald-50 rounded-[2rem] p-8 border border-green-100">
           <div className="flex items-center gap-4 mb-6">
             <div
-              className={`w-14 h-14 rounded-full ${
-                getBadgeDetails(userStats.badgeLevel).bgColor
-              } flex items-center justify-center`}
+              className={`w-14 h-14 rounded-full ${getBadgeDetails(userStats.badgeLevel).bgColor
+                } flex items-center justify-center`}
             >
               <i
-                className={`fas ${getBadgeDetails(userStats.badgeLevel).icon} ${
-                  getBadgeDetails(userStats.badgeLevel).color
-                } text-xl`}
+                className={`fas ${getBadgeDetails(userStats.badgeLevel).icon} ${getBadgeDetails(userStats.badgeLevel).color
+                  } text-xl`}
               ></i>
             </div>
             <div>
               <p className="text-sm text-gray-500">Your Impact Level</p>
               <p
-                className={`text-xl font-bold ${
-                  getBadgeDetails(userStats.badgeLevel).color
-                }`}
+                className={`text-xl font-bold ${getBadgeDetails(userStats.badgeLevel).color
+                  }`}
               >
                 {getBadgeDetails(userStats.badgeLevel).name}
               </p>
@@ -1312,8 +1171,8 @@ const ImpactPage = ({ lang, settings, user }: any) => {
                 {userStats.badgeLevel === "supporter"
                   ? "50 → Changemaker"
                   : userStats.badgeLevel === "changemaker"
-                  ? "150 → Hero"
-                  : "Max Level!"}
+                    ? "150 → Hero"
+                    : "Max Level!"}
               </p>
             </div>
           </div>
@@ -1328,9 +1187,9 @@ const ImpactPage = ({ lang, settings, user }: any) => {
             const progress =
               campaign.goal_amount > 0
                 ? Math.min(
-                    (campaign.current_amount / campaign.goal_amount) * 100,
-                    100
-                  )
+                  (campaign.current_amount / campaign.goal_amount) * 100,
+                  100
+                )
                 : 0;
 
             return (
@@ -1420,15 +1279,14 @@ const ImpactPage = ({ lang, settings, user }: any) => {
                 className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl"
               >
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                    entry.rank === 1
-                      ? "bg-yellow-400 text-yellow-900"
-                      : entry.rank === 2
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${entry.rank === 1
+                    ? "bg-yellow-400 text-yellow-900"
+                    : entry.rank === 2
                       ? "bg-gray-300 text-gray-700"
                       : entry.rank === 3
-                      ? "bg-amber-600 text-white"
-                      : "bg-gray-200 text-gray-500"
-                  }`}
+                        ? "bg-amber-600 text-white"
+                        : "bg-gray-200 text-gray-500"
+                    }`}
                 >
                   {entry.rank}
                 </div>
@@ -1461,16 +1319,13 @@ const Navbar = ({
   onLogout,
   onOpenCart,
   onLogoClick,
-  mounéClasses = [],
+
 }: any) => {
   const t = translations[lang];
   const location = useLocation();
 
   // Build dropdown items from database classes
-  const mounéDropdownItems = mounéClasses.map((m: any) => ({
-    to: `/moune/${m.id}`,
-    label: lang === "ar" ? m.nameAr : m.name,
-  }));
+
 
   return (
     <header className="absolute top-4 left-4 right-4 z-40 glass-panel rounded-2xl border border-white/40 shadow-2xl py-2 px-4 sm:px-6 animate-3d-entrance">
@@ -1509,41 +1364,13 @@ const Navbar = ({
               label={t.kits}
               isActive={location.pathname === "/shop"}
             />
-            <NavDropdown
-              label="Mouné Classes"
-              isActive={
-                location.pathname === "/moune" ||
-                location.pathname.startsWith("/moune/")
-              }
-              items={
-                mounéDropdownItems.length > 0
-                  ? mounéDropdownItems
-                  : [
-                      {
-                        to: "/moune/mini-moune",
-                        label: "Mini Mouné (Budget Smart)",
-                      },
-                      {
-                        to: "/moune/classic-moune",
-                        label: "Classic Mouné (Best Value)",
-                      },
-                      {
-                        to: "/moune/premium-village",
-                        label: "Premium Village",
-                      },
-                    ]
-              }
-            />
+
             <NavLink
               to="/impact"
               label={t.impact}
               isActive={location.pathname === "/impact"}
             />
-            <NavLink
-              to="/services"
-              label={t.services}
-              isActive={location.pathname === "/services"}
-            />
+
           </nav>
         </div>
 
@@ -1572,11 +1399,10 @@ const Navbar = ({
             <div className="flex items-center gap-3">
               <Link
                 to="/profile"
-                className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold transition-all shadow-md group ${
-                  location.pathname === "/profile"
-                    ? "bg-primary text-white scale-110"
-                    : "bg-primary/5 text-primary hover:bg-white"
-                }`}
+                className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold transition-all shadow-md group ${location.pathname === "/profile"
+                  ? "bg-primary text-white scale-110"
+                  : "bg-primary/5 text-primary hover:bg-white"
+                  }`}
               >
                 <span className="group-hover:scale-110 transition-transform">
                   {user.name.charAt(0)}
@@ -1614,11 +1440,10 @@ const NavLink = ({
 }) => (
   <Link
     to={to}
-    className={`px-4 py-2.5 rounded-lg text-xs font-black transition-all duration-300 uppercase tracking-wider ${
-      isActive
-        ? "bg-white text-primary shadow-sm scale-[1.02] border border-gray-100"
-        : "text-gray-500 hover:text-gray-900 hover:bg-white/40"
-    }`}
+    className={`px-4 py-2.5 rounded-lg text-xs font-black transition-all duration-300 uppercase tracking-wider ${isActive
+      ? "bg-white text-primary shadow-sm scale-[1.02] border border-gray-100"
+      : "text-gray-500 hover:text-gray-900 hover:bg-white/40"
+      }`}
   >
     {label}
   </Link>
@@ -1645,11 +1470,10 @@ const NavDropdown = ({
       onMouseLeave={handleMouseLeave}
     >
       <button
-        className={`px-4 py-2.5 rounded-lg text-xs font-black transition-all duration-300 uppercase tracking-wider flex items-center gap-1 ${
-          isActive || isOpen
-            ? "bg-white text-primary shadow-sm scale-[1.02] border border-gray-100"
-            : "text-gray-500 hover:text-gray-900 hover:bg-white/40"
-        }`}
+        className={`px-4 py-2.5 rounded-lg text-xs font-black transition-all duration-300 uppercase tracking-wider flex items-center gap-1 ${isActive || isOpen
+          ? "bg-white text-primary shadow-sm scale-[1.02] border border-gray-100"
+          : "text-gray-500 hover:text-gray-900 hover:bg-white/40"
+          }`}
       >
         {label}
         <i
@@ -1703,16 +1527,7 @@ const MobileTabBar = ({ lang, onOpenCart, cartCount }: any) => {
           label={t.kits}
           isActive={location.pathname === "/shop"}
         />
-        <MobileTab
-          to="/moune"
-          icon="fa-utensils"
-          iconOutline="fa-utensils"
-          label={lang === "ar" ? "موني" : "Mouné"}
-          isActive={
-            location.pathname === "/moune" ||
-            location.pathname.startsWith("/moune/")
-          }
-        />
+
         <MobileTab
           to="/impact"
           icon="fa-hand-holding-heart"
@@ -1724,11 +1539,10 @@ const MobileTabBar = ({ lang, onOpenCart, cartCount }: any) => {
         {/* Cart Tab */}
         <button
           onClick={onOpenCart}
-          className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all relative ${
-            location.pathname === "/cart" || cartCount > 0
-              ? "text-red-600 scale-105"
-              : "text-gray-400"
-          }`}
+          className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all relative ${location.pathname === "/cart" || cartCount > 0
+            ? "text-red-600 scale-105"
+            : "text-gray-400"
+            }`}
         >
           <div className="relative">
             <i className="fa-regular fa-bag-shopping text-xl"></i>
@@ -1756,19 +1570,16 @@ const MobileTabBar = ({ lang, onOpenCart, cartCount }: any) => {
 const MobileTab = ({ to, icon, iconOutline, label, isActive }: any) => (
   <Link
     to={to}
-    className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 ${
-      isActive ? "text-red-600 scale-105" : "text-gray-400 hover:text-gray-600"
-    }`}
+    className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 ${isActive ? "text-red-600 scale-105" : "text-gray-400 hover:text-gray-600"
+      }`}
   >
     <i
-      className={`${isActive ? "fa-solid" : "fa-regular"} ${
-        isActive ? icon : iconOutline || icon
-      } text-xl`}
+      className={`${isActive ? "fa-solid" : "fa-regular"} ${isActive ? icon : iconOutline || icon
+        } text-xl`}
     ></i>
     <span
-      className={`text-[10px] font-medium mt-1 ${
-        isActive ? "text-red-600" : "text-gray-400"
-      }`}
+      className={`text-[10px] font-medium mt-1 ${isActive ? "text-red-600" : "text-gray-400"
+        }`}
     >
       {label}
     </span>

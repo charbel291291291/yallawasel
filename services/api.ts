@@ -49,21 +49,7 @@ export interface HappyHour {
   active: boolean;
 }
 
-export interface MounéClass {
-  id: string;
-  name: string;
-  nameAr: string;
-  description: string;
-  descriptionAr: string;
-  totalWeight: string;
-  mealsCount: number;
-  price: number;
-  cost?: number;
-  image: string;
-  category: string;
-  isActive?: boolean;
-  classType: "mini" | "classic" | "premium";
-}
+
 
 export interface ImpactCampaign {
   id: string;
@@ -276,71 +262,7 @@ export const HappyHoursAPI = {
   },
 };
 
-// ============================================
-// MOUNÉ CLASSES API
-// ============================================
 
-export const MounéAPI = {
-  async getAll(activeOnly = true): Promise<MounéClass[]> {
-    let query = supabase
-      .from("moune_classes")
-      .select("*")
-      .order("price", { ascending: true });
-    if (activeOnly) {
-      query = query.eq("is_active", true);
-    }
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
-  },
-
-  async getById(id: string): Promise<MounéClass | null> {
-    const { data, error } = await supabase
-      .from("moune_classes")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (error) throw error;
-    return data;
-  },
-
-  async create(mouneClass: Partial<MounéClass>): Promise<MounéClass> {
-    const { data, error } = await supabase
-      .from("moune_classes")
-      .insert(mouneClass)
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
-  },
-
-  async update(id: string, mouneClass: Partial<MounéClass>): Promise<void> {
-    const { error } = await supabase
-      .from("moune_classes")
-      .update(mouneClass)
-      .eq("id", id);
-    if (error) throw error;
-  },
-
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("moune_classes")
-      .delete()
-      .eq("id", id);
-    if (error) throw error;
-  },
-
-  subscribe(callback: (payload: any) => void) {
-    return supabase
-      .channel("moune-api-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "moune_classes" },
-        callback
-      )
-      .subscribe();
-  },
-};
 
 // ============================================
 // IMPACT CAMPAIGNS API
@@ -384,7 +306,7 @@ export const ImpactAPI = {
 // ============================================
 
 export const CATEGORIES = [
-  { id: "moune", name: "Mouné", nameAr: "موني", icon: "fa-utensils" },
+
   { id: "impact", name: "Impact", nameAr: "Impact", icon: "fa-heart" },
   {
     id: "happyhours",
@@ -425,7 +347,6 @@ export default {
   Orders: OrdersAPI,
   Products: ProductsAPI,
   HappyHours: HappyHoursAPI,
-  Mouné: MounéAPI,
   Impact: ImpactAPI,
   CATEGORIES,
   ORDER_STATUSES,

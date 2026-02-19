@@ -1,4 +1,4 @@
-import { Product, Service, User, UserTier, Order, AdminLog } from "./types";
+import { Product, User, UserTier, Order, AdminLog } from "./types";
 
 export const MOCK_PRODUCTS: Product[] = [
   {
@@ -79,33 +79,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: "https://picsum.photos/400/400?random=5",
     tags: ["Baby", "Gift"],
     isActive: true,
-  },
-];
-
-export const MOCK_SERVICES: Service[] = [
-  {
-    id: "s1",
-    name: "Express Electrician",
-    nameAr: "كهربائي سريع",
-    type: "electrician",
-    basePrice: 20,
-    available: true,
-  },
-  {
-    id: "s2",
-    name: "Plumbing Emergency",
-    nameAr: "طوارئ صحية",
-    type: "plumber",
-    basePrice: 25,
-    available: true,
-  },
-  {
-    id: "s3",
-    name: "AC Maintenance",
-    nameAr: "صيانة مكيفات",
-    type: "maintenance",
-    basePrice: 30,
-    available: true,
   },
 ];
 

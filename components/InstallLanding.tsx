@@ -16,10 +16,10 @@ const InstallLanding: React.FC = () => {
     setIsIOS(iOS);
 
     // Check if already installed
-    const isStandalone = 
+    const isStandalone =
       window.matchMedia?.("(display-mode: standalone)")?.matches ||
       (window.navigator as any)?.standalone === true;
-    
+
     if (isStandalone) {
       // Already installed - reload to go to app
       window.location.reload();
@@ -32,7 +32,7 @@ const InstallLanding: React.FC = () => {
       deferredPromptGlobal = e;
       setCanInstall(true);
     };
-    
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
 
     // Listen for app installed
@@ -51,7 +51,7 @@ const InstallLanding: React.FC = () => {
   const handleInstallClick = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     console.log("Install button clicked!");
     setIsInstalling(true);
 
@@ -60,7 +60,7 @@ const InstallLanding: React.FC = () => {
       try {
         const { outcome } = await deferredPromptGlobal.prompt();
         console.log("Install outcome:", outcome);
-        
+
         if (outcome === "accepted") {
           // App will install
           setIsInstalling(false);
@@ -70,7 +70,7 @@ const InstallLanding: React.FC = () => {
         console.error("Install error:", err);
       }
     }
-    
+
     // If we get here, show the manual instructions modal
     setIsInstalling(false);
     setShowModal(true);
@@ -90,7 +90,8 @@ const InstallLanding: React.FC = () => {
           inset: 0,
           width: "100vw",
           height: "100vh",
-          background: "linear-gradient(135deg, #8a1c1c 0%, #6b1515 50%, #4a0f0f 100%)",
+          background:
+            "linear-gradient(135deg, #8a1c1c 0%, #6b1515 50%, #4a0f0f 100%)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -143,19 +144,42 @@ const InstallLanding: React.FC = () => {
           </div>
 
           {/* Title */}
-          <h1 style={{ fontSize: "2rem", fontWeight: 900, color: "white", marginBottom: "0.5rem" }}>
+          <h1
+            style={{
+              fontSize: "2rem",
+              fontWeight: 900,
+              color: "white",
+              marginBottom: "0.5rem",
+            }}
+          >
             Yalla Wasel 🚀
           </h1>
 
           {/* Subtitle */}
-          <p style={{ color: "#fbbf24", fontSize: "1.125rem", fontWeight: 600, marginBottom: "1rem" }}>
+          <p
+            style={{
+              color: "#fbbf24",
+              fontSize: "1.125rem",
+              fontWeight: 600,
+              marginBottom: "1rem",
+            }}
+          >
             Deliver Smarter. Faster. Better.
           </p>
 
           {/* Description */}
-          <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.9rem", marginBottom: "1.5rem", lineHeight: 1.6 }}>
-            Install the app for a smoother experience,<br/>
-            exclusive offers,<br/>
+          <p
+            style={{
+              color: "rgba(255,255,255,0.8)",
+              fontSize: "0.9rem",
+              marginBottom: "1.5rem",
+              lineHeight: 1.6,
+            }}
+          >
+            Install the app for a smoother experience,
+            <br />
+            exclusive offers,
+            <br />
             and real-time order tracking.
           </p>
 
@@ -170,8 +194,10 @@ const InstallLanding: React.FC = () => {
             }}
           >
             <p style={{ color: "white", fontSize: "0.875rem" }}>
-              <span style={{ color: "#4ade80" }}>✔</span> Faster performance<br/>
-              <span style={{ color: "#4ade80" }}>✔</span> Exclusive deals<br/>
+              <span style={{ color: "#4ade80" }}>✔</span> Faster performance
+              <br />
+              <span style={{ color: "#4ade80" }}>✔</span> Exclusive deals
+              <br />
               <span style={{ color: "#4ade80" }}>✔</span> Live order tracking
             </p>
           </div>
@@ -200,15 +226,32 @@ const InstallLanding: React.FC = () => {
             {isInstalling ? "Installing..." : "📲 Install the App"}
           </button>
 
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", marginTop: "1rem" }}>
+          <p
+            style={{
+              color: "rgba(255,255,255,0.5)",
+              fontSize: "0.7rem",
+              marginTop: "1rem",
+            }}
+          >
             Tap to install • Works on all devices
           </p>
         </div>
 
         {/* Bottom */}
-        <div style={{ position: "absolute", bottom: "2rem", textAlign: "center" }}>
+        <div
+          style={{ position: "absolute", bottom: "2rem", textAlign: "center" }}
+        >
           <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem" }}>
-            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4ade80", display: "inline-block" }}></span> Secure • Fast • Reliable
+            <span
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                background: "#4ade80",
+                display: "inline-block",
+              }}
+            ></span>{" "}
+            Secure • Fast • Reliable
           </p>
         </div>
       </div>
@@ -261,7 +304,14 @@ const InstallLanding: React.FC = () => {
               >
                 📱
               </div>
-              <h3 style={{ color: "white", fontWeight: 800, fontSize: "1.25rem", margin: 0 }}>
+              <h3
+                style={{
+                  color: "white",
+                  fontWeight: 800,
+                  fontSize: "1.25rem",
+                  margin: 0,
+                }}
+              >
                 How to Install
               </h3>
             </div>
@@ -270,24 +320,76 @@ const InstallLanding: React.FC = () => {
             <div style={{ padding: "1.5rem" }}>
               {isIOS ? (
                 <>
-                  <p style={{ color: "#1f2937", fontWeight: 600, marginBottom: "1rem", textAlign: "center" }}>
+                  <p
+                    style={{
+                      color: "#1f2937",
+                      fontWeight: 600,
+                      marginBottom: "1rem",
+                      textAlign: "center",
+                    }}
+                  >
                     iPhone / iPad
                   </p>
-                  <ol style={{ color: "#4b5563", fontSize: "0.9rem", paddingLeft: "1.25rem", lineHeight: 2, margin: 0 }}>
-                    <li>Tap the <strong style={{ color: "#8a1c1c" }}>Share</strong> button</li>
-                    <li>Scroll down and tap <strong style={{ color: "#8a1c1c" }}>Add to Home Screen</strong></li>
-                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Add</strong> in top right</li>
+                  <ol
+                    style={{
+                      color: "#4b5563",
+                      fontSize: "0.9rem",
+                      paddingLeft: "1.25rem",
+                      lineHeight: 2,
+                      margin: 0,
+                    }}
+                  >
+                    <li>
+                      Tap the{" "}
+                      <strong style={{ color: "#8a1c1c" }}>Share</strong> button
+                    </li>
+                    <li>
+                      Scroll down and tap{" "}
+                      <strong style={{ color: "#8a1c1c" }}>
+                        Add to Home Screen
+                      </strong>
+                    </li>
+                    <li>
+                      Tap <strong style={{ color: "#8a1c1c" }}>Add</strong> in
+                      top right
+                    </li>
                   </ol>
                 </>
               ) : (
                 <>
-                  <p style={{ color: "#1f2937", fontWeight: 600, marginBottom: "1rem", textAlign: "center" }}>
+                  <p
+                    style={{
+                      color: "#1f2937",
+                      fontWeight: 600,
+                      marginBottom: "1rem",
+                      textAlign: "center",
+                    }}
+                  >
                     Android / Chrome
                   </p>
-                  <ol style={{ color: "#4b5563", fontSize: "0.9rem", paddingLeft: "1.25rem", lineHeight: 2, margin: 0 }}>
-                    <li>Tap the <strong style={{ color: "#8a1c1c" }}>menu</strong> (three dots) in browser</li>
-                    <li>Select <strong style={{ color: "#8a1c1c" }}>Add to Home Screen</strong></li>
-                    <li>Tap <strong style={{ color: "#8a1c1c" }}>Add</strong> to confirm</li>
+                  <ol
+                    style={{
+                      color: "#4b5563",
+                      fontSize: "0.9rem",
+                      paddingLeft: "1.25rem",
+                      lineHeight: 2,
+                      margin: 0,
+                    }}
+                  >
+                    <li>
+                      Tap the <strong style={{ color: "#8a1c1c" }}>menu</strong>{" "}
+                      (three dots) in browser
+                    </li>
+                    <li>
+                      Select{" "}
+                      <strong style={{ color: "#8a1c1c" }}>
+                        Add to Home Screen
+                      </strong>
+                    </li>
+                    <li>
+                      Tap <strong style={{ color: "#8a1c1c" }}>Add</strong> to
+                      confirm
+                    </li>
                   </ol>
                 </>
               )}

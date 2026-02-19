@@ -46,14 +46,7 @@ export interface HappyHour {
   active: boolean;
 }
 
-export interface Service {
-  id: string;
-  name: string;
-  nameAr: string;
-  type: "electrician" | "plumber" | "maintenance" | "cleaning";
-  basePrice: number;
-  available: boolean;
-}
+
 
 export interface CartItem extends Product {
   quantity: number;
@@ -201,31 +194,9 @@ export interface DeliveryDay {
   active: boolean;
 }
 
-export interface MounéClass {
-  id: string;
-  name: string;
-  nameAr: string;
-  description: string;
-  descriptionAr: string;
-  totalWeight: string;
-  mealsCount: number;
-  price: number;
-  cost?: number;
-  image: string;
-  category: string;
-  isActive?: boolean;
-  classType: "mini" | "classic" | "premium";
-}
 
-export interface MounéClassComponent {
-  id: string;
-  mouneClassId: string;
-  productId?: string;
-  productName: string;
-  productNameAr: string;
-  quantity: number;
-  unit: string;
-}
+
+
 
 export interface DeliveryConfig {
   settings: DeliverySettings;

@@ -4,14 +4,14 @@ import { supabase } from "../services/supabaseClient";
 import { useSettings } from "../contexts/SettingsContext";
 import { ADMIN_PASSWORD } from "../constants";
 import { Product, Order, UserTier, OrderStatus, CartItem } from "../types";
-import MounéClassesView from "./MounéClassesView";
+
 import { processOrderImpact } from "../services/impactService";
 
 type Tab =
   | "dashboard"
   | "orders"
   | "products"
-  | "moune"
+
   | "customers"
   | "rewards"
   | "happyhour"
@@ -118,20 +118,18 @@ const AdminPanel: React.FC = () => {
                 {[0, 1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      i < pin.length
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${i < pin.length
                         ? "bg-red-500 shadow-[0_0_10px_#ef4444] scale-110"
                         : "bg-slate-900 shadow-inner scale-90"
-                    }`}
+                      }`}
                   ></div>
                 ))}
               </div>
               <div
-                className={`absolute bottom-2 left-0 right-0 text-center text-[9px] font-black uppercase tracking-widest transition-opacity duration-300 ${
-                  error
+                className={`absolute bottom-2 left-0 right-0 text-center text-[9px] font-black uppercase tracking-widest transition-opacity duration-300 ${error
                     ? "text-red-500 opacity-100 animate-pulse"
                     : "text-slate-700 opacity-0"
-                }`}
+                  }`}
               >
                 {error || "Locked"}
               </div>
@@ -187,8 +185,7 @@ const AdminPanel: React.FC = () => {
         return <OrdersView />;
       case "products":
         return <ProductsView />;
-      case "moune":
-        return <MounéClassesView />;
+
       case "customers":
         return <CustomersView />;
       case "rewards":
@@ -215,7 +212,7 @@ const AdminPanel: React.FC = () => {
           { id: "dashboard", icon: "fa-chart-pie", label: "Home" },
           { id: "orders", icon: "fa-shopping-cart", label: "Orders" },
           { id: "products", icon: "fa-box", label: "Kits" },
-          { id: "moune", icon: "fa-utensils", label: "Mouné" },
+
           { id: "customers", icon: "fa-users", label: "Users" },
           { id: "happyhour", icon: "fa-clock", label: "Happy" },
           { id: "rewards", icon: "fa-gift", label: "Rewards" },
@@ -225,11 +222,10 @@ const AdminPanel: React.FC = () => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as Tab)}
-            className={`flex flex-col items-center justify-center flex-shrink-0 min-w-[60px] h-full px-3 transition-all duration-150 active:scale-95 ${
-              activeTab === tab.id
+            className={`flex flex-col items-center justify-center flex-shrink-0 min-w-[60px] h-full px-3 transition-all duration-150 active:scale-95 ${activeTab === tab.id
                 ? "text-red-500 bg-slate-800/50"
                 : "text-gray-400 hover:text-gray-200 hover:bg-slate-800/30"
-            }`}
+              }`}
           >
             <i className={`fa-solid ${tab.icon} text-lg`}></i>
             <span className="text-[8px] mt-0.5 font-medium">{tab.label}</span>
@@ -241,9 +237,8 @@ const AdminPanel: React.FC = () => {
       </div>
 
       <aside
-        className={`hidden md:flex fixed inset-y-0 left-0 z-50 bg-slate-900 text-white transition-all duration-300 ${
-          isSidebarOpen ? "w-64" : "w-20"
-        } overflow-hidden shadow-2xl flex flex-col`}
+        className={`hidden md:flex fixed inset-y-0 left-0 z-50 bg-slate-900 text-white transition-all duration-300 ${isSidebarOpen ? "w-64" : "w-20"
+          } overflow-hidden shadow-2xl flex flex-col`}
       >
         <div className="h-16 md:h-20 flex items-center justify-center border-b border-slate-800 flex-shrink-0">
           <div className="flex items-center gap-3 font-bold text-xl">
@@ -279,13 +274,7 @@ const AdminPanel: React.FC = () => {
             onClick={() => setActiveTab("products")}
             isOpen={isSidebarOpen}
           />
-          <SidebarItem
-            icon="fa-utensils"
-            label="Mouné Classes"
-            active={activeTab === "moune"}
-            onClick={() => setActiveTab("moune")}
-            isOpen={isSidebarOpen}
-          />
+
           <SidebarItem
             icon="fa-users"
             label="Customers"
@@ -331,9 +320,8 @@ const AdminPanel: React.FC = () => {
               setIsAuthenticated(false);
               navigate("/");
             }}
-            className={`flex items-center gap-4 px-3 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors w-full ${
-              !isSidebarOpen ? "justify-center" : ""
-            }`}
+            className={`flex items-center gap-4 px-3 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors w-full ${!isSidebarOpen ? "justify-center" : ""
+              }`}
           >
             <i className="fa-solid fa-lock text-lg"></i>
             {isSidebarOpen && (
@@ -403,11 +391,10 @@ const AdminPanel: React.FC = () => {
 const SidebarItem = ({ icon, label, active, onClick, isOpen }: any) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all ${
-      active
+    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all ${active
         ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02] border-b-4 border-primary-dark translate-y-[-1px]"
         : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
-    } ${!isOpen ? "justify-center" : ""}`}
+      } ${!isOpen ? "justify-center" : ""}`}
   >
     <i className={`fa-solid ${icon} w-6 text-center text-lg`}></i>
     {isOpen && (
@@ -926,9 +913,8 @@ const OrdersView = () => {
                   Phone
                 </p>
                 <a
-                  href={`tel:${
-                    selectedOrder.phone || selectedOrder.profiles?.phone
-                  }`}
+                  href={`tel:${selectedOrder.phone || selectedOrder.profiles?.phone
+                    }`}
                   className="font-bold text-primary"
                 >
                   {selectedOrder.phone ||
@@ -1278,9 +1264,8 @@ const ProductsView = () => {
                   )}
                   <div className="flex-1">
                     <label
-                      className={`flex items-center justify-center w-full p-3 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-primary/50 transition-colors ${
-                        uploading ? "opacity-50 pointer-events-none" : ""
-                      }`}
+                      className={`flex items-center justify-center w-full p-3 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-primary/50 transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""
+                        }`}
                     >
                       <span className="text-sm text-gray-500 font-bold">
                         {uploading ? (
@@ -1557,11 +1542,10 @@ const CustomersView = () => {
                     </p>
                   </div>
                   <span
-                    className={`font-bold ${
-                      transaction.points >= 0
+                    className={`font-bold ${transaction.points >= 0
                         ? "text-green-600"
                         : "text-red-600"
-                    }`}
+                      }`}
                   >
                     {transaction.points >= 0 ? "+" : ""}
                     {transaction.points}
@@ -1658,11 +1642,10 @@ const CustomersView = () => {
                         </p>
                       </div>
                       <span
-                        className={`font-bold text-lg ${
-                          transaction.points >= 0
+                        className={`font-bold text-lg ${transaction.points >= 0
                             ? "text-green-600"
                             : "text-red-600"
-                        }`}
+                          }`}
                       >
                         {transaction.points >= 0 ? "+" : ""}
                         {transaction.points}
@@ -1947,21 +1930,19 @@ const RewardsView = () => {
         <div className="flex gap-4">
           <button
             onClick={() => setActiveTab("rewards")}
-            className={`px-6 py-2 rounded-xl font-bold text-sm ${
-              activeTab === "rewards"
+            className={`px-6 py-2 rounded-xl font-bold text-sm ${activeTab === "rewards"
                 ? "bg-primary text-white"
                 : "bg-gray-100 text-gray-600"
-            }`}
+              }`}
           >
             Rewards
           </button>
           <button
             onClick={() => setActiveTab("redemptions")}
-            className={`px-6 py-2 rounded-xl font-bold text-sm ${
-              activeTab === "redemptions"
+            className={`px-6 py-2 rounded-xl font-bold text-sm ${activeTab === "redemptions"
                 ? "bg-primary text-white"
                 : "bg-gray-100 text-gray-600"
-            }`}
+              }`}
           >
             Redemptions
           </button>
@@ -2033,11 +2014,10 @@ const RewardsView = () => {
                         onClick={() =>
                           handleToggleActive(reward.id, reward.active)
                         }
-                        className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          reward.active
+                        className={`px-3 py-1 rounded-full text-xs font-bold ${reward.active
                             ? "bg-green-100 text-green-700"
                             : "bg-gray-100 text-gray-600"
-                        }`}
+                          }`}
                       >
                         {reward.active ? "Active" : "Inactive"}
                       </button>
@@ -2728,11 +2708,10 @@ const HappyHourView = () => {
                       key={day}
                       type="button"
                       onClick={() => toggleDay(day)}
-                      className={`p-2 rounded-lg text-sm font-bold ${
-                        formData.days_of_week.includes(day)
+                      className={`p-2 rounded-lg text-sm font-bold ${formData.days_of_week.includes(day)
                           ? "bg-primary text-white"
                           : "bg-gray-100 text-gray-600"
-                      }`}
+                        }`}
                     >
                       {getDayName(day)}
                     </button>
@@ -2845,11 +2824,10 @@ const HappyHourView = () => {
                       key={day}
                       type="button"
                       onClick={() => toggleDay(day)}
-                      className={`p-2 rounded-lg text-sm font-bold ${
-                        formData.days_of_week.includes(day)
+                      className={`p-2 rounded-lg text-sm font-bold ${formData.days_of_week.includes(day)
                           ? "bg-primary text-white"
                           : "bg-gray-100 text-gray-600"
-                      }`}
+                        }`}
                     >
                       {getDayName(day)}
                     </button>
@@ -3047,17 +3025,16 @@ const ImpactView = () => {
           const progress =
             campaign.goal_amount > 0
               ? Math.min(
-                  (campaign.current_amount / campaign.goal_amount) * 100,
-                  100
-                )
+                (campaign.current_amount / campaign.goal_amount) * 100,
+                100
+              )
               : 0;
 
           return (
             <div
               key={campaign.id}
-              className={`bg-white rounded-[2rem] border shadow-sm overflow-hidden ${
-                !campaign.is_active ? "opacity-60" : ""
-              }`}
+              className={`bg-white rounded-[2rem] border shadow-sm overflow-hidden ${!campaign.is_active ? "opacity-60" : ""
+                }`}
             >
               {campaign.image_url && (
                 <div className="h-40 bg-gray-100">
@@ -3072,11 +3049,10 @@ const ImpactView = () => {
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-bold text-lg">{campaign.title}</h4>
                   <span
-                    className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                      campaign.is_active
+                    className={`px-2 py-1 rounded-full text-[10px] font-bold ${campaign.is_active
                         ? "bg-green-100 text-green-700"
                         : "bg-gray-100 text-gray-500"
-                    }`}
+                      }`}
                   >
                     {campaign.is_active ? "ACTIVE" : "INACTIVE"}
                   </span>
@@ -3109,11 +3085,10 @@ const ImpactView = () => {
                     onClick={() =>
                       toggleCampaign(campaign.id, campaign.is_active)
                     }
-                    className={`flex-1 py-2 rounded-xl text-sm font-bold ${
-                      campaign.is_active
+                    className={`flex-1 py-2 rounded-xl text-sm font-bold ${campaign.is_active
                         ? "bg-gray-100 text-gray-600"
                         : "bg-green-100 text-green-700"
-                    }`}
+                      }`}
                   >
                     {campaign.is_active ? "Deactivate" : "Activate"}
                   </button>
@@ -3147,15 +3122,14 @@ const ImpactView = () => {
               className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl"
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                  entry.rank === 1
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${entry.rank === 1
                     ? "bg-yellow-400 text-yellow-900"
                     : entry.rank === 2
-                    ? "bg-gray-300 text-gray-700"
-                    : entry.rank === 3
-                    ? "bg-amber-600 text-white"
-                    : "bg-gray-200 text-gray-500"
-                }`}
+                      ? "bg-gray-300 text-gray-700"
+                      : entry.rank === 3
+                        ? "bg-amber-600 text-white"
+                        : "bg-gray-200 text-gray-500"
+                  }`}
               >
                 {entry.rank}
               </div>
@@ -3378,9 +3352,8 @@ const SettingsView = () => {
                 </div>
                 <div className="flex-1">
                   <label
-                    className={`btn-3d px-4 py-2 bg-white text-gray-600 border border-gray-200 rounded-lg text-xs font-bold cursor-pointer inline-flex items-center gap-2 ${
-                      uploading ? "opacity-50 pointer-events-none" : ""
-                    }`}
+                    className={`btn-3d px-4 py-2 bg-white text-gray-600 border border-gray-200 rounded-lg text-xs font-bold cursor-pointer inline-flex items-center gap-2 ${uploading ? "opacity-50 pointer-events-none" : ""
+                      }`}
                   >
                     {uploading ? (
                       <i className="fa-solid fa-spinner fa-spin"></i>
@@ -3415,16 +3388,14 @@ const SettingsView = () => {
                       maintenance_mode: !localSettings.maintenance_mode,
                     })
                   }
-                  className={`w-12 h-6 rounded-full transition-colors relative ${
-                    localSettings.maintenance_mode
+                  className={`w-12 h-6 rounded-full transition-colors relative ${localSettings.maintenance_mode
                       ? "bg-red-500"
                       : "bg-gray-300"
-                  }`}
+                    }`}
                 >
                   <div
-                    className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
-                      localSettings.maintenance_mode ? "right-1" : "left-1"
-                    }`}
+                    className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${localSettings.maintenance_mode ? "right-1" : "left-1"
+                      }`}
                   ></div>
                 </button>
               </div>
