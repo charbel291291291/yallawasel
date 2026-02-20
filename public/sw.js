@@ -1,16 +1,13 @@
 // Service Worker for Yalla Wasel PWA
 
-const CACHE_NAME = "yalla-wasel-v1.0.0";
+const CACHE_NAME = "yalla-wasel-v1.0.1";
 const urlsToCache = [
   "/",
   "/index.html",
-  "/assets/logo.png",
-  "/assets/logo-dark.png",
-  "/assets/logo-light.png",
-  "/assets/logo.svg",
-  "/icons/favicon.ico",
-  "/icons/favicon-16x16.png",
-  "/icons/favicon-32x32.png",
+  "/logo.png",
+  "/icons/favicon.png",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
 ];
 
 // Install event - cache static assets

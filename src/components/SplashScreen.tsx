@@ -21,9 +21,13 @@ const SplashScreen: React.FC = () => {
     <div className="fixed inset-0 z-[9999] bg-primary flex flex-col items-center justify-center">
       <div className="w-32 h-32 bg-white rounded-2xl flex items-center justify-center shadow-2xl animate-float">
         <img
-          src="/assets/Logo.png"
+          src="/logo.png"
           alt="Yalla Wasel"
           className="w-24 h-24 object-contain"
+          onError={(e) => {
+            (e.target as HTMLImageElement).onerror = null;
+            (e.target as HTMLImageElement).src = "/icons/icon-512x512.png";
+          }}
         />
       </div>
       <p className="mt-6 text-white font-bold text-lg tracking-widest animate-pulse">

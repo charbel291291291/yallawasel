@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 
+/**
+ * Production-grade PWA Install Hook
+ * Handles native 'beforeinstallprompt' event, platform detection, 
+ * and persistent installation state.
+ */
+
 interface BeforeInstallPromptEvent extends Event {
-    readonly platforms: string[];
+    readonly platforms: Array<string>;
     readonly userChoice: Promise<{
         outcome: 'accepted' | 'dismissed';
         platform: string;
@@ -9,58 +15,56 @@ interface BeforeInstallPromptEvent extends Event {
     prompt(): Promise<void>;
 }
 
-export type PWAPlatform = 'ios' | 'android' | 'desktop' | 'unknown';
+export type PWAPlatform = 'ios' | 'android' | 'chrome' | 'unknown';
 
 export interface UsePWAInstallReturn {
     canInstall: boolean;
     isInstalled: boolean;
-    isStandalone: boolean;
     platform: PWAPlatform;
-    promptInstall: () => Promise<'accepted' | 'dismissed' | 'manual'>;
+    deferredPrompt: BeforeInstallPromptEvent | null;
+    installApp: () => Promise<'accepted' | 'dismissed' | 'manual'>;
 }
 
-export const usePWAInstall = (manifestType: 'main' | 'driver' = 'main'): UsePWAInstallReturn => {
+export const usePWAInstall = (): UsePWAInstallReturn => {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-    const [isStandalone, setIsStandalone] = useState(false);
+    const [isInstalled, setIsInstalled] = useState(false);
     const [platform, setPlatform] = useState<PWAPlatform>('unknown');
 
     useEffect(() => {
-        // Detect Platform
-        const ua = navigator.userAgent;
-        if (/iPhone|iPad|iPod/i.test(ua)) {
-            setPlatform('ios');
-        } else if (/Android/i.test(ua)) {
-            setPlatform('android');
-        } else {
-            setPlatform('desktop');
-        }
+        // 1. Detect Platform
+        const ua = window.navigator.userAgent;
+        const isIOS = /iPhone|iPad|iPod/i.test(ua);
+        const isAndroid = /Android/i.test(ua);
+        const isChrome = /Chrome/i.test(ua) && !/Edge|OPR|Brave/i.test(ua);
 
-        // Detect Standalone Mode
+        if (isIOS) setPlatform('ios');
+        else if (isAndroid) setPlatform('android');
+        else if (isChrome) setPlatform('chrome');
+
+        // 2. Detect Standalone State
         const checkStandalone = () => {
             const standalone =
                 window.matchMedia('(display-mode: standalone)').matches ||
-                (navigator as any).standalone === true;
-            setIsStandalone(standalone);
+                (window.navigator as any).standalone === true;
+            setIsInstalled(standalone);
         };
 
         checkStandalone();
 
-        // Listen for beforeinstallprompt
+        // 3. Listen for Native Prompt
         const handleBeforeInstallPrompt = (e: Event) => {
             // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
-            // Stash the event so it can be triggered later.
+            // Stash the event so it can be triggered later
             setDeferredPrompt(e as BeforeInstallPromptEvent);
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // Listen for appinstalled
+        // 4. Listen for Successful Installation
         const handleAppInstalled = () => {
-            setIsStandalone(true);
+            setIsInstalled(true);
             setDeferredPrompt(null);
-            // Optional: Log analytics
-            console.log('PWA was installed');
         };
 
         window.addEventListener('appinstalled', handleAppInstalled);
@@ -71,7 +75,10 @@ export const usePWAInstall = (manifestType: 'main' | 'driver' = 'main'): UsePWAI
         };
     }, []);
 
-    const promptInstall = useCallback(async () => {
+    /**
+     * Triggers the native installation prompt or signals manual fallback
+     */
+    const installApp = useCallback(async () => {
         if (platform === 'ios') {
             return 'manual';
         }
@@ -80,23 +87,26 @@ export const usePWAInstall = (manifestType: 'main' | 'driver' = 'main'): UsePWAI
             return 'manual';
         }
 
-        // Show the install prompt
-        await deferredPrompt.prompt();
+        try {
+            await deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
 
-        // Wait for the user to respond to the prompt
-        const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                setDeferredPrompt(null);
+            }
 
-        // We've used the prompt, and can't use it again, throw it away
-        setDeferredPrompt(null);
-
-        return outcome;
+            return outcome;
+        } catch (error) {
+            console.error('PWA Installation failed', error);
+            return 'dismissed';
+        }
     }, [deferredPrompt, platform]);
 
     return {
         canInstall: !!deferredPrompt || platform === 'ios',
-        isInstalled: isStandalone,
-        isStandalone,
+        isInstalled,
         platform,
-        promptInstall
+        deferredPrompt,
+        installApp
     };
 };

@@ -27,7 +27,7 @@
   ],
   "screenshots": [
     {
-      "src": "/assets/Logo.png",
+      "src": "/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "wide",

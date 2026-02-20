@@ -49,12 +49,16 @@ const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) => {
         <div className="relative">
           {/* Logo Image */}
           <img
-            src="/assets/Logo.png"
+            src="/logo.png"
             alt="Yalla Wasel"
             className="w-32 h-32 md:w-48 md:h-48 object-contain drop-shadow-2xl animate-logo-sequence"
             // Prevent layout shift if image loads late
             width={192}
             height={192}
+            onError={(e) => {
+              (e.target as HTMLImageElement).onerror = null;
+              (e.target as HTMLImageElement).src = "/icons/icon-512x512.png";
+            }}
           />
         </div>
       </div>

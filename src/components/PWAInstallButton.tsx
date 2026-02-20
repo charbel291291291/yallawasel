@@ -6,49 +6,42 @@ interface PWAInstallButtonProps {
     className?: string;
 }
 
+/**
+ * Enterprise-grade PWA Install Button
+ * Triggers native browser install or fallback instructions.
+ */
 const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({ className }) => {
-    const { isInstalled, platform, promptInstall } = usePWAInstall('main');
+    const { isInstalled, installApp, platform } = usePWAInstall();
     const [showInstructions, setShowInstructions] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const handleInstall = async () => {
+    const handleInstallClick = async () => {
         if (isInstalled) return;
 
         setIsProcessing(true);
-        const result = await promptInstall();
+        const result = await installApp();
         setIsProcessing(false);
 
         if (result === 'manual') {
             setShowInstructions(true);
         }
-
-        if (result === 'accepted') {
-            console.log('Customer PWA install accepted');
-        }
     };
 
-    if (isInstalled) {
-        return (
-            <button
-                disabled
-                className={`${className} opacity-50 cursor-not-allowed`}
-                style={{ pointerEvents: 'none' }}
-            >
-                ✅ Already Installed
-            </button>
-        );
-    }
+    // Do not render if the app is already running in standalone mode
+    if (isInstalled) return null;
 
     return (
         <>
             <button
-                onClick={handleInstall}
-                className={`${className} ${isProcessing ? 'animate-pulse' : ''}`}
+                onClick={handleInstallClick}
+                className={`${className} ${isProcessing ? 'animate-pulse opacity-80' : ''}`}
                 disabled={isProcessing}
+                aria-label="Install Yalla Wasel App"
             >
-                {isProcessing ? 'Processing...' : '📲 Install the App'}
+                {isProcessing ? 'Preparing...' : '📲 Install the App'}
             </button>
 
+            {/* Manual Installation Instructions for iOS or restricted browsers */}
             <InstallInstructionsModal
                 isOpen={showInstructions}
                 onClose={() => setShowInstructions(false)}
