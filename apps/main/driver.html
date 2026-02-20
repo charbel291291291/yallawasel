@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Adonis Driver" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Adonis Driver PWA</title>
+  <meta name="description" content="Driver delivery management for Yalla Wasel" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="icon" href="/icons/favicon.ico" />
+  <link rel="manifest" href="/manifest-driver.json" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* Critical CSS — only the loading state */
+    body {
+      margin: 0;
+      background: #0f172a;
+      font-family: system-ui, sans-serif;
+    }
+
+    #root {
+      min-height: 100vh;
+    }
+
+    .driver-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #94a3b8;
+      gap: 1rem;
+    }
+
+    .driver-loading .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(148, 163, 184, 0.2);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root">
+    <div class="driver-loading">
+      <div class="spinner"></div>
+      <p>Loading Driver App...</p>
+    </div>
+  </div>
+  <script type="module" src="/src/driver_main.tsx"></script>
+</body>
+
+</html>
