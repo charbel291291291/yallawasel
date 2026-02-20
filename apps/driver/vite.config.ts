@@ -9,6 +9,7 @@ export default defineConfig({
         VitePWA({
             registerType: 'autoUpdate',
             injectRegister: 'auto',
+            filename: 'manifest.json', // Ensure manifest.json is generated
             manifest: {
                 name: 'Yalla Wasel Driver',
                 short_name: 'YW Driver',
@@ -16,6 +17,9 @@ export default defineConfig({
                 theme_color: '#000000',
                 background_color: '#000000',
                 display: 'standalone',
+                start_url: '/',
+                scope: '/',
+                id: '/',
                 icons: [
                     {
                         src: '/icons/icon-192x192.png',
@@ -31,11 +35,12 @@ export default defineConfig({
                         src: '/icons/icon-maskable-512.png',
                         sizes: '512x512',
                         type: 'image/png',
-                        purpose: 'maskable'
+                        purpose: 'any maskable'
                     }
                 ]
             },
             workbox: {
+                cacheId: 'yalla-driver-pwa', // Unique cache namespace
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
                 cleanupOutdatedCaches: true,
                 clientsClaim: true,
