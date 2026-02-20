@@ -1,7 +1,0 @@
-{
-  "name": "Yalla Wasel - Adonis Luxury Services",
-  "description": "Premium kit delivery, home services, and loyalty platform for the Adonis area.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
-}

@@ -24,6 +24,7 @@ export default defineConfig(({ mode }) => {
         includeAssets: ["icons/favicon.png", "icons/icon-512x512.png", "icons/icon-maskable-512.png"],
         manifest: false, // Managed externally or via separate file
         workbox: {
+          cacheId: "yalla-main-v1", // Unique cache namespace
           globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
           cleanupOutdatedCaches: true, // Delete old caches automatically
           clientsClaim: true, // Take control of open pages immediately
@@ -61,9 +62,9 @@ export default defineConfig(({ mode }) => {
         }
       }),
     ],
-    define: {
-      "process.env.VITE_API_KEY": JSON.stringify(env.VITE_API_KEY || env.GEMINI_API_KEY),
-    },
+    // define: {
+    //   "process.env.VITE_API_KEY": JSON.stringify(env.VITE_API_KEY || env.GEMINI_API_KEY),
+    // },
     build: {
       outDir: "dist",
       sourcemap: mode === "development",
@@ -73,7 +74,6 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'index.html'),
-          driver: path.resolve(__dirname, 'driver.html'),
         },
         output: {
           entryFileNames: 'assets/[name]-[hash].js',

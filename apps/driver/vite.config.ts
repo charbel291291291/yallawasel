@@ -40,7 +40,7 @@ export default defineConfig({
                 ]
             },
             workbox: {
-                cacheId: 'yalla-driver-pwa', // Unique cache namespace
+                cacheId: 'yalla-driver-v1', // Unique cache namespace
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
                 cleanupOutdatedCaches: true,
                 clientsClaim: true,
