@@ -31,6 +31,7 @@ interface Order {
   status: string;
   created_at: string;
   updated_at: string;
+  search_started_at?: string;
   payment_method: string;
   delivery_zone: string;
   notes: string;
@@ -67,6 +68,31 @@ const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ lang }) => {
   const [history, setHistory] = useState<OrderStatusHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    // Ticker for narrative updates
+    const ticker = setInterval(() => setCurrentTime(Date.now()), 5000);
+    return () => clearInterval(ticker);
+  }, []);
+
+  const getNarrative = () => {
+    if (!order) return "";
+    if (order.status !== "pending") {
+      if (order.status === "assigned") return "Our driver is on the way to pick up your order!";
+      if (order.status === "preparing") return "The kitchen is preparing your selection...";
+      if (order.status === "out_for_delivery") return "Almost there! Your delivery is nearby.";
+      return statusSteps.find(s => s.key === order.status)?.label || "In progress";
+    }
+
+    const start = order.search_started_at ? new Date(order.search_started_at).getTime() : new Date(order.created_at).getTime();
+    const elapsed = (currentTime - start) / 1000;
+
+    if (elapsed < 45) return "Finding your perfect driver...";
+    if (elapsed < 90) return "Expanding our search zone to get you moving faster...";
+    if (elapsed < 180) return "Applying priority boost to secure a driver for you.";
+    return "Searching far and wide. We appreciate your patience!";
+  };
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -213,6 +239,13 @@ const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ lang }) => {
           <h1 className="text-2xl font-black text-gray-900">Order Tracking</h1>
           <p className="text-gray-500 mt-1">
             #{order.id.slice(0, 8).toUpperCase()}
+          </p>
+        </div>
+
+        {/* Narrative Banner */}
+        <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 mb-6 text-center">
+          <p className="text-primary font-bold animate-pulse">
+            {getNarrative()}
           </p>
         </div>
 

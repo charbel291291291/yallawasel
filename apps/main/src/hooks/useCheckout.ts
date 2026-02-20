@@ -49,6 +49,8 @@ export function useCheckout(
                     total: total,
                     price: total, // Real-time lifecycle field
                     delivery_fee: deliveryFee,
+                    payout_base: deliveryFee > 0 ? deliveryFee * 0.8 : 5.0, // Guaranteed base payout
+                    search_started_at: new Date().toISOString(),
                     status: "pending",
                     payment_method: "cash",
                     delivery_zone: "Adonis",

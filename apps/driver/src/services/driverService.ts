@@ -6,9 +6,26 @@ export interface DriverState {
     last_seen: string;
     lat: number | null;
     lng: number | null;
+    speed_score: number;
+    tier: string;
+    total_accepted: number;
 }
 
 export const DriverService = {
+    /**
+     * Fetch current driver stats for the leaderboard/dashboard
+     */
+    async getDriverStats(userId: string): Promise<DriverState | null> {
+        const { data, error } = await supabase
+            .from('drivers')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (error) return null;
+        return data;
+    },
+
     /**
      * 🟢 2️⃣ HEARTBEAT & STATE MANAGEMENT
      * Updates driver status and geolocation every 20 seconds.

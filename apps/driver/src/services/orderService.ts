@@ -16,6 +16,10 @@ export interface Order {
     items: any[];
     expires_at: string | null;
     expired: boolean;
+    payout_base: number;
+    payout_bonus: number;
+    search_started_at: string;
+    boost_level: number;
     created_at: string;
     updated_at: string;
 }
@@ -73,23 +77,23 @@ export const OrderService = {
     },
 
     /**
-     * 🛡 STEP 7 — ACCEPT ORDER (Pro Level with RPC)
-     * Prevents race conditions.
+     * 🏁 COMPETITIVE ACCEPTANCE (v3)
+     * Handles speed bonuses and margin protection.
      */
     async acceptOrder(orderId: string): Promise<Order> {
-        const { data, error } = await supabase.rpc('accept_order', {
+        const { data, error } = await supabase.rpc('accept_order_v3', {
             order_uuid: orderId
         });
 
         if (error) {
-            if (error.message.includes('already taken') || error.message.includes('exception')) {
-                throw new Error('This order has already been accepted by another driver.');
+            if (error.message.toLowerCase().includes('already taken') || error.message.toLowerCase().includes('expired')) {
+                throw new Error('Order is no longer available (taken or expired).');
             }
             throw error;
         }
 
         if (!data || data.length === 0) {
-            throw new Error('Order not found or already taken.');
+            throw new Error('Order match failed.');
         }
 
         return data[0];
