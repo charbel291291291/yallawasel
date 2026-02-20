@@ -12,7 +12,7 @@ const SmartKitBuilder: React.FC = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
-    const [publishError, setPublishError] = useState<string | null>(null);
+    const [_publishError, setPublishError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
 
     // Business Goals
@@ -36,8 +36,8 @@ const SmartKitBuilder: React.FC = () => {
 
     const fetchProducts = async () => {
         setLoading(true);
-        const { data, error } = await supabase.from("products").select("*").eq("is_active", true);
-        if (data) setProducts(data);
+        const { data: _fetchData, error: _fetchError } = await supabase.from("products").select("*").eq("is_active", true);
+        if (_fetchData) setProducts(_fetchData);
         setLoading(false);
     };
 
@@ -94,7 +94,7 @@ const SmartKitBuilder: React.FC = () => {
         setLoading(true);
 
         try {
-            const { data: newProduct, error } = await supabase.from("products").insert({
+            const { error: publishError } = await supabase.from("products").insert({
                 name: selectedKit.name,
                 description: selectedKit.aiExplanation,
                 price: selectedKit.bundlePrice,
@@ -105,7 +105,7 @@ const SmartKitBuilder: React.FC = () => {
                 tags: ['ai-generated', selectedKit.strategy.toLowerCase()]
             }).select().single();
 
-            if (error) throw error;
+            if (publishError) throw publishError;
             setStep("PUBLISH_SUCCESS");
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Failed to publish";

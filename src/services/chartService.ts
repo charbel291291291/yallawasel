@@ -1,5 +1,13 @@
 
 import { supabase } from "./supabaseClient";
+import { logger } from "@/services/logger";
+import {
+    ChartSettingsSchema,
+    LiveOfferSchema,
+    LiveOfferHistorySchema,
+    validateSingle,
+    validateArray,
+} from "@/validation";
 
 export interface ChartSettings {
     id: number;
@@ -48,15 +56,15 @@ export const ChartService = {
             const { data, error } = await supabase
                 .from('chart_settings')
                 .select('*')
-                .maybeSingle(); // Use maybeSingle to avoid error on 0 rows
+                .maybeSingle();
 
             if (error) {
-                console.warn('Chart settings not found (using defaults):', error.message);
-                return null; // Component will use DEFAULT_SETTINGS
+                logger.warn('Chart settings not found (using defaults):', error.message);
+                return null;
             }
-            return data;
+            return validateSingle(ChartSettingsSchema, data, "ChartService.getSettings");
         } catch (err) {
-            console.error('Unexpected error fetching chart settings:', err);
+            logger.error('Unexpected error fetching chart settings:', err);
             return null;
         }
     },
@@ -65,10 +73,10 @@ export const ChartService = {
         const { error } = await supabase
             .from('chart_settings')
             .update({ ...updates, updated_at: new Date().toISOString() })
-            .eq('id', 1); // Singleton row
+            .eq('id', 1);
 
         if (error) {
-            console.error('Error updating chart settings:', error);
+            logger.error('Error updating chart settings:', error);
             return false;
         }
         return true;
@@ -84,12 +92,12 @@ export const ChartService = {
                 .order('updated_at', { ascending: false });
 
             if (error) {
-                console.warn('Live offers fetch error:', error.message);
+                logger.warn('Live offers fetch error:', error.message);
                 return [];
             }
-            return data || [];
+            return validateArray(LiveOfferSchema, data, "ChartService.getLiveOffers");
         } catch (err) {
-            console.error('Unexpected error fetching live offers:', err);
+            logger.error('Unexpected error fetching live offers:', err);
             return [];
         }
     },
@@ -99,14 +107,14 @@ export const ChartService = {
             .from('live_offer_history')
             .select('*')
             .eq('offer_id', offerId)
-            .order('recorded_at', { ascending: true }) // Charts need chronological order
+            .order('recorded_at', { ascending: true })
             .limit(limit);
 
         if (error) {
-            console.error('Error fetching history:', error);
+            logger.error('Error fetching history:', error);
             return [];
         }
-        return data || [];
+        return validateArray(LiveOfferHistorySchema, data, "ChartService.getOfferHistory");
     },
 
     // --- Admin Actions ---

@@ -6,6 +6,12 @@ import {
   ImpactBadgeLevel,
 } from "@/types";
 import { logger } from "@/services/logger";
+import {
+  ImpactCampaignSchema,
+  UserImpactSchema,
+  validateArray,
+  validateSingle,
+} from "@/validation";
 
 const DEFAULT_IMPACT_PERCENTAGE = 3; // 3% of order goes to impact
 
@@ -38,7 +44,7 @@ export const getActiveCampaigns = async (): Promise<ImpactCampaign[]> => {
     return [];
   }
 
-  return data || [];
+  return validateArray(ImpactCampaignSchema, data, "getActiveCampaigns");
 };
 
 // Get single campaign
@@ -52,7 +58,7 @@ export const getCampaign = async (
     .single();
 
   if (error) return null;
-  return data;
+  return validateSingle(ImpactCampaignSchema, data, "getCampaign");
 };
 
 // Get user's impact stats
@@ -76,12 +82,14 @@ export const getUserImpactStats = async (
       };
     }
 
-    const totalContributed = contributions.reduce(
+    const validContributions = validateArray(UserImpactSchema, contributions, "getUserImpactStats");
+
+    const totalContributed = validContributions.reduce(
       (sum: number, c: UserImpact) => sum + (c.contribution_amount || 0),
       0
     );
 
-    const totalImpactUnits = contributions.reduce(
+    const totalImpactUnits = validContributions.reduce(
       (sum: number, c: UserImpact) => sum + (c.impact_units || 0),
       0
     );
@@ -92,10 +100,10 @@ export const getUserImpactStats = async (
       totalContributed,
       totalImpactUnits,
       badgeLevel,
-      campaignContributions: contributions,
+      campaignContributions: validContributions,
     };
-  } catch (error) {
-    console.error("Error fetching user impact stats:", error);
+  } catch (err) {
+    logger.error("Error fetching user impact stats:", err);
     return {
       totalContributed: 0,
       totalImpactUnits: 0,
@@ -186,7 +194,7 @@ export const processOrderImpact = async (
     });
 
     if (insertError) {
-      console.error("Error inserting user impact:", insertError);
+      logger.error("Error inserting user impact:", insertError);
       return;
     }
 
@@ -199,7 +207,7 @@ export const processOrderImpact = async (
       .eq("id", targetCampaign.id);
 
     if (updateError) {
-      console.error("Error updating campaign:", updateError);
+      logger.error("Error updating campaign:", updateError);
     }
 
     // Award bonus reward points for impact
@@ -240,7 +248,7 @@ export const addManualContribution = async (
     });
 
     if (error) {
-      console.error("Error adding contribution:", error);
+      logger.error("Error adding contribution:", error);
       return false;
     }
 
@@ -262,8 +270,8 @@ export const addManualContribution = async (
     }
 
     return true;
-  } catch (error) {
-    console.error("Error adding manual contribution:", error);
+  } catch (err) {
+    logger.error("Error adding manual contribution:", err);
     return false;
   }
 };
@@ -325,8 +333,8 @@ export const getLeaderboard = async (limit: number = 10) => {
       name: profileMap.get(entry.userId) || "Anonymous",
       totalImpact: Math.floor(entry.totalImpact),
     }));
-  } catch (error) {
-    console.error("Error fetching leaderboard:", error);
+  } catch (err) {
+    logger.error("Error fetching leaderboard:", err);
     return [];
   }
 };
@@ -340,7 +348,7 @@ export const createCampaign = async (campaign: Partial<ImpactCampaign>) => {
     .single();
 
   if (error) {
-    console.error("Error creating campaign:", error);
+    logger.error("Error creating campaign:", error);
     return null;
   }
   return data;
@@ -359,7 +367,7 @@ export const updateCampaign = async (
     .single();
 
   if (error) {
-    console.error("Error updating campaign:", error);
+    logger.error("Error updating campaign:", error);
     return null;
   }
   return data;

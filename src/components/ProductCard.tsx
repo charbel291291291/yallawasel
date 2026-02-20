@@ -1,6 +1,6 @@
 import React from "react";
 import { Product } from "../types";
-import { translations, Language } from "../translations";
+import { Language } from "../translations";
 import Image from "./Image";
 
 interface ProductCardProps {
@@ -10,7 +10,6 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAdd, lang }) => {
-    const t = translations[lang];
     return (
         <div className="depth-card rounded-[2.5rem] overflow-hidden flex flex-col h-full group">
             <div className="relative h-64 overflow-hidden">

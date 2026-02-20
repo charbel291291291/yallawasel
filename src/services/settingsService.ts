@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabaseClient';
 import { AppSettings } from '@/types';
 import { logger } from '@/services/logger';
+import { AppSettingsSchema, validateResponse } from '@/validation';
 
 export const DEFAULT_SETTINGS: AppSettings = {
   store_name: 'Yalla Wasel',
@@ -45,10 +46,9 @@ export const SettingsService = {
     // but specific columns override config if they exist to keep DB consistent.
     const config = data.config || {};
 
-    return {
+    return validateResponse(AppSettingsSchema, {
       ...DEFAULT_SETTINGS,
-      ...config, // Spread JSON config first
-      // Override with strongly typed columns if they exist in the DB response
+      ...config,
       store_name: data.store_name ?? config.store_name ?? DEFAULT_SETTINGS.store_name,
       store_description: data.store_description ?? config.store_description ?? DEFAULT_SETTINGS.store_description,
       logo_url: data.logo_url ?? config.logo_url ?? DEFAULT_SETTINGS.logo_url,
@@ -56,7 +56,7 @@ export const SettingsService = {
       contact_phone: data.contact_phone ?? config.contact_phone ?? DEFAULT_SETTINGS.contact_phone,
       maintenance_mode: data.maintenance_mode ?? config.maintenance_mode ?? DEFAULT_SETTINGS.maintenance_mode,
       ticker_speed: config.ticker_speed ?? DEFAULT_SETTINGS.ticker_speed,
-    };
+    }, "SettingsService.getSettings", DEFAULT_SETTINGS);
   },
 
   /**

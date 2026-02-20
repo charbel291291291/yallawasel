@@ -11,7 +11,7 @@ interface HomePageProps {
     settings: AppSettings;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ products, addToCart, lang, settings }) => {
+const HomePage: React.FC<HomePageProps> = ({ products, addToCart, lang }) => {
     const t = translations[lang];
     return (
         <div className="space-y-12 pb-12">

@@ -9,7 +9,7 @@ let deferredPromptGlobal: BeforeInstallPromptEvent | null = null;
 
 const InstallLanding: React.FC = () => {
   const [isIOS, setIsIOS] = useState(false);
-  const [canInstall, setCanInstall] = useState(false);
+  const [, setCanInstall] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
 

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { CartItem, User } from '../types';
 import { translations, Language } from '../translations';
 import { Link } from 'react-router-dom';
@@ -15,8 +15,8 @@ interface CartDrawerProps {
   checkoutLoading: boolean;
 }
 
-const CartDrawer: React.FC<CartDrawerProps> = ({ 
-  isOpen, onClose, cart, setCart, lang, user, onCheckout, checkoutLoading 
+const CartDrawer: React.FC<CartDrawerProps> = ({
+  isOpen, onClose, cart, setCart, lang, user, onCheckout, checkoutLoading
 }) => {
   const t = translations[lang];
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -35,15 +35,15 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
-      
+
       {/* Drawer */}
       <div className={`fixed top-0 bottom-0 ${lang === 'ar' ? 'left-0' : 'right-0'} w-full max-w-md bg-white z-[101] shadow-2xl transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : (lang === 'ar' ? '-translate-x-full' : 'translate-x-full')}`}>
         <div className="flex flex-col h-full">
-          
+
           {/* Header */}
           <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-10">
             <h2 className="font-luxury text-2xl font-bold">{t.yourBag} ({cart.length})</h2>
@@ -102,18 +102,18 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
                   <span>${total}</span>
                 </div>
               </div>
-              
+
               {user ? (
-                <button 
+                <button
                   onClick={onCheckout}
                   disabled={checkoutLoading}
                   className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
-                   {checkoutLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : <><i className="fa-solid fa-lock"></i> {t.checkoutWallet}</>}
+                  {checkoutLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : <><i className="fa-solid fa-lock"></i> {t.checkoutWallet}</>}
                 </button>
               ) : (
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   onClick={onClose}
                   className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2"
                 >

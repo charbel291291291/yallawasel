@@ -1,18 +1,12 @@
-
 import React, { useEffect, useState } from 'react';
 import { ChartService, ChartSettings, LiveOffer } from '@/services/chartService';
 import LiveBreakingChart from '@/components/LiveBreakingChart';
-// import { motion } from 'framer-motion';
-import { Settings, Sliders, Palette, Activity, Plus } from 'lucide-react';
-// import { toast } from 'react-hot-toast';
+import { Sliders, Palette, Activity, Plus, TrendingUp, TrendingDown, Zap } from 'lucide-react';
 
 const ChartSettingsView: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'visuals' | 'data' | 'offers'>('visuals');
     const [settings, setSettings] = useState<ChartSettings | null>(null);
     const [offers, setOffers] = useState<LiveOffer[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // Offer Form
     const [newOffer, setNewOffer] = useState({ title: '', price: 0 });
 
     useEffect(() => {
@@ -30,7 +24,6 @@ const ChartSettingsView: React.FC = () => {
             setOffers(o);
         } catch (e) {
             console.error("Failed to load chart data", e);
-            // Don't leave user stuck, allow render with defaults/empty state
         } finally {
             setLoading(false);
         }
@@ -54,7 +47,6 @@ const ChartSettingsView: React.FC = () => {
         if (success) {
             setNewOffer({ title: '', price: 0 });
             loadData();
-            // toast.success('Offer created');
         }
     };
 
@@ -63,7 +55,7 @@ const ChartSettingsView: React.FC = () => {
         loadData();
     };
 
-    if (loading) return <div className="p-8 text-center animate-pulse">Loading Chart Capabilities...</div>;
+    if (loading) return <div className="p-12 text-center animate-pulse text-gray-400">Loading Ticker System...</div>;
 
     // Safety fallback
     const currentSettings = settings || {
@@ -88,167 +80,146 @@ const ChartSettingsView: React.FC = () => {
     } as ChartSettings;
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            <header className="flex justify-between items-center mb-6">
+        <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
+            <header className="flex justify-between items-center pb-6 border-b border-gray-100">
                 <div>
-                    {!settings && <div className="text-amber-500 text-xs font-bold mb-1">OFFLINE MODE: Using Defaults</div>}
-                    <h2 className="text-2xl font-bold flex items-center gap-2">
-                        <Activity className="text-primary" /> Live Chart Control Center
+                    <h2 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
+                        <Activity className="text-red-600" /> Live Ticker Control
                     </h2>
-                    <p className="text-gray-500 text-sm">Customize the breaking news ticker and offer visualization.</p>
+                    <p className="text-gray-500 text-sm mt-1">Manage breaking offers and customize the broadcast appearance.</p>
                 </div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setActiveTab('visuals')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'visuals' ? 'bg-primary text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                    >
-                        <Palette className="w-4 h-4 inline mr-2" /> Visuals
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('data')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'data' ? 'bg-primary text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                    >
-                        <Settings className="w-4 h-4 inline mr-2" /> Data
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('offers')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'offers' ? 'bg-primary text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                    >
-                        <Sliders className="w-4 h-4 inline mr-2" /> Offers Manager
-                    </button>
-                </div>
+                {!settings && <div className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">Offline Mode</div>}
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* PREVIEW PANEL */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                        <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">Live Preview</h3>
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                {/* PREVIEW & VISUALS */}
+                <div className="xl:col-span-2 space-y-6">
+                    {/* Live Preview */}
+                    <div className="bg-white p-6 rounded-2xl border shadow-sm ring-1 ring-slate-100">
+                        <h3 className="text-xs font-bold uppercase text-gray-400 mb-4 tracking-wider flex items-center gap-2">
+                            <Zap className="w-3 h-3" /> Live Broadcast Preview
+                        </h3>
                         <LiveBreakingChart />
                     </div>
 
-                    {/* SETTINGS PANELS */}
-                    {activeTab === 'visuals' && (
-                        <div className="bg-white p-6 rounded-2xl border shadow-sm grid grid-cols-2 gap-6">
-                            <ColorInput label="Primary Color" value={currentSettings.primary_color} onChange={(v) => handleUpdateSetting('primary_color', v)} />
-                            <ColorInput label="Background" value={currentSettings.background_color} onChange={(v) => handleUpdateSetting('background_color', v)} />
-                            <ColorInput label="Positive Trend" value={currentSettings.positive_color} onChange={(v) => handleUpdateSetting('positive_color', v)} />
-                            <ColorInput label="Negative Trend" value={currentSettings.negative_color} onChange={(v) => handleUpdateSetting('negative_color', v)} />
-                            <ColorInput label="Grid Lines" value={currentSettings.grid_color} onChange={(v) => handleUpdateSetting('grid_color', v)} />
-                            <ColorInput label="Text Color" value={currentSettings.text_color} onChange={(v) => handleUpdateSetting('text_color', v)} />
+                    {/* Simplified Color Controls (No extraneous categories) */}
+                    <div className="bg-white p-6 rounded-2xl border shadow-sm ring-1 ring-slate-100">
+                        <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <Palette className="w-4 h-4 text-gray-500" /> Breaking Colors
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="flex flex-col gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span className="text-xs font-bold uppercase text-gray-500 flex items-center gap-2">
+                                    <TrendingUp className="w-3 h-3 text-green-500" /> Up Trend
+                                </span>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="color"
+                                        value={currentSettings.positive_color}
+                                        onChange={(e) => handleUpdateSetting('positive_color', e.target.value)}
+                                        className="w-10 h-10 rounded-lg cursor-pointer border-2 border-white shadow-sm"
+                                    />
+                                    <span className="font-mono text-sm text-gray-600">{currentSettings.positive_color}</span>
+                                </div>
+                            </div>
 
-                            <div className="col-span-2 border-t pt-4 mt-2">
-                                <label className="flex items-center justify-between mb-4 cursor-pointer">
-                                    <span className="font-medium">Line Thickness ({currentSettings.line_thickness}px)</span>
+                            <div className="flex flex-col gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span className="text-xs font-bold uppercase text-gray-500 flex items-center gap-2">
+                                    <TrendingDown className="w-3 h-3 text-red-500" /> Down Trend
+                                </span>
+                                <div className="flex items-center gap-3">
                                     <input
-                                        type="range" min="1" max="10"
-                                        value={currentSettings.line_thickness}
-                                        onChange={(e) => handleUpdateSetting('line_thickness', Number(e.target.value))}
-                                        className="w-48 accent-primary"
+                                        type="color"
+                                        value={currentSettings.negative_color}
+                                        onChange={(e) => handleUpdateSetting('negative_color', e.target.value)}
+                                        className="w-10 h-10 rounded-lg cursor-pointer border-2 border-white shadow-sm"
                                     />
-                                </label>
-                                <label className="flex items-center justify-between mb-2 cursor-pointer">
-                                    <span className="font-medium">Show Smooth Curves</span>
+                                    <span className="font-mono text-sm text-gray-600">{currentSettings.negative_color}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span className="text-xs font-bold uppercase text-gray-500 flex items-center gap-2">
+                                    <Activity className="w-3 h-3 text-blue-500" /> Base Line
+                                </span>
+                                <div className="flex items-center gap-3">
                                     <input
-                                        type="checkbox"
-                                        checked={currentSettings.show_smooth_curves}
-                                        onChange={(e) => handleUpdateSetting('show_smooth_curves', e.target.checked)}
-                                        className="toggle"
+                                        type="color"
+                                        value={currentSettings.primary_color}
+                                        onChange={(e) => handleUpdateSetting('primary_color', e.target.value)}
+                                        className="w-10 h-10 rounded-lg cursor-pointer border-2 border-white shadow-sm"
                                     />
-                                </label>
-                                <label className="flex items-center justify-between cursor-pointer">
-                                    <span className="font-medium">Shadow Glow Effect</span>
-                                    <input
-                                        type="checkbox"
-                                        checked={currentSettings.show_shadow_glow}
-                                        onChange={(e) => handleUpdateSetting('show_shadow_glow', e.target.checked)}
-                                        className="toggle"
-                                    />
-                                </label>
+                                    <span className="font-mono text-sm text-gray-600">{currentSettings.primary_color}</span>
+                                </div>
                             </div>
                         </div>
-                    )}
-
-                    {activeTab === 'offers' && (
-                        <div className="bg-white p-6 rounded-2xl border shadow-sm">
-                            <form onSubmit={handleCreateOffer} className="flex gap-4 mb-8">
-                                <input
-                                    type="text"
-                                    placeholder="Offer Title (e.g. BTC-USD, Gold Pass)"
-                                    value={newOffer.title}
-                                    onChange={e => setNewOffer({ ...newOffer, title: e.target.value })}
-                                    className="flex-1 px-4 py-2 border rounded-lg"
-                                    required
-                                />
-                                <input
-                                    type="number"
-                                    placeholder="Price"
-                                    value={newOffer.price || ''}
-                                    onChange={e => setNewOffer({ ...newOffer, price: Number(e.target.value) })}
-                                    className="w-32 px-4 py-2 border rounded-lg"
-                                    required
-                                />
-                                <button type="submit" className="px-6 py-2 bg-primary text-white rounded-lg font-bold flex items-center gap-2">
-                                    <Plus className="w-4 h-4" /> Add
-                                </button>
-                            </form>
-
-                            <div className="space-y-2">
-                                {offers.map(offer => (
-                                    <div key={offer.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border hover:border-primary transition-colors">
-                                        <div>
-                                            <div className="font-bold">{offer.title}</div>
-                                            <div className="text-xs text-gray-500">{offer.status}</div>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => handleUpdatePrice(offer.id, offer.current_price - 1)}
-                                                    className="w-8 h-8 flex items-center justify-center bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                                                >-</button>
-                                                <span className="font-mono font-bold w-20 text-center text-lg">${offer.current_price}</span>
-                                                <button
-                                                    onClick={() => handleUpdatePrice(offer.id, offer.current_price + 1)}
-                                                    className="w-8 h-8 flex items-center justify-center bg-green-100 text-green-600 rounded-full hover:bg-green-200"
-                                                >+</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    </div>
                 </div>
 
-                {/* SIDEBAR HELP */}
-                <div className="space-y-6">
-                    <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
-                        <h4 className="font-bold text-blue-900 mb-2">Tips</h4>
-                        <ul className="text-sm text-blue-800 space-y-2 list-disc pl-4">
-                            <li>Use high contrast colors for better visibility.</li>
-                            <li>"Live Offers" drive the chart data automatically.</li>
-                            <li>Changing prices updates the connected clients instantly.</li>
-                        </ul>
+                {/* OFFERS MANAGER (Essential Data) */}
+                <div className="bg-white p-6 rounded-2xl border shadow-sm ring-1 ring-slate-100 h-fit">
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Sliders className="w-4 h-4 text-gray-500" /> Active Ticker Items
+                    </h3>
+
+                    <form onSubmit={handleCreateOffer} className="flex gap-2 mb-6">
+                        <input
+                            type="text"
+                            placeholder="Gold, BTC, Oil..."
+                            value={newOffer.title}
+                            onChange={e => setNewOffer({ ...newOffer, title: e.target.value })}
+                            className="flex-1 px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:bg-white transition-colors"
+                            required
+                        />
+                        <input
+                            type="number"
+                            placeholder="$"
+                            value={newOffer.price || ''}
+                            onChange={e => setNewOffer({ ...newOffer, price: Number(e.target.value) })}
+                            className="w-20 px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:bg-white"
+                            required
+                        />
+                        <button type="submit" className="px-3 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors">
+                            <Plus className="w-4 h-4" />
+                        </button>
+                    </form>
+
+                    <div className="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
+                        {offers.map(offer => (
+                            <div key={offer.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-300 transition-colors group">
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-sm text-slate-700">{offer.title}</span>
+                                    <span className="text-[10px] text-gray-400 font-mono uppercase">
+                                        {offer.movement === 'up' ? '▲' : offer.movement === 'down' ? '▼' : '−'} {offer.status}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleUpdatePrice(offer.id, offer.current_price - 1)}
+                                        className="w-7 h-7 flex items-center justify-center bg-white border border-gray-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-200 transition-all font-bold"
+                                    >
+                                        -
+                                    </button>
+                                    <span className="font-mono font-bold w-16 text-center text-sm">${offer.current_price}</span>
+                                    <button
+                                        onClick={() => handleUpdatePrice(offer.id, offer.current_price + 1)}
+                                        className="w-7 h-7 flex items-center justify-center bg-white border border-gray-200 text-green-600 rounded-lg hover:bg-green-50 hover:border-green-200 transition-all font-bold"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                        {offers.length === 0 && (
+                            <div className="text-center py-8 text-gray-400 text-xs italic">
+                                No active offers. Add one to start the ticker.
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
     );
 };
-
-const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (v: string) => void }) => (
-    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50">
-        <span className="text-sm font-medium text-gray-600">{label}</span>
-        <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-gray-400">{value}</span>
-            <input
-                type="color"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="w-8 h-8 rounded-full border-none cursor-pointer overflow-hidden"
-            />
-        </div>
-    </div>
-);
 
 export default ChartSettingsView;

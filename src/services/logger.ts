@@ -3,27 +3,32 @@ import { ENV } from "@/config/env";
 /**
  * Enhanced production-ready logger.
  * Drops all logs in production except critical errors.
+ * Uses unknown[] instead of any[] for strict type safety.
  */
 class Logger {
-    info(message: string, ...args: any[]) {
+    info(message: string, ...args: unknown[]) {
         if (ENV.isDev) {
+            // eslint-disable-next-line no-console
             console.log(`[INFO] ${message}`, ...args);
         }
     }
 
-    warn(message: string, ...args: any[]) {
+    warn(message: string, ...args: unknown[]) {
         if (ENV.isDev) {
+            // eslint-disable-next-line no-console
             console.warn(`[WARN] ${message}`, ...args);
         }
     }
 
-    error(message: string, ...args: any[]) {
-        // We keep errors even in prod, but maybe send them to a service like Sentry in the future
+    error(message: string, ...args: unknown[]) {
+        // We keep errors even in prod for monitoring/Sentry integration
+        // eslint-disable-next-line no-console
         console.error(`[ERROR] ${message}`, ...args);
     }
 
-    debug(message: string, ...args: any[]) {
+    debug(message: string, ...args: unknown[]) {
         if (ENV.isDev) {
+            // eslint-disable-next-line no-console
             console.debug(`[DEBUG] ${message}`, ...args);
         }
     }

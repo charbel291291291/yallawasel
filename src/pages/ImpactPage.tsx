@@ -23,7 +23,7 @@ interface ImpactPageProps {
     user?: User | null;
 }
 
-const ImpactPage: React.FC<ImpactPageProps> = ({ lang, settings, user }) => {
+const ImpactPage: React.FC<ImpactPageProps> = ({ lang, user }) => {
     const t = translations[lang];
     const [campaigns, setCampaigns] = useState<ImpactCampaign[]>([]);
     const [userStats, setUserStats] = useState<ImpactUserStats | null>(null);

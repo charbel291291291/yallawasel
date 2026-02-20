@@ -123,7 +123,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                     }`}
                             >
                                 <span className="group-hover:scale-110 transition-transform">
-                                    {user.name.charAt(0)}
+                                    {user.name?.charAt(0) ?? "?"}
                                 </span>
                             </Link>
                             <button

@@ -3,13 +3,12 @@ import { supabase } from "../services/supabaseClient";
 import { processOrderImpact } from "../services/impactService";
 import {
     AdminOrder,
-    OrderStatusHistoryEntry,
 } from "./types";
 
 const OrdersView: React.FC = () => {
     const [orders, setOrders] = useState<AdminOrder[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
-    const [orderHistory, setOrderHistory] = useState<OrderStatusHistoryEntry[]>([]);
+    const [, setOrderHistory] = useState<Array<{ id: string; order_id: string; status: string; note: string; created_at: string }>>([]);
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [adminNote, setAdminNote] = useState("");

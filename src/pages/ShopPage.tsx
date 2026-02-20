@@ -11,7 +11,7 @@ interface ShopPageProps {
 }
 
 const ShopPage: React.FC<ShopPageProps> = ({ products, addToCart, lang }) => {
-    const [filter, setFilter] = useState("all");
+    const [filter] = useState("all");
     const t = translations[lang];
     const filtered =
         filter === "all"

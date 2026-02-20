@@ -78,7 +78,7 @@ const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({
                 <span className="text-white/40">|</span>
                 <span className="text-green-400 font-black">{currentHappyHour?.multiplier}X POINTS</span>
                 <span className="px-2 py-0.5 bg-white/20 rounded text-[10px] font-bold">LIMITED TIME</span>
-                {currentHappyHour?.bonus_points > 0 && (
+                {(currentHappyHour?.bonus_points ?? 0) > 0 && (
                   <>
                     <span className="text-white/40">+</span>
                     <span className="text-blue-300 font-bold">{currentHappyHour?.bonus_points} BONUS</span>

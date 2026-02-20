@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { User, Order } from "../types";
 import { translations, Language } from "../translations";
 import { supabase } from "../services/supabaseClient";

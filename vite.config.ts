@@ -67,6 +67,7 @@ export default defineConfig(({ mode }) => {
       outDir: "dist",
       sourcemap: mode === "development",
       minify: "terser",
+      chunkSizeWarningLimit: 600, // AdminPanel is lazy-loaded, 574KB uncompressed is acceptable
       emptyOutDir: true, // Ensure old files are removed
       rollupOptions: {
         input: {
@@ -79,10 +80,8 @@ export default defineConfig(({ mode }) => {
           assetFileNames: 'assets/[name]-[hash].[ext]',
           manualChunks: (id) => {
             if (id.includes('node_modules')) {
-              if (id.includes('react')) return 'vendor-react';
               if (id.includes('@supabase')) return 'vendor-supabase';
               if (id.includes('firebase')) return 'vendor-firebase';
-              return 'vendor';
             }
           }
         },

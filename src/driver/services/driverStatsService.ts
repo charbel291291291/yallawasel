@@ -1,4 +1,6 @@
 import { supabase } from "@/services/supabaseClient";
+import { logger } from "@/services/logger";
+import { DailyStatsSchema, validateResponse } from "@/validation";
 
 interface DailyStats {
     earnings: number;
@@ -42,11 +44,13 @@ export const getDailyStats = async (driverId: string): Promise<DailyStats> => {
             .eq("date", today)
             .single();
 
-        return {
+        const rawStats = {
             earnings: todaysEarnings,
             deliveries: todaysDeliveries ?? 0,
             goal: goalData ?? defaults.goal,
         };
+
+        return validateResponse(DailyStatsSchema, rawStats, "getDailyStats", defaults);
     } catch {
         return defaults;
     }
@@ -59,7 +63,9 @@ export const getDriverAchievements = async (driverId: string) => {
             .select("*")
             .eq("driver_id", driverId);
         return data ?? [];
-    } catch {
+    } catch (err) {
+        logger.error("Error fetching driver achievements:", err);
         return [];
     }
 };
+

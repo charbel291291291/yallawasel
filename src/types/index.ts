@@ -230,7 +230,7 @@ export interface UserImpact {
   created_at: string;
   user_id: string;
   campaign_id: string;
-  order_id: string;
+  order_id?: string;
   contribution_amount: number;
   impact_units: number;
   impact_type: string;

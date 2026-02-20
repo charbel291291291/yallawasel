@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
-import { translations, Language } from "../translations";
+import { Language } from "../translations";
 
 interface OrderStatusHistory {
   id: string;
@@ -59,7 +59,6 @@ interface OrderTrackingPageProps {
 
 const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ lang }) => {
   const { id } = useParams<{ id: string }>();
-  const t = translations[lang];
   const [order, setOrder] = useState<Order | null>(null);
   const [history, setHistory] = useState<OrderStatusHistory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -229,8 +228,8 @@ const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ lang }) => {
               <div key={step.key} className="flex flex-col items-center">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${index <= currentStep
-                      ? "bg-primary text-white"
-                      : "bg-gray-200 text-gray-400"
+                    ? "bg-primary text-white"
+                    : "bg-gray-200 text-gray-400"
                     }`}
                 >
                   <i className={`fas ${step.icon} text-sm`}></i>
@@ -249,8 +248,8 @@ const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ lang }) => {
           <div className="mt-6 text-center">
             <span
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${statusColors[order.status]
-                  ? statusColors[order.status] + " text-white"
-                  : "bg-gray-500 text-white"
+                ? statusColors[order.status] + " text-white"
+                : "bg-gray-500 text-white"
                 }`}
             >
               <i

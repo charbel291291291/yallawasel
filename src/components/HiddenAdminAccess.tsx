@@ -38,13 +38,11 @@ const HiddenAdminAccess: React.FC<HiddenAdminAccessProps> = ({ children }) => {
 
   // 5 clicks on logo - works on any click, not just links
   useEffect(() => {
-    let clickCount = 0;
-    let lastClickTime = 0;
     // Store ref to persist across renders
     const clickData = { count: 0, lastTime: 0 };
 
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
+    const handleClick = (e: Event) => {
+      const target = (e as MouseEvent).target as HTMLElement;
       // Look for logo click anywhere in the app
       const logoElement =
         target.closest('[data-logo="true"]') ||
@@ -144,9 +142,8 @@ const HiddenAdminAccess: React.FC<HiddenAdminAccessProps> = ({ children }) => {
                   {Array.from({ length: 6 }).map((_, i) => (
                     <div
                       key={i}
-                      className={`w-3 h-3 rounded-full ${
-                        i < pin.length ? "bg-yellow-500" : "bg-gray-700"
-                      }`}
+                      className={`w-3 h-3 rounded-full ${i < pin.length ? "bg-yellow-500" : "bg-gray-700"
+                        }`}
                     />
                   ))}
                 </div>
@@ -181,11 +178,10 @@ const HiddenAdminAccess: React.FC<HiddenAdminAccessProps> = ({ children }) => {
                   <button
                     type="submit"
                     disabled={pin.length !== 6}
-                    className={`h-12 rounded-lg font-bold ${
-                      pin.length === 6
+                    className={`h-12 rounded-lg font-bold ${pin.length === 6
                         ? "bg-yellow-500 text-black"
                         : "bg-gray-700 text-gray-500"
-                    }`}
+                      }`}
                   >
                     OK
                   </button>

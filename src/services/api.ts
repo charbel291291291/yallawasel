@@ -3,6 +3,14 @@
 
 import { supabase } from "./supabaseClient";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import {
+  OrderResponseSchema,
+  ProductSchema,
+  HappyHourSchema,
+  ImpactCampaignSchema,
+  validateArray,
+  validateSingle,
+} from "@/validation";
 
 // Types
 export interface Product {
@@ -32,19 +40,21 @@ export interface OrderItem {
 export interface Order {
   id: string;
   user_id: string;
+  driver_id?: string | null;
   full_name: string;
   phone: string;
   address: string;
   total: number;
-  delivery_fee: number;
+  delivery_fee?: number;
   status: string;
   payment_method: string;
-  delivery_zone: string;
+  delivery_zone?: string | null;
   items: OrderItem[];
-  notes?: string;
-  admin_notes?: string;
+  notes?: string | null;
+  admin_notes?: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string | null;
+  profiles?: { full_name?: string | null; phone?: string | null; email?: string | null };
 }
 
 export interface HappyHour {
@@ -53,7 +63,7 @@ export interface HappyHour {
   name: string;
   start_time: string;
   end_time: string;
-  days_of_week: number[];
+  days_of_week: number[] | null;
   multiplier: number;
   bonus_points: number;
   active: boolean;
@@ -93,7 +103,7 @@ export const OrdersAPI = {
 
     const { data, error } = await query;
     if (error) throw error;
-    return data || [];
+    return validateArray(OrderResponseSchema, data, "OrdersAPI.getAll");
   },
 
   // Fetch single order
@@ -104,7 +114,7 @@ export const OrdersAPI = {
       .eq("id", id)
       .single();
     if (error) throw error;
-    return data;
+    return validateSingle(OrderResponseSchema, data, "OrdersAPI.getById");
   },
 
   // Create new order
@@ -162,7 +172,7 @@ export const ProductsAPI = {
     }
     const { data, error } = await query;
     if (error) throw error;
-    return data || [];
+    return validateArray(ProductSchema, data, "ProductsAPI.getAll");
   },
 
   async getById(id: string): Promise<Product | null> {
@@ -172,7 +182,7 @@ export const ProductsAPI = {
       .eq("id", id)
       .single();
     if (error) throw error;
-    return data;
+    return validateSingle(ProductSchema, data, "ProductsAPI.getById");
   },
 
   async create(product: Partial<Product>): Promise<Product> {
@@ -222,7 +232,7 @@ export const HappyHoursAPI = {
       .eq("active", true)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data || [];
+    return validateArray(HappyHourSchema, data, "HappyHoursAPI.getActive");
   },
 
   async getAll(): Promise<HappyHour[]> {
@@ -231,7 +241,7 @@ export const HappyHoursAPI = {
       .select("*")
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data || [];
+    return validateArray(HappyHourSchema, data, "HappyHoursAPI.getAll");
   },
 
   async create(hour: Partial<HappyHour>): Promise<HappyHour> {
@@ -287,7 +297,7 @@ export const ImpactAPI = {
       .eq("show_on_impact_page", true)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data || [];
+    return validateArray(ImpactCampaignSchema, data, "ImpactAPI.getActive");
   },
 
   async getAll(): Promise<ImpactCampaign[]> {
@@ -296,7 +306,7 @@ export const ImpactAPI = {
       .select("*")
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data || [];
+    return validateArray(ImpactCampaignSchema, data, "ImpactAPI.getAll");
   },
 
   subscribe(callback: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void) {

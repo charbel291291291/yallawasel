@@ -130,10 +130,6 @@ const InstallGate: React.FC<InstallGateProps> = ({ children }) => {
     setDeferredPrompt(null);
   };
 
-  // While checking, show install screen (never return null/blank)
-  // This ensures no blank page ever
-  const showInstallScreen = isInstalled === null || !isMobile || !isInstalled;
-
   // Desktop or installed - render children
   if (!isMobile || isInstalled) {
     return <>{children}</>;

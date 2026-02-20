@@ -51,21 +51,7 @@ interface LogItemProps {
     type: string;
 }
 
-const LogItem: React.FC<LogItemProps> = ({ label, time, type }) => {
-    const getIcon = () => {
-        switch (type) {
-            case "update":
-                return "fa-pen text-blue-500";
-            case "order":
-                return "fa-shopping-bag text-green-500";
-            case "alert":
-                return "fa-bell text-amber-500";
-            case "system":
-                return "fa-server text-slate-500";
-            default:
-                return "fa-circle-info text-slate-400";
-        }
-    };
+const LogItem: React.FC<LogItemProps> = ({ label, time }) => {
 
     return (
         <div className="flex gap-3 group">
