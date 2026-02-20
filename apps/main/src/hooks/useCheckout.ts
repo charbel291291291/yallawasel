@@ -38,10 +38,16 @@ export function useCheckout(
                 .from("orders")
                 .insert({
                     user_id: user.id,
+                    customer_id: user.id, // Real-time lifecycle field
                     full_name: profile?.full_name || user.name || "Customer",
                     phone: profile?.phone || user.phone || "",
                     address: profile?.address || "",
+                    pickup_address: "Main Branch (Shop)", // For driver preview
+                    dropoff_address: profile?.address || "", // For driver preview
+                    pickup_lat: 33.8938, // Central Beirut / Shop Coord
+                    pickup_lng: 35.5018,
                     total: total,
+                    price: total, // Real-time lifecycle field
                     delivery_fee: deliveryFee,
                     status: "pending",
                     payment_method: "cash",

@@ -38,16 +38,20 @@ interface Order {
 
 const statusSteps = [
   { key: "pending", label: "Pending", icon: "fa-clock" },
+  { key: "assigned", label: "Driver Found", icon: "fa-user-check" },
   { key: "approved", label: "Approved", icon: "fa-check-circle" },
   { key: "preparing", label: "Preparing", icon: "fa-box" },
+  { key: "picked_up", label: "Picked Up", icon: "fa-dolly" },
   { key: "out_for_delivery", label: "On the Way", icon: "fa-truck" },
   { key: "delivered", label: "Delivered", icon: "fa-home" },
 ];
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-500",
+  assigned: "bg-indigo-500",
   approved: "bg-blue-500",
   preparing: "bg-purple-500",
+  picked_up: "bg-cyan-500",
   out_for_delivery: "bg-orange-500",
   delivered: "bg-green-500",
   cancelled: "bg-red-500",
