@@ -19,7 +19,7 @@ export default defineConfig({
                 display: 'standalone',
                 start_url: '/',
                 scope: '/',
-                id: '/',
+                id: 'yalla-wasel-driver',
                 icons: [
                     {
                         src: '/icons/icon-192x192.png',
