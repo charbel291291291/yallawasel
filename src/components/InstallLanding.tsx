@@ -135,7 +135,7 @@ const InstallLanding: React.FC = () => {
           {/* Logo */}
           <div style={{ marginBottom: "2rem" }}>
             <img
-              src="/assets/logo.png"
+              src="/assets/Logo.png"
               alt="Yalla Wasel"
               style={{
                 width: "160px",

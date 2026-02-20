@@ -93,8 +93,8 @@ const showNotification = (payload: NotificationPayload) => {
     // Create a notification that appears even when the app is in the foreground
     new Notification(notification.title, {
       body: notification.body,
-      icon: notification.icon || "/pwalogo.png",
-      badge: "/pwalogo.png",
+      icon: notification.icon || "/icons/icon-192x192.png",
+      badge: "/icons/icon-192x192.png",
       tag: payload.messageId,
     });
   }

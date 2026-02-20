@@ -21,7 +21,7 @@ const SplashScreen: React.FC = () => {
     <div className="fixed inset-0 z-[9999] bg-primary flex flex-col items-center justify-center">
       <div className="w-32 h-32 bg-white rounded-2xl flex items-center justify-center shadow-2xl animate-float">
         <img
-          src="/pwalogo.png"
+          src="/assets/Logo.png"
           alt="Yalla Wasel"
           className="w-24 h-24 object-contain"
         />

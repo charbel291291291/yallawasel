@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
       react(),
       VitePWA({
         registerType: "autoUpdate", // Forces immediate update when new content is found
-        includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
+        includeAssets: ["icons/favicon.png", "icons/icon-512x512.png", "icons/icon-maskable-512.png"],
         manifest: false, // Managed externally or via separate file
         workbox: {
           globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
