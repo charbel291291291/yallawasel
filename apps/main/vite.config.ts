@@ -81,8 +81,13 @@ export default defineConfig(({ mode }) => {
           assetFileNames: 'assets/[name]-[hash].[ext]',
           manualChunks: (id) => {
             if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'vendor-core';
               if (id.includes('@supabase')) return 'vendor-supabase';
               if (id.includes('firebase')) return 'vendor-firebase';
+              if (id.includes('framer-motion')) return 'vendor-ui-motion';
+              if (id.includes('recharts')) return 'vendor-charts';
+              if (id.includes('lucide-react')) return 'vendor-icons';
+              return 'vendor-misc';
             }
           }
         },

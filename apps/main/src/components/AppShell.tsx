@@ -7,8 +7,8 @@ import {
 import { Language } from "@/translations";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useProducts } from "@/hooks/useProducts";
 import { useCheckout } from "@/hooks/useCheckout";
+import { useStore, setupRealtimeListeners } from "@/store/useStore";
 
 // Components
 import Navbar from "@/components/Navbar";
@@ -20,6 +20,7 @@ import BreakingNewsTicker from "@/components/BreakingNewsTicker";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AppRouter from "@/router/AppRouter";
+import { telemetry } from "@/services/telemetry";
 
 const AppShell: React.FC = () => {
     const [cart, setCart] = useState<CartItem[]>([]);
@@ -29,8 +30,10 @@ const AppShell: React.FC = () => {
     const { settings } = useSettings();
     const location = useLocation();
     const { user, handleLogout, authLoading } = useAuth();
-    const { products, happyHours } = useProducts();
     const { setUser } = useAuth(); // for checkout updates
+
+    const happyHours = useStore(s => s.happyHours);
+    const fetchInitialData = useStore(s => s.fetchInitialData);
 
     const {
         checkoutLoading,
@@ -45,6 +48,15 @@ const AppShell: React.FC = () => {
         document.documentElement.lang = lang;
     }, [lang]);
 
+    useEffect(() => {
+        // Initialize store data
+        fetchInitialData();
+
+        // Setup real-time pipeline
+        const cleanup = setupRealtimeListeners();
+        return cleanup;
+    }, [fetchInitialData]);
+
     const toggleLanguage = useCallback(() => {
         startTransition(() => {
             setLang((prev: Language) => (prev === "en" ? "ar" : "en"));
@@ -52,18 +64,28 @@ const AppShell: React.FC = () => {
     }, []);
 
     const addToCart = useCallback((product: Product) => {
+        const startTime = performance.now();
+
+        // Priority 1: Instant feedback (Open Cart)
+        setIsCartOpen(true);
+
+        // Priority 2: Deferred state update
         startTransition(() => {
             setCart((prev: CartItem[]) => {
-                const existing = prev.find((p) => p.id === product.id);
-                if (existing)
-                    return prev.map((p) =>
-                        p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p
-                    );
+                const existingIndex = prev.findIndex((p) => p.id === product.id);
+                if (existingIndex > -1) {
+                    const next = [...prev];
+                    next[existingIndex] = {
+                        ...next[existingIndex],
+                        quantity: next[existingIndex].quantity + 1
+                    };
+                    return next;
+                }
                 return [...prev, { ...product, quantity: 1 }];
             });
         });
-        // Use a small delay for smoother UI feedback
-        setTimeout(() => setIsCartOpen(true), 50);
+
+        telemetry.logInteraction('addToCart', performance.now() - startTime);
     }, []);
 
     const isAdminRoute = location.pathname.startsWith("/admin");
@@ -100,7 +122,6 @@ const AppShell: React.FC = () => {
 
             <main className={isAdminRoute ? "" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"}>
                 <AppRouter
-                    products={products}
                     addToCart={addToCart}
                     lang={lang}
                     settings={settings}

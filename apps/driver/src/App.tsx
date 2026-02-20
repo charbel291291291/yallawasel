@@ -1,28 +1,30 @@
 import React from 'react';
 
+import DriverRootLayout from './layouts/DriverRootLayout';
+
 const App: React.FC = () => {
     return (
-        <div style={{
-            height: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#000',
-            color: '#fff',
-            fontFamily: 'sans-serif'
-        }}>
-            <h1 style={{ fontSize: '2rem', fontWeight: 900 }}>Yalla Wasel Driver</h1>
-            <p style={{ color: '#aaa' }}>Logistics & Delivery Portal</p>
-            <div style={{
-                marginTop: '2rem',
-                padding: '1rem',
-                border: '1px solid #333',
-                borderRadius: '12px'
-            }}>
-                <p>Driver authentication and dashboard coming soon.</p>
+        <DriverRootLayout>
+            <div className="p-8 lg:p-12 h-fit">
+                <h1 className="text-5xl font-black mb-2 tracking-tight">Active Terminal</h1>
+                <p className="text-white/40 font-bold uppercase tracking-widest text-xs mb-12">Logistics & Delivery Operational Dashboard</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-slate-900/50 border border-white/10 p-6 rounded-[2rem] hover:border-red-500/50 transition-colors group">
+                        <h3 className="text-xl font-bold mb-2">Authenticated Status</h3>
+                        <p className="text-white/60 mb-6 text-sm">Security credentials verified for current session.</p>
+                        <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-full w-full bg-green-500"></div>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-900/50 border border-white/10 p-6 rounded-[2rem] opacity-50">
+                        <h3 className="text-xl font-bold mb-2">Live Map View</h3>
+                        <p className="text-white/60 text-sm">Real-time geospatial tracking coming in v1.1</p>
+                    </div>
+                </div>
             </div>
-        </div>
+        </DriverRootLayout>
     );
 };
 

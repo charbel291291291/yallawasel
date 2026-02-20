@@ -24,20 +24,21 @@ const PageSpinner = () => (
     </div>
 );
 
+import { useStore } from "@/store/useStore";
+
 interface AppRouterProps {
-    products: Product[];
     addToCart: (p: Product) => void;
     lang: Language;
     settings: AppSettings;
 }
 
 const AppRouter: React.FC<AppRouterProps> = ({
-    products,
     addToCart,
     lang,
     settings,
 }) => {
     const { user, handleLogout } = useAuth();
+    const products = useStore((state) => state.products);
 
     return (
         <Suspense fallback={<PageSpinner />}>

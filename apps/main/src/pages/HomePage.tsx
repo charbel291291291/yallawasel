@@ -13,6 +13,8 @@ interface HomePageProps {
 
 const HomePage: React.FC<HomePageProps> = ({ products, addToCart, lang }) => {
     const t = translations[lang];
+    const heroProducts = React.useMemo(() => products.slice(0, 3), [products]);
+
     return (
         <div className="space-y-12 pb-12">
             <section className="relative h-[450px] rounded-[2.5rem] overflow-hidden shadow-2xl group animate-3d-entrance">
@@ -57,7 +59,7 @@ const HomePage: React.FC<HomePageProps> = ({ products, addToCart, lang }) => {
                     </Link>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {products.slice(0, 3).map((p: Product, i: number) => (
+                    {heroProducts.map((p: Product, i: number) => (
                         <div
                             key={p.id}
                             className="animate-3d-entrance"

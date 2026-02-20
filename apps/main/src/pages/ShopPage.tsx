@@ -13,10 +13,12 @@ interface ShopPageProps {
 const ShopPage: React.FC<ShopPageProps> = ({ products, addToCart, lang }) => {
     const [filter] = useState("all");
     const t = translations[lang];
-    const filtered =
+
+    const filtered = React.useMemo(() =>
         filter === "all"
             ? products
-            : products.filter((p: Product) => p.category === filter);
+            : products.filter((p: Product) => p.category === filter)
+        , [filter, products]);
     return (
         <div className="space-y-12 py-6">
             <div className="text-center max-w-2xl mx-auto mb-16">

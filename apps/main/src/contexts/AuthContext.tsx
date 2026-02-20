@@ -89,13 +89,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
     }, []);
 
-    const value = {
+    const value = React.useMemo(() => ({
         user,
         setUser,
         authLoading,
         handleLogout,
         isAdmin: user?.isAdmin || false,
-    };
+    }), [user, authLoading, handleLogout]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

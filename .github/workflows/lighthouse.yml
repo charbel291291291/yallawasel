@@ -1,0 +1,28 @@
+name: Performance Guard Rails
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  performance-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Build main app
+        run: npm run build --workspace apps/main
+        
+      - name: Run Lighthouse Audit
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            http://localhost:3000/
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configPath: ./.github/lighthouserc.json

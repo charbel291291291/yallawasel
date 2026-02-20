@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Performance Optimization: Render Containment */
+.contain-layout {
+  contain: layout;
+}
+
+.contain-paint {
+  contain: paint;
+}
+
+.contain-strict {
+  contain: strict;
+}
+
+/* GPU Acceleration for complex animations */
+.gpu {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform;
+}
+
+/* Eliminate forced synchronous layouts */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 /* Custom Animations for Yalla Wasel Animated Splash */
 
 @keyframes float {

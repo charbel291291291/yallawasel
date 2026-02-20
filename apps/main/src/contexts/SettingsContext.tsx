@@ -92,8 +92,17 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const value = React.useMemo(() => ({
+    settings,
+    loading,
+    error,
+    isReady,
+    updateSettings,
+    refreshSettings: fetchSettings
+  }), [settings, loading, error, isReady, updateSettings]);
+
   return (
-    <SettingsContext.Provider value={{ settings, loading, error, isReady, updateSettings, refreshSettings: fetchSettings }}>
+    <SettingsContext.Provider value={value}>
       {children}
     </SettingsContext.Provider>
   );

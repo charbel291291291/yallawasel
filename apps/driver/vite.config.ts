@@ -56,6 +56,17 @@ export default defineConfig({
     build: {
         outDir: 'dist',
         emptyOutDir: true,
-        sourcemap: false
+        sourcemap: false,
+        rollupOptions: {
+            output: {
+                manualChunks: (id) => {
+                    if (id.includes('node_modules')) {
+                        if (id.includes('react') || id.includes('react-dom')) return 'vendor-core';
+                        if (id.includes('lucide-react')) return 'vendor-icons';
+                        return 'vendor-utils';
+                    }
+                }
+            }
+        }
     }
 });

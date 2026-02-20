@@ -9,9 +9,9 @@ interface ProductCardProps {
     lang: Language;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onAdd, lang }) => {
+const ProductCard: React.FC<ProductCardProps> = React.memo(({ product, onAdd, lang }) => {
     return (
-        <div className="depth-card rounded-[2.5rem] overflow-hidden flex flex-col h-full group">
+        <div className="depth-card rounded-[2.5rem] overflow-hidden flex flex-col h-full group contain-layout">
             <div className="relative h-64 overflow-hidden">
                 <Image
                     src={product.image}
@@ -54,6 +54,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAdd, lang }) => {
             </div>
         </div>
     );
-};
+});
 
 export default ProductCard;
