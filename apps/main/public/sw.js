@@ -1,6 +1,5 @@
-// Service Worker for Yalla Wasel PWA
-
-const CACHE_NAME = "yalla-wasel-v1.0.1";
+// Service Worker for Yalla Wasel Customer PWA
+const CACHE_NAME = "yalla-main-v1.2";
 const urlsToCache = [
   "/",
   "/index.html",
@@ -106,15 +105,12 @@ self.addEventListener("fetch", (event) => {
 // Handle POST requests for sync operations
 async function handlePostRequest(event) {
   try {
-    // Try to send the request immediately
     const response = await fetch(event.request.clone());
     return response;
   } catch (error) {
-    // If fetch fails, store the request for later sync
     const requestClone = event.request.clone();
     const payload = await requestClone.json();
 
-    // Store the request in IndexedDB for later sync
     const queue = await getSyncQueue();
     queue.push({
       url: event.request.url,
@@ -125,15 +121,14 @@ async function handlePostRequest(event) {
 
     await setSyncQueue(queue);
 
-    // Register sync event to process the queue when online
     if ("sync" in self.registration) {
-      await self.registration.sync.register("sync-requests");
+      await self.registration.sync.register("sync-requests-main");
     }
 
     return new Response(
       JSON.stringify({
         queued: true,
-        message: "Request queued for offline sync",
+        message: "Request queued for offline sync (Main)",
       }),
       {
         status: 200,
@@ -142,6 +137,18 @@ async function handlePostRequest(event) {
     );
   }
 }
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
+self.addEventListener("sync", (event) => {
+  if (event.tag === "sync-requests-main") {
+    event.waitUntil(processSyncQueue());
+  }
+});
 
 // IndexedDB helpers for sync queue
 function getSyncQueue() {
@@ -208,12 +215,8 @@ function setSyncQueue(queue) {
   });
 }
 
-// Background sync handler
-self.addEventListener("sync", (event) => {
-  if (event.tag === "sync-requests") {
-    event.waitUntil(processSyncQueue());
-  }
-});
+// Background sync handled above in main listener
+
 
 async function processSyncQueue() {
   const queue = await getSyncQueue();

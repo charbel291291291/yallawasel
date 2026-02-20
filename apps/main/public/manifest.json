@@ -1,8 +1,10 @@
 {
   "name": "Yalla Wasel | Luxury Kits & Services",
   "short_name": "Yalla",
+  "id": "yalla-wasel-main",
   "description": "Luxury Lebanese Super-Kit PWA Platform",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
@@ -32,13 +34,6 @@
       "type": "image/png",
       "form_factor": "wide",
       "label": "Yalla Wasel Splash Screen"
-    },
-    {
-      "src": "/assets/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Yalla Wasel Mobile Home"
     }
   ],
   "categories": [
@@ -47,6 +42,5 @@
     "utilities"
   ],
   "lang": "en-US",
-  "dir": "ltr",
-  "scope": "/"
+  "dir": "ltr"
 }
