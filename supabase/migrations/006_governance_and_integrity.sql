@@ -209,7 +209,7 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION run_full_integrity_drill() TO authenticated;
-GRANT SELECT ON ALL VIEWS IN SCHEMA public TO service_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO service_role;
 
 COMMENT ON VIEW public.audit_unsecured_policies IS 'Pre-deploy check: Detects USING(true) or WITH CHECK(true) policies.';
 COMMENT ON FUNCTION public.get_decayed_risk_score IS 'Calculates survival risk using a 7-day half-life decay model.';
