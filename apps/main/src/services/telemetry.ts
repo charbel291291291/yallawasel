@@ -36,7 +36,10 @@ class TelemetryService {
     private reportMetric = (metric: Metric) => {
         // Log to console in development
         if (!this.isProduction) {
-            console.log(`[Performance] ${metric.name}:`, {
+            const isHighINP = metric.name === 'INP' && metric.value > 150;
+            const logFn = isHighINP ? console.error : console.log;
+
+            logFn(`[Performance] ${isHighINP ? 'CRITICAL ' : ''}${metric.name}:`, {
                 value: metric.value,
                 id: metric.id,
                 rating: metric.rating,

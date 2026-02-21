@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition, memo } from 'react';
 import { useDriverStore } from '../../../store/useDriverStore';
 import { useI18n } from '../../../hooks/useI18n';
 import { Order } from '../../../types';
+import { performanceService } from '../../../services/performanceService';
 
-export const IncomingOrdersPanel: React.FC = () => {
+export const IncomingOrdersPanel: React.FC = memo(() => {
     const { incomingOrders, isOnline, status, isShiftActive } = useDriverStore();
     const { t } = useI18n();
 
@@ -46,15 +47,16 @@ export const IncomingOrdersPanel: React.FC = () => {
             </div>
         </section>
     );
-};
+});
 
-const MissionCard: React.FC<{ order: Order }> = ({ order }) => {
+const MissionCard: React.FC<{ order: Order }> = memo(({ order }) => {
     const { acceptOrder, declineOrder, surgeMultiplier, tier } = useDriverStore();
     const { t, isRTL } = useI18n();
     const [progress, setProgress] = useState(100);
     const [isExiting, setIsExiting] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [, startTransition] = useTransition();
 
     useEffect(() => {
         const duration = 12000;
@@ -65,7 +67,7 @@ const MissionCard: React.FC<{ order: Order }> = ({ order }) => {
             setProgress(prev => {
                 if (prev <= 0) {
                     clearInterval(timer);
-                    handleDecline();
+                    performanceService.safeInteraction(handleDecline)();
                     return 0;
                 }
                 return prev - step;
@@ -75,35 +77,48 @@ const MissionCard: React.FC<{ order: Order }> = ({ order }) => {
         return () => clearInterval(timer);
     }, []);
 
-    const handleAccept = async () => {
+    const handleAccept = performanceService.safeInteraction(async () => {
         if (isProcessing) return;
+
+        // Instant visual feedback
         setIsProcessing(true);
         setError(null);
 
         try {
             const success = await acceptOrder(order);
-            if (success) {
-                setIsExiting(true);
-            } else {
-                setError('Mission Acquired by Another Unit');
-                setIsProcessing(false);
-                setTimeout(() => declineOrder(order.id, 'Conflict'), 2000);
-            }
+            startTransition(() => {
+                if (success) {
+                    setIsExiting(true);
+                } else {
+                    setError('Mission Acquired by Another Unit');
+                    setIsProcessing(false);
+                    setTimeout(() => declineOrder(order.id, 'Conflict'), 2000);
+                }
+            });
         } catch (e) {
-            setError('System Link Error');
-            setIsProcessing(false);
+            startTransition(() => {
+                setError('System Link Error');
+                setIsProcessing(false);
+            });
         }
-    };
+    });
 
-    const handleDecline = () => {
+    const handleDecline = performanceService.safeInteraction(() => {
         setIsExiting(true);
-        setTimeout(() => declineOrder(order.id, 'Manual Rejection'), 300);
-    };
+        setTimeout(() => {
+            startTransition(() => {
+                declineOrder(order.id, 'Manual Rejection');
+            });
+        }, 300);
+    });
 
     const priorityScore = (tier === 'Gold' ? 1.2 : tier === 'Silver' ? 1.1 : 1.0) * surgeMultiplier;
 
     return (
-        <div className={`group relative terminal-card overflow-hidden transition-all duration-500 transform ${isExiting ? 'scale-95 opacity-0 translate-x-12' : 'scale-100 opacity-100 translate-x-0'} ${isRTL ? 'font-arabic' : ''}`}>
+        <div
+            className={`group relative terminal-card overflow-hidden transition-all duration-500 transform ${isExiting ? 'scale-95 opacity-0 translate-x-12' : 'scale-100 opacity-100 translate-x-0'} ${isRTL ? 'font-arabic' : ''}`}
+            style={{ contain: 'layout paint' }}
+        >
 
             {/* Expiration Progress Bar */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/5 z-0"></div>
@@ -189,4 +204,4 @@ const MissionCard: React.FC<{ order: Order }> = ({ order }) => {
             </div>
         </div>
     );
-};
+});

@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
+import { unstable_batchedUpdates } from 'react-dom';
 import { useDriverStore } from '../store/useDriverStore';
 import { MissionService } from '../services/missionService';
 import { WalletService } from '../services/walletService';
 
 /**
- * PRODUCTION REALTIME HOOK
- * Orchestrates all Supabase Realtime subscriptions with high reliability.
+ * ARCHITECTURAL HARDENING: REALTIME SAFETY
+ * Uses React 18 batching and selective subscription logic to prevent main-thread flooding.
+ * Implementation of Phase 3 rules.
  */
 export const useRealtime = () => {
     const {
@@ -23,19 +25,24 @@ export const useRealtime = () => {
 
         console.log('[Realtime] Establishing operational uplink...');
 
-        // 1. Subscribe to Assignments (only if IDLE or Online)
+        // 1. Subscribe to Assignments
+        // Filtering is handled at the DB level via MissionService (pending status only)
         const missionSub = MissionService.subscribeToNewMissions((newOrder) => {
             if (isOnline && !activeOrder) {
-                const currentOrders = useDriverStore.getState().incomingOrders;
-                setIncomingOrders([newOrder, ...currentOrders]);
-                addLogEntry('accept', 'New assignment detected in sector');
+                unstable_batchedUpdates(() => {
+                    const currentOrders = useDriverStore.getState().incomingOrders;
+                    setIncomingOrders([newOrder, ...currentOrders]);
+                    addLogEntry('accept', 'New assignment detected in sector');
+                });
             }
         });
 
-        // 2. Subscribe to Wallet/Financial Changes
+        // 2. Subscribe to Wallet/Financial Changes (Filtered by profile.id)
         const walletSub = WalletService.subscribeToWallet(profile.id, (_update) => {
-            syncOperationalState();
-            addLogEntry('delivered', 'Financial ledger updated');
+            unstable_batchedUpdates(() => {
+                syncOperationalState();
+                addLogEntry('delivered', 'Financial ledger updated');
+            });
         });
 
         return () => {
@@ -43,5 +50,5 @@ export const useRealtime = () => {
             missionSub.unsubscribe();
             walletSub.unsubscribe();
         };
-    }, [profile?.id, isShiftActive, isOnline, !!activeOrder, setIncomingOrders, syncOperationalState, addLogEntry]);
+    }, [profile?.id, isShiftActive, isOnline, !!activeOrder]);
 };

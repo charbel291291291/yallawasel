@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -22,15 +22,19 @@ interface MapProps {
     dropoffLocation?: { lat: number; lng: number } | null;
 }
 
-// Helper to auto-center the map
-function ChangeView({ center, zoom }: { center: L.LatLngExpression, zoom: number }) {
+/**
+ * ARCHITECTURAL HARDENING: MAP COMPONENT
+ * Uses optimized view transitions and memoization to prevent main-thread spikes during GPS updates.
+ */
+const ChangeView = memo(({ center, zoom }: { center: L.LatLngExpression, zoom: number }) => {
     const map = useMap();
-    map.setView(center, zoom);
+    // Use flyTo for smoother transition or setView for instant but optimized update
+    map.setView(center, zoom, { animate: true });
     return null;
-}
+});
 
-export const OrderMap: React.FC<MapProps> = ({ driverLocation, pickupLocation, dropoffLocation }) => {
-    const center: L.LatLngExpression = driverLocation ? [driverLocation.lat, driverLocation.lng] : [33.8938, 35.5018]; // Default Beirut
+export const OrderMap: React.FC<MapProps> = memo(({ driverLocation, pickupLocation, dropoffLocation }) => {
+    const center: L.LatLngExpression = driverLocation ? [driverLocation.lat, driverLocation.lng] : [33.8938, 35.5018];
 
     const polyline: L.LatLngExpression[] = [];
     if (driverLocation) polyline.push([driverLocation.lat, driverLocation.lng]);
@@ -38,12 +42,16 @@ export const OrderMap: React.FC<MapProps> = ({ driverLocation, pickupLocation, d
     if (dropoffLocation) polyline.push([dropoffLocation.lat, dropoffLocation.lng]);
 
     return (
-        <div className="w-full h-full rounded-[2.5rem] overflow-hidden border border-white/5 relative shadow-inner">
+        <div
+            className="w-full h-full rounded-[2.5rem] overflow-hidden border border-white/5 relative shadow-inner"
+            style={{ contain: 'layout paint' }}
+        >
             <MapContainer
                 center={center}
                 zoom={14}
                 style={{ height: '100%', width: '100%' }}
                 zoomControl={false}
+                attributionControl={false}
             >
                 <ChangeView center={center} zoom={14} />
                 <TileLayer
@@ -82,4 +90,4 @@ export const OrderMap: React.FC<MapProps> = ({ driverLocation, pickupLocation, d
             </div>
         </div>
     );
-};
+});

@@ -6,6 +6,10 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { bootstrap } from './bootstrap';
 import { AuthProvider } from './contexts/AuthContext';
 import { AuthGate } from './components/AuthGate';
+import { performanceService } from './services/performanceService';
+
+// Initialize Main-Thread Monitoring
+performanceService.initLongTaskObserver();
 
 // Defensive Global Guard - Neutralize vendor SDK crashes before any logic executes
 if (typeof window !== "undefined") {

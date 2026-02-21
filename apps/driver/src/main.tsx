@@ -2,6 +2,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
+import { performanceService } from './services/performanceService'
+
+// Initialize Main-Thread Monitoring
+performanceService.initLongTaskObserver();
 
 // PWA Service Worker Registration
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
