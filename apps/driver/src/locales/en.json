@@ -49,5 +49,12 @@
         "step2_desc": "Maintain consistent operational status to increase tier and bonus multipliers.",
         "pwa_prompt": "Install Terminal for Direct Link",
         "get_started": "INITIATE SYSTEM LINK"
+    },
+    "pwa": {
+        "loading_app": "Loading Driver App...",
+        "install_title": "Install the App on Your Device",
+        "install_desc": "Get a faster and smoother experience by installing the app on your device.",
+        "install_now": "Install Now",
+        "already_installed": "App Successfully Installed"
     }
 }

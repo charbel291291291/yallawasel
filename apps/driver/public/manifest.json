@@ -4,8 +4,8 @@
     "description": "Tactical Mission Control for Yalla Wasel Logistics Operators",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#0E0E11",
-    "theme_color": "#dc2626",
+    "background_color": "#0A0C14",
+    "theme_color": "#B9975B",
     "orientation": "portrait",
     "icons": [
         {

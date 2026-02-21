@@ -1,29 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './features/auth/useAuth';
 import { LoginPage } from './features/auth/LoginPage';
 import { AccessPendingPage } from './features/auth/AccessPendingPage';
 import { TerminalPage } from './features/terminal/TerminalPage';
-import { LoadingScreen } from './components/LoadingScreen';
+import { InstallLanding } from './components/InstallLanding';
 import { useDriverStore } from './store/useDriverStore';
 
 const App: React.FC = () => {
     const { profile } = useAuth();
     const sessionLoading = useDriverStore(state => state.sessionLoading);
-
+    const [showLanding, setShowLanding] = useState(true);
 
     // 🔐 Verification Logic
-    // If we have a profile, we allow access for now or redirect to pending
-    // Note: In production, this should be strict.
     const isApproved = profile?.role === 'driver' && (profile?.verified === true || profile?.status === 'approved');
-
-    // If they have a profile but aren't approved yet, we show pending
-    // We treat 'pending' or null status as "not yet approved"
     const isPendingOrRejected = profile && !isApproved;
 
-    // 🔐 Session Hydration Guard
-    if (sessionLoading) {
-        return <LoadingScreen message="Establishing Satellite Uplink" />;
+    // Handle Landing Visibility
+    // We show landing while session is loading, or for a minimum duration to ensure the premium experience
+    useEffect(() => {
+        if (!sessionLoading) {
+            // Give extra time for smooth transition
+            const timer = setTimeout(() => {
+                setShowLanding(false);
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [sessionLoading]);
+
+    if (showLanding) {
+        return <InstallLanding onComplete={() => setShowLanding(false)} />;
     }
 
     return (
@@ -56,6 +62,5 @@ const App: React.FC = () => {
         </Router>
     );
 };
-
 
 export default App;
