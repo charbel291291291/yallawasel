@@ -6,7 +6,9 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+// https://vitejs.dev/config/
 export default defineConfig({
+    root: __dirname,
     plugins: [react()],
     resolve: {
         alias: {
@@ -17,7 +19,8 @@ export default defineConfig({
         outDir: 'dist',
         emptyOutDir: true,
         rollupOptions: {
-            input: 'index.html'
+            // Explicitly pointing to index.html using an absolute path relative to this config file
+            input: path.resolve(__dirname, 'index.html'),
         },
     },
 })
