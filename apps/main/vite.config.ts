@@ -14,13 +14,5 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-  },
-  preview: {
-    port: 4173,
-    strictPort: true,
-  },
   clearScreen: false
 })
