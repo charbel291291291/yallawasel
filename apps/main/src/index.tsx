@@ -2,10 +2,27 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
-import { telemetry } from './services/telemetry';
+import ErrorBoundary from './components/ErrorBoundary';
+import { bootstrap } from './bootstrap';
+import { AuthProvider } from './contexts/AuthContext';
+import { AuthGate } from './components/AuthGate';
 
-// Activate performance monitoring
-(function () { return telemetry; })();
+// Defensive Global Guard - Neutralize vendor SDK crashes before any logic executes
+if (typeof window !== "undefined") {
+  if (!(window as any).Activity) {
+    Object.defineProperty(window, "Activity", {
+      value: {},
+      writable: true,
+      configurable: true,
+    });
+  }
+}
+
+// Initialize safe runtime layer
+bootstrap().catch(err => {
+  console.error("[Index] Critical bootstrap failure:", err);
+});
+
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -15,6 +32,12 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <AuthProvider>
+        <AuthGate>
+          <App />
+        </AuthGate>
+      </AuthProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );

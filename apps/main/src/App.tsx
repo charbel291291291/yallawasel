@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { HashRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import { SettingsProvider } from "@/contexts/SettingsContext";
-import { AuthProvider } from "@/contexts/AuthContext";
 import AnimatedSplash from "@/components/AnimatedSplash";
 import InstallGate from "@/components/InstallGate";
 import InstallLanding from "@/components/InstallLanding";
@@ -45,29 +44,9 @@ function App() {
 
   return (
     <SettingsProvider>
-      <AuthProvider>
-        <HashRouter>
-          <ReloadPrompt />
-          {/* Render Splash if not done */}
-          {!isSplashDone && <AnimatedSplash onComplete={handleSplashComplete} />}
-
-          {/* Render App when Splash is done 
-              Use CSS hidden or conditional rendering to prevent unmount/remount 
-              issues if heavy init logic exists, but here conditional is cleaner for DOM size.
-           */}
-          {isSplashDone && (
-            <>
-              {showLanding ? (
-                <InstallLanding />
-              ) : (
-                <InstallGate>
-                  <AppShell />
-                </InstallGate>
-              )}
-            </>
-          )}
-        </HashRouter>
-      </AuthProvider>
+      <BrowserRouter>
+        <AppShell />
+      </BrowserRouter>
     </SettingsProvider>
   );
 }

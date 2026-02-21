@@ -15,6 +15,7 @@ import HappyHourView from "../admin/HappyHourView";
 import ImpactView from "../admin/ImpactView";
 import ChartSettingsView from "../admin/ChartSettingsView";
 import SettingsView from "../admin/SettingsView";
+import DriverVerificationView from "../admin/DriverVerificationView";
 
 type Tab = AdminTab;
 
@@ -32,12 +33,14 @@ const AdminPanel: React.FC = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  // Redirect if not authenticated
+  // Redirect handled by specific logout/login actions
+  /* 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/");
     }
   }, [isAuthenticated, navigate]);
+  */
 
   // Keypad Handlers
   const handleNumClick = (num: string) => {
@@ -179,6 +182,8 @@ const AdminPanel: React.FC = () => {
         return <ImpactView />;
       case "chart_settings":
         return <ChartSettingsView />;
+      case "verification":
+        return <DriverVerificationView />;
       case "settings":
         return <SettingsView />;
       default:
@@ -329,6 +334,13 @@ const AdminPanel: React.FC = () => {
               label="Customers"
               active={activeTab === "customers"}
               onClick={() => setActiveTab("customers")}
+              isOpen={isSidebarOpen}
+            />
+            <SidebarItem
+              icon="fa-id-card-clip"
+              label="Driver Verification"
+              active={activeTab === "verification"}
+              onClick={() => setActiveTab("verification")}
               isOpen={isSidebarOpen}
             />
           </SidebarGroup>

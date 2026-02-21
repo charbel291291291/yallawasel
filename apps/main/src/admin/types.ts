@@ -47,6 +47,9 @@ export interface AdminCustomer {
     tier: string;
     wallet_balance: number;
     is_admin: boolean;
+    verified?: boolean;
+    status?: 'pending' | 'approved' | 'rejected';
+    role?: string;
     created_at: string;
     total_spent?: number;
     visits_count?: number;
@@ -152,4 +155,5 @@ export type AdminTab =
     | "happyhour"
     | "impact"
     | "chart_settings"
+    | "verification"
     | "settings";

@@ -100,8 +100,7 @@ const HiddenAdminAccess: React.FC<HiddenAdminAccessProps> = ({ children }) => {
     if (pin === "969696") {
       localStorage.setItem("isAdmin", "true");
       setShowTerminal(false);
-      window.location.hash = "#/admin";
-      window.location.reload();
+      window.location.href = "/admin";
     } else {
       setError("ACCESS DENIED");
       setShake(true);
@@ -179,8 +178,8 @@ const HiddenAdminAccess: React.FC<HiddenAdminAccessProps> = ({ children }) => {
                     type="submit"
                     disabled={pin.length !== 6}
                     className={`h-12 rounded-lg font-bold ${pin.length === 6
-                        ? "bg-yellow-500 text-black"
-                        : "bg-gray-700 text-gray-500"
+                      ? "bg-yellow-500 text-black"
+                      : "bg-gray-700 text-gray-500"
                       }`}
                   >
                     OK

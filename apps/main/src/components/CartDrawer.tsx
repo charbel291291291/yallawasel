@@ -1,36 +1,30 @@
 
 import React from 'react';
-import { CartItem, User } from '../types';
-import { translations, Language } from '../translations';
+import { translations } from '../translations';
 import { Link } from 'react-router-dom';
+
+import { useStore } from '../store/useStore';
 
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  cart: CartItem[];
-  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
-  lang: Language;
-  user: User | null;
   onCheckout: () => void;
   checkoutLoading: boolean;
 }
 
 const CartDrawer: React.FC<CartDrawerProps> = ({
-  isOpen, onClose, cart, setCart, lang, user, onCheckout, checkoutLoading
+  isOpen, onClose, onCheckout, checkoutLoading
 }) => {
+  const { cart, lang, user, updateCartQuantity } = useStore();
   const t = translations[lang];
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const deliveryFee = subtotal > 50 ? 0 : 5; // Simple rule: Free over $50
   const total = subtotal + deliveryFee;
 
   const updateQuantity = (id: string, delta: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === id) {
-        return { ...item, quantity: Math.max(0, item.quantity + delta) };
-      }
-      return item;
-    }).filter(item => item.quantity > 0));
+    updateCartQuantity(id, delta);
   };
+
 
   return (
     <>

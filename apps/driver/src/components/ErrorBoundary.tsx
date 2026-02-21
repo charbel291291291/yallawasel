@@ -1,52 +1,44 @@
-import React from "react";
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 
-// 🛡 STEP 4 — PREVENT BLANK PAGE CRASH
-export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-    constructor(props: { children: React.ReactNode }) {
-        super(props);
-        this.state = { hasError: false };
-    }
+interface Props {
+    children?: ReactNode;
+}
 
-    static getDerivedStateFromError() {
+interface State {
+    hasError: boolean;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+    public state: State = {
+        hasError: false
+    };
+
+    public static getDerivedStateFromError(_: Error): State {
         return { hasError: true };
     }
 
-    componentDidCatch(error: any, errorInfo: any) {
-        console.error("ErrorBoundary caught an error:", error, errorInfo);
+    public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+        console.error('[Terminal Error]:', error, errorInfo);
     }
 
-    render() {
+    public render() {
         if (this.state.hasError) {
             return (
-                <div style={{
-                    height: '100vh',
-                    width: '100vw',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: '#0a0a0a',
-                    color: '#fff',
-                    fontFamily: 'Inter, system-ui, sans-serif',
-                    padding: 40,
-                    textAlign: 'center'
-                }}>
-                    <div style={{
-                        background: 'rgba(255,255,255,0.05)',
-                        padding: '48px',
-                        borderRadius: '32px',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        maxWidth: '500px'
-                    }}>
-                        <h1 style={{ fontSize: '32px', fontWeight: 900, marginBottom: '16px', color: '#ff4b4b' }}>Configuration Error</h1>
-                        <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, fontSize: '18px' }}>
-                            The application encountered a critical startup error. This is likely due to missing environment variables.
-                        </p>
-                        <div style={{ marginTop: '32px', padding: '16px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', textAlign: 'left' }}>
-                            <p style={{ fontSize: '14px', fontFamily: 'monospace', color: '#aaa' }}>
-                                Check your <code style={{ color: '#fff' }}>.env.local</code> file in this app's directory.
-                            </p>
+                <div className="fixed inset-0 bg-[#0E0E11] flex items-center justify-center p-8 text-center z-[1000]">
+                    <div className="max-w-xs animate-entrance">
+                        <div className="w-20 h-20 bg-red-600/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-red-600/20">
+                            <i className="fas fa-triangle-exclamation text-red-600 text-3xl animate-pulse"></i>
                         </div>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-4">Critical System Fault</h2>
+                        <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] leading-relaxed mb-10">
+                            Terminal environment has encountered a fatal exception. Satellite link severed.
+                        </p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="w-full bg-white text-black font-black py-5 rounded-2xl text-[10px] uppercase tracking-[0.3em] active:scale-95 transition-all"
+                        >
+                            Re-initialize Terminal
+                        </button>
                     </div>
                 </div>
             );

@@ -227,7 +227,7 @@ export const ProductsAPI = {
 export const HappyHoursAPI = {
   async getActive(): Promise<HappyHour[]> {
     const { data, error } = await supabase
-      .from("happy_hours")
+      .from("happy_hours_schedule")
       .select("*")
       .eq("active", true)
       .order("created_at", { ascending: false });
@@ -237,7 +237,7 @@ export const HappyHoursAPI = {
 
   async getAll(): Promise<HappyHour[]> {
     const { data, error } = await supabase
-      .from("happy_hours")
+      .from("happy_hours_schedule")
       .select("*")
       .order("created_at", { ascending: false });
     if (error) throw error;
@@ -246,7 +246,7 @@ export const HappyHoursAPI = {
 
   async create(hour: Partial<HappyHour>): Promise<HappyHour> {
     const { data, error } = await supabase
-      .from("happy_hours")
+      .from("happy_hours_schedule")
       .insert(hour)
       .select()
       .single();
@@ -256,7 +256,7 @@ export const HappyHoursAPI = {
 
   async update(id: string, hour: Partial<HappyHour>): Promise<void> {
     const { error } = await supabase
-      .from("happy_hours")
+      .from("happy_hours_schedule")
       .update(hour)
       .eq("id", id);
     if (error) throw error;
@@ -264,7 +264,7 @@ export const HappyHoursAPI = {
 
   async delete(id: string): Promise<void> {
     const { error } = await supabase
-      .from("happy_hours")
+      .from("happy_hours_schedule")
       .delete()
       .eq("id", id);
     if (error) throw error;
@@ -275,11 +275,12 @@ export const HappyHoursAPI = {
       .channel("happyhours-api-realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "happy_hours" },
+        { event: "*", schema: "public", table: "happy_hours_schedule" },
         callback
       )
       .subscribe();
   },
+
 };
 
 

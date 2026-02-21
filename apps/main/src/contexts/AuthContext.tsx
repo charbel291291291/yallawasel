@@ -1,19 +1,22 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, startTransition } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { User, UserTier } from "@/types";
 import { supabase } from "@/services/supabaseClient";
 
 interface AuthContextType {
     user: User | null;
-    setUser: React.Dispatch<React.SetStateAction<User | null>>;
+    setUser: (user: User | null) => void;
     authLoading: boolean;
     handleLogout: () => Promise<void>;
     isAdmin: boolean;
 }
 
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+import { useStore } from "@/store/useStore";
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const { user, setUser } = useStore();
     const [authLoading, setAuthLoading] = useState(true);
 
     const fetchUserProfile = useCallback(async (userId: string, email: string) => {
@@ -46,12 +49,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } finally {
             setAuthLoading(false);
         }
-    }, []);
+    }, [setUser]);
 
     useEffect(() => {
         let mounted = true;
 
-        // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (mounted) {
                 if (session && session.user) {
@@ -62,7 +64,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         });
 
-        // Listen for changes
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -80,14 +81,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             mounted = false;
             subscription.unsubscribe();
         };
-    }, [fetchUserProfile]);
+    }, [fetchUserProfile, setUser]);
 
     const handleLogout = useCallback(async () => {
         await supabase.auth.signOut();
-        startTransition(() => {
-            setUser(null);
-        });
-    }, []);
+        setUser(null);
+    }, [setUser]);
 
     const value = React.useMemo(() => ({
         user,
@@ -95,10 +94,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authLoading,
         handleLogout,
         isAdmin: user?.isAdmin || false,
-    }), [user, authLoading, handleLogout]);
+    }), [user, setUser, authLoading, handleLogout]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
 
 export const useAuth = () => {
     const context = useContext(AuthContext);

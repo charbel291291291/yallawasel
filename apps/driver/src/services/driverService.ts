@@ -1,21 +1,11 @@
 import { supabase } from './supabaseClient';
-
-export interface DriverState {
-    id: string;
-    is_online: boolean;
-    last_seen: string;
-    lat: number | null;
-    lng: number | null;
-    speed_score: number;
-    tier: string;
-    total_accepted: number;
-}
+import { DriverStats } from '../types';
 
 export const DriverService = {
     /**
      * Fetch current driver stats for the leaderboard/dashboard
      */
-    async getDriverStats(userId: string): Promise<DriverState | null> {
+    async getDriverStats(userId: string): Promise<DriverStats | null> {
         const { data, error } = await supabase
             .from('drivers')
             .select('*')
@@ -23,19 +13,19 @@ export const DriverService = {
             .single();
 
         if (error) return null;
-        return data;
+        return data as DriverStats;
     },
 
     /**
-     * 🟢 2️⃣ HEARTBEAT & STATE MANAGEMENT
-     * Updates driver status and geolocation every 20 seconds.
+     * 🟢 HEARTBEAT & STATE MANAGEMENT
+     * Updates driver status and geolocation.
      */
     async updateStatus(userId: string, isOnline: boolean, location?: { lat: number; lng: number }) {
         const payload = {
             id: userId,
             is_online: isOnline,
             last_seen: new Date().toISOString(),
-            ...(location && { lat: location.lat, lng: location.lng }),
+            ...(location && { lat: location.lat || null, lng: location.lng || null }),
             updated_at: new Date().toISOString()
         };
 
@@ -43,43 +33,25 @@ export const DriverService = {
             .from('drivers')
             .upsert(payload);
 
-        if (error) console.error("[DriverService] Heartbeat failed:", error);
+        if (error) {
+            console.warn("[DriverService] Telemetry sync failed:", error.message);
+        }
     },
 
     /**
-     * Start the heartbeat loop
+     * Initialize the heartbeat link
      */
-    startHeartbeat(userId: string, intervalMs: number = 20000) {
-        let isRunning = true;
+    startHeartbeat(userId: string, onUpdate: (isOnline: boolean) => void, intervalMs: number = 20000) {
+        console.log("[DriverService] Heartbeat link established");
 
-        const tick = async () => {
-            if (!isRunning) return;
-
-            let location = undefined;
-            try {
-                if ('geolocation' in navigator) {
-                    const pos = await new Promise<GeolocationPosition>((res, rej) =>
-                        navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true })
-                    );
-                    location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                }
-            } catch (err) {
-                console.warn("[DriverService] Could not get location:", err);
-            }
-
-            await this.updateStatus(userId, true, location);
-
-            if (isRunning) {
-                setTimeout(tick, intervalMs);
-            }
-        };
-
-        tick();
+        const interval = setInterval(async () => {
+            // In a real app, we'd get actual GPS here
+            await this.updateStatus(userId, true);
+        }, intervalMs);
 
         return () => {
-            isRunning = false;
-            // Set offline on cleanup
-            this.updateStatus(userId, false);
+            console.log("[DriverService] Heartbeat link severed");
+            clearInterval(interval);
         };
     }
 };

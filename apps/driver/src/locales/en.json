@@ -1,0 +1,53 @@
+{
+    "common": {
+        "welcome": "Welcome back, Operator",
+        "accept": "Accept Mission",
+        "decline": "Decline",
+        "status": "Tactical Status",
+        "earnings": "Shift Earnings",
+        "wallet": "Central Wallet",
+        "missions": "Missions Cleared",
+        "streak": "Momentum Streak",
+        "online": "Operational Status: LIVE",
+        "offline": "Operational Status: STANDBY",
+        "loading": "Syncing Terminal State",
+        "reconnecting": "Link Severed: Reconnecting..."
+    },
+    "terminal": {
+        "locked": "Terminal Locked",
+        "authorization": "Personnel authorization required. Start operational shift to establish satellite uplink.",
+        "start_shift": "INITIATE OPERATIONAL SHIFT",
+        "end_shift": "TERMINATE SHIFT LINK",
+        "scanning": "Scanning Operational Sectors...",
+        "priority_job": "High Priority Assignment Detected"
+    },
+    "mission": {
+        "active": "Active Mission Mode",
+        "arrived_pickup": "CONFIRM ARRIVAL AT PICKUP",
+        "picked_up": "CONFIRM CARGO SECURED",
+        "delivering": "TRANSITIONING TO TARGET SECTOR",
+        "complete": "FINALIZE MISSION SUCCESS",
+        "source": "Source Node",
+        "target": "Target Destination",
+        "value": "Mission Value",
+        "bonus": "Tactical Multiplier"
+    },
+    "wallet": {
+        "balance": "Total Balance",
+        "today": "Shift Generated",
+        "pending": "Pending Verification",
+        "history": "Transaction Archive",
+        "withdraw": "Initiate Transfer"
+    },
+    "onboarding": {
+        "welcome": "Welcome to Yalla Wasel",
+        "subtitle": "Your tactical logistics terminal",
+        "lang_select": "Select Tactical Language",
+        "step1_title": "Mission Protocol",
+        "step1_desc": "Accept tactical assignments within the golden window to maximize earnings.",
+        "step2_title": "Shift Economy",
+        "step2_desc": "Maintain consistent operational status to increase tier and bonus multipliers.",
+        "pwa_prompt": "Install Terminal for Direct Link",
+        "get_started": "INITIATE SYSTEM LINK"
+    }
+}

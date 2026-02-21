@@ -1,18 +1,19 @@
 import { useState, useCallback } from "react";
 import { startTransition } from "react";
-import { CartItem, User, AppSettings } from "../types";
+import { AppSettings } from "../types";
 import { supabase } from "../services/supabaseClient";
 import { OrderNotificationData } from "../services/whatsappNotification";
 
+
+import { useStore } from "../store/useStore";
+
 export function useCheckout(
-    user: User | null,
-    setUser: React.Dispatch<React.SetStateAction<User | null>>,
-    cart: CartItem[],
-    setCart: React.Dispatch<React.SetStateAction<CartItem[]>>,
-    setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>,
+    setIsCartOpen: (open: boolean) => void,
     settings: AppSettings
 ) {
+    const { user, cart, setUser, setCart } = useStore();
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+
     const [lastOrder, setLastOrder] = useState<OrderNotificationData | null>(null);
     const [showOrderSuccess, setShowOrderSuccess] = useState(false);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -98,10 +99,8 @@ export function useCheckout(
                 .single();
 
             startTransition(() => {
-                if (updatedProfile) {
-                    setUser((prev) =>
-                        prev ? { ...prev, points: updatedProfile.points } : null
-                    );
+                if (updatedProfile && user) {
+                    setUser({ ...user, points: updatedProfile.points });
                 }
                 setCart([]);
                 setIsCartOpen(false);
@@ -113,6 +112,7 @@ export function useCheckout(
             setCheckoutLoading(false);
         }
     }, [user, cart, settings, setUser, setCart, setIsCartOpen]);
+
 
     const closeOrderSuccess = useCallback(() => {
         setShowOrderSuccess(false);

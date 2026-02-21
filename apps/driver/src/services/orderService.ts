@@ -1,101 +1,83 @@
 import { supabase } from './supabaseClient';
+import type { Order } from '../types';
 
-export interface Order {
-    id: string;
-    customer_id: string;
-    user_id: string;
-    driver_id: string | null;
-    status: 'pending' | 'assigned' | 'picked_up' | 'delivered' | 'cancelled' | 'approved' | 'preparing' | 'out_for_delivery';
-    pickup_address: string;
-    dropoff_address: string;
-    price: number;
-    total: number;
-    full_name: string;
-    phone: string;
-    address: string;
-    items: any[];
-    expires_at: string | null;
-    expired: boolean;
-    payout_base: number;
-    payout_bonus: number;
-    search_started_at: string;
-    boost_level: number;
-    created_at: string;
-    updated_at: string;
-}
+export type { Order };
 
 export const OrderService = {
-    /**
-     * 📡 STEP 4 — SUBSCRIBE TO ORDERS (Pending & Updates)
-     * Upgraded for Enterprise Dispatch: Handles expiration and re-assignments.
-     */
-    subscribeToOrderFeed(onInsert: (order: Order) => void, onChange: (payload: any) => void) {
-        const channel = supabase
-            .channel('driver-orders-feed')
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'orders',
-                    filter: 'status=eq.pending'
-                },
-                (payload) => {
-                    onInsert(payload.new as Order);
-                }
-            )
-            .on(
-                'postgres_changes',
-                {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'orders'
-                },
-                (payload) => {
-                    onChange(payload);
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    },
-
-    /**
-     * Fetch current pending orders
-     */
     async getPendingOrders(): Promise<Order[]> {
         const { data, error } = await supabase
             .from('orders')
             .select('*')
             .eq('status', 'pending')
+            .eq('expired', false)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
         return data || [];
     },
 
-    /**
-     * 🏁 COMPETITIVE ACCEPTANCE (v3)
-     * Handles speed bonuses and margin protection.
-     */
     async acceptOrder(orderId: string): Promise<Order> {
-        const { data, error } = await supabase.rpc('accept_order_v3', {
-            order_uuid: orderId
-        });
+        // Atomic Accept via RPC
+        const { data, error } = await supabase
+            .rpc('accept_order', {
+                order_uuid: orderId
+            });
 
         if (error) {
-            if (error.message.toLowerCase().includes('already taken') || error.message.toLowerCase().includes('expired')) {
-                throw new Error('Order is no longer available (taken or expired).');
+            // Check for double-accept (custom error in SQL)
+            if (error.message.includes('already taken')) {
+                throw new Error('This order was already accepted by another driver.');
             }
             throw error;
         }
 
         if (!data || data.length === 0) {
-            throw new Error('Order match failed.');
+            throw new Error('Failed to accept order. It may have expired.');
         }
 
         return data[0];
+    },
+
+    async updateStatus(orderId: string, status: Order['status']): Promise<void> {
+        const payload = {
+            status,
+            updated_at: new Date().toISOString(),
+            ...(status === 'delivered' ? { matched_at: new Date().toISOString() } : {})
+        };
+
+        const { error } = await supabase
+            .from('orders')
+            .update(payload)
+            .eq('id', orderId);
+
+        if (error) {
+            console.warn("[OrderService] Network fail, queuing status transition");
+            const { OfflineQueue } = await import('./offlineQueue');
+            await OfflineQueue.push('status_update', { id: orderId, update: payload });
+        }
+    },
+
+
+    subscribeToOrderFeed(onInsert: (order: Order) => void, onUpdate: (payload: any) => void) {
+        const channel = supabase
+            .channel('driver-feed')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'orders',
+                filter: `status=eq.pending`
+            }, (payload) => {
+                if (payload.eventType === 'INSERT') {
+                    onInsert(payload.new as Order);
+                } else {
+                    onUpdate(payload);
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }
+
 };

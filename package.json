@@ -8,8 +8,6 @@
     "verify:no-root-dist": "node -e \"if (require('fs').existsSync('dist')) { console.error('Root dist forbidden'); process.exit(1); }\""
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.17",
-    "postcss": "^8.5.6",
-    "autoprefixer": "^10.4.24"
+    "react-is": "^19.2.4"
   }
 }

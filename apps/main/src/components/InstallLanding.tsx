@@ -73,7 +73,7 @@ const InstallLanding: React.FC = () => {
         {/* Logo */}
         <div style={{ marginBottom: "2rem" }}>
           <img
-            src="/logo.png"
+            src="./logo.png"
             alt="Yalla Wasel"
             style={{
               width: "160px",
@@ -82,9 +82,10 @@ const InstallLanding: React.FC = () => {
             }}
             onError={(e) => {
               (e.target as HTMLImageElement).onerror = null;
-              (e.target as HTMLImageElement).src = "/icons/icon-512x512.png";
+              (e.target as HTMLImageElement).src = "./icons/icon-512x512.png";
             }}
           />
+
         </div>
 
         {/* Title */}

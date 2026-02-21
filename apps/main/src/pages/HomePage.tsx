@@ -4,14 +4,11 @@ import { Product, AppSettings } from "../types";
 import { translations, Language } from "../translations";
 import ProductCard from "../components/ProductCard";
 
-interface HomePageProps {
-    products: Product[];
-    addToCart: (p: Product) => void;
-    lang: Language;
-    settings: AppSettings;
-}
+import { useStore } from "../store/useStore";
 
-const HomePage: React.FC<HomePageProps> = ({ products, addToCart, lang }) => {
+const HomePage: React.FC = () => {
+    const { products, addToCart, lang } = useStore();
+
     const t = translations[lang];
     const heroProducts = React.useMemo(() => products.slice(0, 3), [products]);
 

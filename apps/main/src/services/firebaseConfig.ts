@@ -27,15 +27,30 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const messaging = getMessaging(app);
+
+let messagingInstance: any = null;
+
+export const getMessagingInstance = () => {
+  if (typeof window === "undefined") return null;
+  if (!messagingInstance) {
+    try {
+      messagingInstance = getMessaging(app);
+    } catch (e) {
+      console.warn("Firebase Messaging not supported in this environment", e);
+    }
+  }
+  return messagingInstance;
+};
+
 
 // Function to request notification permission and get token
 export const requestFCMToken = async (): Promise<string | null> => {
   try {
+    const messaging = getMessagingInstance();
+    if (!messaging) return null;
+
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
-      // Get registration token. Initially this makes a network call, once retrieved
-      // subsequent calls to getToken will return from cache.
       const token = await getToken(messaging, {
         vapidKey:
           import.meta.env['VITE_FIREBASE_VAPID_KEY'] as string ||
@@ -54,8 +69,11 @@ export const requestFCMToken = async (): Promise<string | null> => {
 // Handle incoming messages when app is in foreground
 export const onForegroundMessage = (): Promise<MessagePayload> => {
   return new Promise((resolve) => {
+    const messaging = getMessagingInstance();
+    if (!messaging) return;
     onMessage(messaging, (payload) => {
       resolve(payload);
     });
   });
 };
+

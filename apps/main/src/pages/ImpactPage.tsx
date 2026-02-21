@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { User, ImpactCampaign, AppSettings } from "../types";
-import { translations, Language } from "../translations";
+import { ImpactCampaign } from "../types";
+import { translations } from "../translations";
 import { supabase } from "../services/supabaseClient";
 
 interface ImpactUserStats {
@@ -17,13 +17,11 @@ interface LeaderboardEntry {
     impact: number;
 }
 
-interface ImpactPageProps {
-    lang: Language;
-    settings: AppSettings;
-    user?: User | null;
-}
+import { useStore } from "../store/useStore";
 
-const ImpactPage: React.FC<ImpactPageProps> = ({ lang, user }) => {
+const ImpactPage: React.FC = () => {
+    const { lang, user } = useStore();
+
     const t = translations[lang];
     const [campaigns, setCampaigns] = useState<ImpactCampaign[]>([]);
     const [userStats, setUserStats] = useState<ImpactUserStats | null>(null);

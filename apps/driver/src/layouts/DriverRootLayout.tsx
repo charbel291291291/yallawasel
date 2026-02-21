@@ -44,7 +44,7 @@ const DriverRootLayout: React.FC<DriverRootLayoutProps> = ({ children, showSideb
                 )}
 
                 {/* 🚀 MAIN CONTENT AREA - Operational Fill */}
-                <main className="flex-1 overflow-auto bg-[#050505] relative contain-layout">
+                <main className="flex-1 overflow-auto bg-[#050505] relative contain-layout scanline">
                     {children}
                 </main>
             </div>

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { User, Order } from "../types";
-import { translations, Language } from "../translations";
+import { Order } from "../types";
+import { translations } from "../translations";
 import { supabase } from "../services/supabaseClient";
 import WalletCard from "../components/WalletCard";
 
-interface ProfilePageProps {
-    user: User;
-    lang: Language;
-    onLogout: () => void;
-}
+import { useStore } from "../store/useStore";
+import { useAuth } from "../contexts/AuthContext";
+
 
 const PrivilegeItem = ({ icon, color, label, desc }: { icon: string; color: string; label: string; desc: string }) => (
     <div className="flex items-center gap-5 group">
@@ -24,7 +22,12 @@ const PrivilegeItem = ({ icon, color, label, desc }: { icon: string; color: stri
     </div>
 );
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ user, lang, onLogout }) => {
+const ProfilePage: React.FC = () => {
+    const { lang, user } = useStore();
+    const { handleLogout } = useAuth();
+
+    if (!user) return null;
+
     const t = translations[lang];
     const [orders, setOrders] = useState<Order[]>([]);
 
@@ -91,7 +94,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, lang, onLogout }) => {
 
                         <div className="mt-6 pt-4 border-t border-gray-100">
                             <button
-                                onClick={onLogout}
+                                onClick={handleLogout}
+
                                 className="btn-3d flex items-center justify-center gap-4 w-full p-4 rounded-2xl bg-red-50 text-red-600 font-black hover:bg-red-100 transition-all shadow-md"
                             >
                                 <i className="fa-solid fa-power-off"></i>

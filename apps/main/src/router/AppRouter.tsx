@@ -1,10 +1,10 @@
 import React, { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Product, AppSettings } from "@/types";
-import { Language } from "@/translations";
 import ProtectedRoute from "./ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStore } from "@/store/useStore";
+import { useSettings } from "@/contexts/SettingsContext";
 
 // Lazy-loaded pages for code splitting
 const HomePage = React.lazy(() => import("@/pages/HomePage"));
@@ -24,21 +24,10 @@ const PageSpinner = () => (
     </div>
 );
 
-import { useStore } from "@/store/useStore";
+const AppRouter: React.FC = () => {
+    const { user } = useAuth();
+    const { lang } = useStore();
 
-interface AppRouterProps {
-    addToCart: (p: Product) => void;
-    lang: Language;
-    settings: AppSettings;
-}
-
-const AppRouter: React.FC<AppRouterProps> = ({
-    addToCart,
-    lang,
-    settings,
-}) => {
-    const { user, handleLogout } = useAuth();
-    const products = useStore((state) => state.products);
 
     return (
         <Suspense fallback={<PageSpinner />}>
@@ -47,12 +36,7 @@ const AppRouter: React.FC<AppRouterProps> = ({
                     path="/"
                     element={
                         <ErrorBoundary>
-                            <HomePage
-                                products={products}
-                                addToCart={addToCart}
-                                lang={lang}
-                                settings={settings}
-                            />
+                            <HomePage />
                         </ErrorBoundary>
                     }
                 />
@@ -60,12 +44,7 @@ const AppRouter: React.FC<AppRouterProps> = ({
                     path="/shop"
                     element={
                         <ErrorBoundary>
-                            <ShopPage
-                                products={products}
-                                addToCart={addToCart}
-                                lang={lang}
-                                settings={settings}
-                            />
+                            <ShopPage />
                         </ErrorBoundary>
                     }
                 />
@@ -73,7 +52,7 @@ const AppRouter: React.FC<AppRouterProps> = ({
                     path="/impact"
                     element={
                         <ErrorBoundary>
-                            <ImpactPage lang={lang} settings={settings} user={user} />
+                            <ImpactPage />
                         </ErrorBoundary>
                     }
                 />
@@ -82,11 +61,7 @@ const AppRouter: React.FC<AppRouterProps> = ({
                     element={
                         <ProtectedRoute>
                             <ErrorBoundary>
-                                <ProfilePage
-                                    user={user!}
-                                    lang={lang}
-                                    onLogout={handleLogout}
-                                />
+                                <ProfilePage />
                             </ErrorBoundary>
                         </ProtectedRoute>
                     }
@@ -120,5 +95,6 @@ const AppRouter: React.FC<AppRouterProps> = ({
         </Suspense>
     );
 };
+
 
 export default AppRouter;

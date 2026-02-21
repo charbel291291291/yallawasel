@@ -3,14 +3,11 @@ import { Product, AppSettings } from "../types";
 import { translations, Language } from "../translations";
 import ProductCard from "../components/ProductCard";
 
-interface ShopPageProps {
-    products: Product[];
-    addToCart: (p: Product) => void;
-    lang: Language;
-    settings?: AppSettings;
-}
+import { useStore } from "../store/useStore";
 
-const ShopPage: React.FC<ShopPageProps> = ({ products, addToCart, lang }) => {
+const ShopPage: React.FC = () => {
+    const { products, addToCart, lang } = useStore();
+
     const [filter] = useState("all");
     const t = translations[lang];
 

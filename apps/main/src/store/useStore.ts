@@ -1,13 +1,32 @@
 import { create } from 'zustand';
-import { Product, HappyHour } from '../types';
+import { Product, HappyHour, User, CartItem } from '../types';
+import { Language } from '../translations';
 import { supabase } from '../services/supabaseClient';
 
+
+
 interface AppState {
+    // Data
     products: Product[];
     happyHours: HappyHour[];
+    user: User | null;
+    cart: CartItem[];
+    lang: Language;
     isLoading: boolean;
+
+    // Actions
     setProducts: (products: Product[]) => void;
     setHappyHours: (happyHours: HappyHour[]) => void;
+    setUser: (user: User | null) => void;
+    setLang: (lang: Language) => void;
+
+    // Cart Logic
+    addToCart: (product: Product) => void;
+    updateCartQuantity: (productId: string, delta: number) => void;
+    setCart: (cart: CartItem[]) => void;
+    clearCart: () => void;
+
+    // Async
     fetchInitialData: () => Promise<void>;
 }
 
@@ -32,10 +51,49 @@ function mapProduct(p: any): Product {
 export const useStore = create<AppState>((set) => ({
     products: [],
     happyHours: [],
+    user: null,
+    cart: [],
+    lang: 'en',
     isLoading: false,
+
     setProducts: (products) => set({ products }),
     setHappyHours: (happyHours) => set({ happyHours }),
+    setUser: (user) => set({ user }),
+    setLang: (lang) => {
+        set({ lang });
+        document.body.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        document.documentElement.lang = lang;
+    },
+
+    addToCart: (product) => set((state) => {
+        const existingIndex = state.cart.findIndex((p) => p.id === product.id);
+        if (existingIndex > -1) {
+            const next = [...state.cart];
+            next[existingIndex] = {
+                ...next[existingIndex],
+                quantity: next[existingIndex].quantity + 1
+            };
+            return { cart: next };
+        }
+        return { cart: [...state.cart, { ...product, quantity: 1 }] };
+    }),
+
+    updateCartQuantity: (productId, delta) => set((state) => {
+        const next = state.cart.map(item => {
+            if (item.id === productId) {
+                const q = Math.max(0, item.quantity + delta);
+                return { ...item, quantity: q };
+            }
+            return item;
+        }).filter(i => i.quantity > 0);
+        return { cart: next };
+    }),
+
+    setCart: (cart) => set({ cart }),
+    clearCart: () => set({ cart: [] }),
+
     fetchInitialData: async () => {
+
         set({ isLoading: true });
         try {
             const { data: pData } = await supabase
