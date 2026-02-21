@@ -7,25 +7,17 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 export default defineConfig({
-    root: __dirname,
-    base: '/',
     plugins: [react()],
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, './src'),
+            '@': path.resolve(__dirname, 'src'),
         },
     },
     build: {
-        outDir: path.resolve(__dirname, 'dist'),
+        outDir: 'dist',
         emptyOutDir: true,
         rollupOptions: {
-            input: {
-                main: path.resolve(__dirname, 'index.html'),
-            },
+            input: 'index.html'
         },
-    },
-    preview: {
-        port: 4174,
-        strictPort: true,
     },
 })
