@@ -6,9 +6,8 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+// https://vitejs.dev/config/
 export default defineConfig({
-    root: __dirname,
-    base: '/',
     plugins: [react()],
     resolve: {
         alias: {
@@ -16,13 +15,8 @@ export default defineConfig({
         },
     },
     build: {
-        outDir: path.resolve(__dirname, 'dist'),
+        outDir: 'dist',
         emptyOutDir: true,
-        rollupOptions: {
-            input: {
-                main: path.resolve(__dirname, 'index.html'),
-            },
-        },
     },
     preview: {
         port: 4174,
