@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { translations, Language } from "../translations";
+import { Language } from "../translations";
 
 interface MobileTabBarProps {
     lang: Language;
@@ -8,18 +8,15 @@ interface MobileTabBarProps {
     cartCount: number;
 }
 
-const MobileTab = ({ to, icon, iconOutline, label, isActive }: { to: string; icon: string; iconOutline: string; label: string; isActive: boolean }) => (
+const MobileTab = ({ to, icon, label, isActive }: { to: string; icon: string; label: string; isActive: boolean }) => (
     <Link
         to={to}
-        className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 ${isActive ? "text-red-600 scale-105" : "text-gray-400 hover:text-gray-600"
+        className={`flex flex-col items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 ${isActive ? "text-primary scale-110" : "text-white/20 hover:text-white/40"
             }`}
     >
-        <i
-            className={`${isActive ? "fa-solid" : "fa-regular"} ${isActive ? icon : iconOutline || icon
-                } text-xl`}
-        ></i>
+        <i className={`${isActive ? "fa-solid" : "fa-regular"} ${icon} text-lg`}></i>
         <span
-            className={`text-[10px] font-medium mt-1 ${isActive ? "text-red-600" : "text-gray-400"
+            className={`text-[8px] font-black uppercase tracking-[0.1em] mt-1.5 ${isActive ? "text-primary" : "text-white/10"
                 }`}
         >
             {label}
@@ -28,60 +25,48 @@ const MobileTab = ({ to, icon, iconOutline, label, isActive }: { to: string; ico
 );
 
 const MobileTabBar: React.FC<MobileTabBarProps> = ({ lang, onOpenCart, cartCount }) => {
-    const t = translations[lang];
+    const isRTL = lang === 'ar';
     const location = useLocation();
+
     return (
-        <div
-            className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.08)] border-t border-gray-100/50"
-            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-        >
-            <div className="flex justify-around items-center h-[70px] px-2 max-w-lg mx-auto">
+        <div className="fixed bottom-6 left-6 right-6 z-50 animate-entrance">
+            <div className="bg-[#151821]/80 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] h-[80px] flex justify-around items-center px-4 max-w-sm mx-auto">
                 <MobileTab
                     to="/"
                     icon="fa-house"
-                    iconOutline="fa-house"
-                    label={t.home}
+                    label={isRTL ? 'الرئيسية' : 'HOME'}
                     isActive={location.pathname === "/"}
                 />
                 <MobileTab
                     to="/shop"
-                    icon="fa-box-open"
-                    iconOutline="fa-box"
-                    label={t.kits}
+                    icon="fa-box"
+                    label={isRTL ? 'المتجر' : 'SHOP'}
                     isActive={location.pathname === "/shop"}
                 />
-                <MobileTab
-                    to="/impact"
-                    icon="fa-hand-holding-heart"
-                    iconOutline="fa-heart"
-                    label={t.impact}
-                    isActive={location.pathname === "/impact"}
-                />
 
-                {/* Cart Tab */}
+                {/* Floating Action Button for Cart */}
                 <button
                     onClick={onOpenCart}
-                    className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all relative ${location.pathname === "/cart" || cartCount > 0
-                        ? "text-red-600 scale-105"
-                        : "text-gray-400"
-                        }`}
+                    className="relative w-14 h-14 bg-gold-gradient rounded-2xl flex items-center justify-center text-black shadow-[0_10px_20px_rgba(200,169,81,0.3)] -translate-y-4 active:scale-90 transition-all duration-300"
                 >
-                    <div className="relative">
-                        <i className="fa-regular fa-bag-shopping text-xl"></i>
-                        {cartCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white">
-                                {cartCount}
-                            </span>
-                        )}
-                    </div>
-                    <span className="text-[10px] font-medium mt-1">{t.bag}</span>
+                    <i className="fa-solid fa-bag-shopping text-xl"></i>
+                    {cartCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-lg">
+                            {cartCount}
+                        </span>
+                    )}
                 </button>
 
                 <MobileTab
+                    to="/impact"
+                    icon="fa-heart"
+                    label={isRTL ? 'أثرنا' : 'IMPACT'}
+                    isActive={location.pathname === "/impact"}
+                />
+                <MobileTab
                     to="/profile"
-                    icon="fa-user-circle"
-                    iconOutline="fa-user"
-                    label={t.wallet}
+                    icon="fa-user"
+                    label={isRTL ? 'حسابي' : 'PROFILE'}
                     isActive={location.pathname === "/profile"}
                 />
             </div>

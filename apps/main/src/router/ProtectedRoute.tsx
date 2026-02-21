@@ -5,10 +5,12 @@ import { useAuth } from "@/contexts/AuthContext";
 interface ProtectedRouteProps {
     children: React.ReactNode;
     adminOnly?: boolean;
+    fleetOnly?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = false }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = false, fleetOnly = false }) => {
     const { user, authLoading, isAdmin } = useAuth();
+    const isFleetManager = user?.role === 'fleet_manager' || isAdmin;
     const location = useLocation();
 
     if (authLoading) {
@@ -25,6 +27,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = f
     }
 
     if (adminOnly && !isAdmin) {
+        return <Navigate to="/" replace />;
+    }
+
+    if (fleetOnly && !isFleetManager) {
         return <Navigate to="/" replace />;
     }
 

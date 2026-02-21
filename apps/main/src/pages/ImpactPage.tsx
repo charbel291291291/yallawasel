@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { ImpactCampaign } from "../types";
-import { translations } from "../translations";
 import { supabase } from "../services/supabaseClient";
 
 interface ImpactUserStats {
@@ -21,8 +19,8 @@ import { useStore } from "../store/useStore";
 
 const ImpactPage: React.FC = () => {
     const { lang, user } = useStore();
+    const isRTL = lang === 'ar';
 
-    const t = translations[lang];
     const [campaigns, setCampaigns] = useState<ImpactCampaign[]>([]);
     const [userStats, setUserStats] = useState<ImpactUserStats | null>(null);
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -30,7 +28,6 @@ const ImpactPage: React.FC = () => {
 
     const fetchData = async () => {
         try {
-            // Fetch active campaigns
             const { data: campaignData } = await supabase
                 .from("impact_campaigns")
                 .select("*")
@@ -39,7 +36,6 @@ const ImpactPage: React.FC = () => {
                 .order("created_at", { ascending: false });
             setCampaigns(campaignData || []);
 
-            // Fetch user stats if logged in
             if (user?.id) {
                 const { data: contributions } = await supabase
                     .from("user_impact")
@@ -69,7 +65,6 @@ const ImpactPage: React.FC = () => {
                 }
             }
 
-            // Fetch leaderboard
             const { data: contributions } = await supabase
                 .from("user_impact")
                 .select("user_id, impact_units")
@@ -115,28 +110,11 @@ const ImpactPage: React.FC = () => {
         fetchData();
     }, [user]);
 
-    // Real-time subscription
     useEffect(() => {
         const channel = supabase
             .channel("impact-realtime")
-            .on(
-                "postgres_changes",
-                {
-                    event: "*",
-                    schema: "public",
-                    table: "impact_campaigns",
-                },
-                () => fetchData()
-            )
-            .on(
-                "postgres_changes",
-                {
-                    event: "INSERT",
-                    schema: "public",
-                    table: "user_impact",
-                },
-                () => fetchData()
-            )
+            .on("postgres_changes", { event: "*", schema: "public", table: "impact_campaigns" }, () => fetchData())
+            .on("postgres_changes", { event: "INSERT", schema: "public", table: "user_impact" }, () => fetchData())
             .subscribe();
 
         return () => {
@@ -145,28 +123,10 @@ const ImpactPage: React.FC = () => {
     }, []);
 
     const getBadgeDetails = (level: string) => {
-        const badges: Record<string, { name: string; color: string; bgColor: string; icon: string; message: string }> = {
-            supporter: {
-                name: "Supporter",
-                color: "text-amber-600",
-                bgColor: "bg-amber-100",
-                icon: "fa-hand-holding-heart",
-                message: "Thank you for your support!",
-            },
-            changemaker: {
-                name: "Changemaker",
-                color: "text-gray-400",
-                bgColor: "bg-gray-200",
-                icon: "fa-star",
-                message: "You're making a real difference!",
-            },
-            hero: {
-                name: "Impact Hero",
-                color: "text-yellow-500",
-                bgColor: "bg-yellow-100",
-                icon: "fa-crown",
-                message: "You're an Impact Hero!",
-            },
+        const badges: Record<string, { name: string; color: string; icon: string }> = {
+            supporter: { name: isRTL ? 'داعم' : 'SUPPORTER', color: "text-primary/60", icon: "fa-hand-holding-heart" },
+            changemaker: { name: isRTL ? 'صانع تغيير' : 'CHANGEMAKER', color: "text-primary/80", icon: "fa-star" },
+            hero: { name: isRTL ? 'بطل الأثر' : 'IMPACT HERO', color: "text-primary", icon: "fa-crown" },
         };
         return badges[level] || badges.supporter;
     };
@@ -183,207 +143,137 @@ const ImpactPage: React.FC = () => {
         return icons[type] || "fa-hands-helping";
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-pulse">
-                    <div className="w-20 h-20 bg-gray-200 rounded-full"></div>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return null;
 
     return (
-        <div className="max-w-5xl mx-auto py-12 animate-3d-entrance px-4">
+        <div className="max-w-5xl mx-auto flex flex-col gap-16 pb-32 animate-entrance px-4">
             {/* Header */}
-            <div className="text-center mb-12">
-                <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 text-white rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 text-5xl shadow-2xl animate-float">
-                    <i className="fa-solid fa-globe-americas"></i>
-                </div>
-                <h1 className="font-luxury text-4xl md:text-5xl font-bold mb-4 tracking-tight">
-                    {t.impact || "Our Impact"}
+            <div className="text-center max-w-2xl mx-auto">
+                <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary mb-6 block">
+                    {isRTL ? 'أثرنا المجتمعي' : 'OUR SOCIAL FOOTPRINT'}
+                </span>
+                <h1 className="font-luxury text-5xl sm:text-7xl font-black text-white mb-6 tracking-tight leading-none">
+                    {isRTL ? 'الأثر' : 'The Impact'}
                 </h1>
-                <p className="text-gray-500 text-lg leading-relaxed max-w-2xl mx-auto">
-                    {t.impactDesc ||
-                        "See how your orders are making a difference in the community."}
+                <p className="text-white/40 text-sm sm:text-lg leading-relaxed font-medium">
+                    {isRTL
+                        ? 'شاهد كيف تساهم طلباتك في إحداث تغيير حقيقي في المجتمع.'
+                        : 'Meticulously tracking how your artifacts contribute to global change.'}
                 </p>
             </div>
 
-            {/* User Stats (if logged in) */}
+            {/* User Stats Card */}
             {user && userStats && (
-                <div className="mb-12 bg-gradient-to-r from-green-50 to-emerald-50 rounded-[2rem] p-8 border border-green-100">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div
-                            className={`w-14 h-14 rounded-full ${getBadgeDetails(userStats.badgeLevel).bgColor
-                                } flex items-center justify-center`}
-                        >
-                            <i
-                                className={`fas ${getBadgeDetails(userStats.badgeLevel).icon} ${getBadgeDetails(userStats.badgeLevel).color
-                                    } text-xl`}
-                            ></i>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Your Impact Level</p>
-                            <p
-                                className={`text-xl font-bold ${getBadgeDetails(userStats.badgeLevel).color
-                                    }`}
-                            >
-                                {getBadgeDetails(userStats.badgeLevel).name}
-                            </p>
-                        </div>
+                <div className="luxury-card p-10 bg-luxury-glow relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <i className={`fas ${getBadgeDetails(userStats.badgeLevel).icon} text-9xl`}></i>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center">
-                            <p className="text-3xl font-black text-gray-900">
-                                ${userStats.totalContributed.toFixed(2)}
-                            </p>
-                            <p className="text-sm text-gray-500">Contributed</p>
+
+                    <div className="flex flex-col md:flex-row gap-12 items-center relative z-10">
+                        <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                            <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-4">Current Standing</span>
+                            <div className={`text-2xl font-black uppercase tracking-widest ${getBadgeDetails(userStats.badgeLevel).color}`}>
+                                {getBadgeDetails(userStats.badgeLevel).name}
+                            </div>
                         </div>
-                        <div className="text-center">
-                            <p className="text-3xl font-black text-green-600">
-                                {Math.floor(userStats.totalImpact)}
-                            </p>
-                            <p className="text-sm text-gray-500">Impact Units</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-3xl font-black text-gray-900">
-                                {userStats.contributions}
-                            </p>
-                            <p className="text-sm text-gray-500">Contributions</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-sm text-gray-500 mb-1">Next Badge</p>
-                            <p className="text-lg font-bold text-green-600">
-                                {userStats.badgeLevel === "supporter"
-                                    ? "50 → Changemaker"
-                                    : userStats.badgeLevel === "changemaker"
-                                        ? "150 → Hero"
-                                        : "Max Level!"}
-                            </p>
+
+                        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-8 w-full border-t md:border-t-0 md:border-l border-white/5 pt-8 md:pt-0 md:pl-12">
+                            <div>
+                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">Contributed</p>
+                                <p className="text-2xl font-black text-white tracking-tighter">${userStats.totalContributed.toFixed(0)}</p>
+                            </div>
+                            <div>
+                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">Impact Units</p>
+                                <p className="text-2xl font-black text-primary tracking-tighter">{Math.floor(userStats.totalImpact)}</p>
+                            </div>
+                            <div>
+                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">Selections</p>
+                                <p className="text-2xl font-black text-white tracking-tighter">{userStats.contributions}</p>
+                            </div>
+                            <div>
+                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">Next Evolution</p>
+                                <p className="text-xs font-black text-primary uppercase tracking-widest mt-2">
+                                    {userStats.badgeLevel === "supporter" ? "CHANGEMAKER" : userStats.badgeLevel === "changemaker" ? "IMPACT HERO" : "ZENITH"}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Campaign Cards */}
-            <div className="mb-12">
-                <h2 className="text-2xl font-bold mb-6">Active Campaigns</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {campaigns.map((campaign) => {
-                        const progress =
-                            campaign.goal_amount > 0
-                                ? Math.min(
-                                    (campaign.current_amount / campaign.goal_amount) * 100,
-                                    100
-                                )
-                                : 0;
+            {/* Campaign Grid */}
+            <div className="space-y-10">
+                <div className="flex items-center justify-between">
+                    <h2 className="font-luxury text-3xl font-black text-white italic">{isRTL ? 'الحملات النشطة' : 'Active Initiatives'}</h2>
+                    <div className="h-[1px] flex-1 mx-10 bg-white/5"></div>
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    {campaigns.map((campaign) => {
+                        const progress = campaign.goal_amount > 0 ? Math.min((campaign.current_amount / campaign.goal_amount) * 100, 100) : 0;
                         return (
-                            <div
-                                key={campaign.id}
-                                className="depth-card rounded-[2rem] overflow-hidden"
-                            >
+                            <div key={campaign.id} className="luxury-card overflow-hidden group">
                                 {campaign.image_url && (
-                                    <div className="h-48 bg-gray-100">
-                                        <img
-                                            src={campaign.image_url}
-                                            alt={campaign.title}
-                                            className="w-full h-full object-cover"
-                                        />
+                                    <div className="h-64 overflow-hidden relative">
+                                        <img src={campaign.image_url} alt={campaign.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E17] via-[#0B0E17]/20 to-transparent"></div>
+                                        <div className="absolute bottom-6 left-8 flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl flex items-center justify-center text-primary">
+                                                <i className={`fas ${getImpactIcon(campaign.goal_type)}`}></i>
+                                            </div>
+                                            <h3 className="font-luxury text-2xl font-black text-white">{campaign.title}</h3>
+                                        </div>
                                     </div>
                                 )}
-                                <div className="p-6">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                                            <i
-                                                className={`fas ${getImpactIcon(
-                                                    campaign.goal_type
-                                                )} text-green-600`}
-                                            ></i>
-                                        </div>
-                                        <h3 className="font-bold text-xl">{campaign.title}</h3>
-                                    </div>
-                                    <p className="text-gray-500 text-sm mb-4 line-clamp-2">
-                                        {campaign.description}
-                                    </p>
+                                <div className="p-8">
+                                    <p className="text-xs text-white/40 mb-8 leading-relaxed line-clamp-2">{campaign.description}</p>
 
-                                    {/* Progress */}
-                                    <div className="mb-4">
-                                        <div className="flex justify-between text-sm mb-2">
-                                            <span className="text-gray-500">
-                                                ${campaign.current_amount || 0} raised
-                                            </span>
-                                            <span className="font-bold">{progress.toFixed(0)}%</span>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-end">
+                                            <div>
+                                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">RAISED</p>
+                                                <p className="text-xl font-black text-white tracking-tighter">${campaign.current_amount || 0}</p>
+                                            </div>
+                                            <p className="text-2xl font-black text-primary tracking-tighter">{progress.toFixed(0)}%</p>
                                         </div>
-                                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-500"
-                                                style={{ width: `${progress}%` }}
-                                            ></div>
+                                        <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-full bg-gold-gradient rounded-full shadow-[0_0_15px_rgba(200,169,81,0.5)] transition-all duration-1000" style={{ width: `${progress}%` }}></div>
                                         </div>
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            Goal: ${campaign.goal_amount} ·{" "}
-                                            {campaign.impact_per_dollar} {campaign.goal_type} per $
-                                        </p>
+                                        <div className="flex justify-between text-[8px] font-black text-white/20 uppercase tracking-[0.2em] pt-2">
+                                            <span>GOAL: ${campaign.goal_amount}</span>
+                                            <span>{campaign.impact_per_dollar} UNITS PER $</span>
+                                        </div>
                                     </div>
-
-                                    {!user && (
-                                        <Link
-                                            to="/login"
-                                            className="block w-full py-3 bg-green-600 text-white text-center rounded-xl font-bold hover:bg-green-700 transition-colors"
-                                        >
-                                            Login to Track Your Impact
-                                        </Link>
-                                    )}
                                 </div>
                             </div>
                         );
                     })}
-
-                    {campaigns.length === 0 && (
-                        <div className="col-span-full text-center py-12 text-gray-400">
-                            <i className="fas fa-globe-americas text-5xl mb-4"></i>
-                            <p className="text-lg">No active campaigns at the moment</p>
-                        </div>
-                    )}
                 </div>
             </div>
 
-            {/* Leaderboard */}
+            {/* Leaderboard - Refined */}
             {leaderboard.length > 0 && (
-                <div className="bg-white rounded-[2rem] p-8 border shadow-sm">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                            <i className="fas fa-trophy text-yellow-600 text-xl"></i>
+                <div className="luxury-card p-10 border-white/5 bg-luxury-glow">
+                    <div className="flex items-center gap-6 mb-12">
+                        <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-primary shadow-2xl">
+                            <i className="fas fa-trophy text-xl"></i>
                         </div>
-                        <h3 className="font-bold text-xl">Top Contributors</h3>
+                        <h3 className="font-luxury text-3xl font-black text-white">{isRTL ? 'كبار المساهمين' : 'The Vanguard'}</h3>
                     </div>
-                    <div className="space-y-3">
+
+                    <div className="grid gap-4">
                         {leaderboard.map((entry) => (
-                            <div
-                                key={entry.rank}
-                                className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl"
-                            >
-                                <div
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${entry.rank === 1
-                                        ? "bg-yellow-400 text-yellow-900"
-                                        : entry.rank === 2
-                                            ? "bg-gray-300 text-gray-700"
-                                            : entry.rank === 3
-                                                ? "bg-amber-600 text-white"
-                                                : "bg-gray-200 text-gray-500"
-                                        }`}
-                                >
+                            <div key={entry.rank} className="flex items-center gap-6 p-6 rounded-3xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${entry.rank === 1 ? "bg-primary text-black" : "bg-white/10 text-white/40"
+                                    }`}>
                                     {entry.rank}
                                 </div>
                                 <div className="flex-1">
-                                    <p className="font-bold">{entry.name}</p>
+                                    <p className="font-black text-white text-xs uppercase tracking-widest">{entry.name}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-black text-green-600 text-lg">
-                                        {entry.impact}
-                                    </p>
-                                    <p className="text-xs text-gray-400">impact units</p>
+                                    <p className="text-xl font-black text-primary tracking-tighter">{entry.impact}</p>
+                                    <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">UNITS</p>
                                 </div>
                             </div>
                         ))}

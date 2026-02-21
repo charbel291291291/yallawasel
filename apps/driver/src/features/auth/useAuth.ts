@@ -42,39 +42,62 @@ export function useAuth() {
 
     useEffect(() => {
         let isMounted = true;
+        let safetyTimeout: any = null;
 
         const syncAuth = async (session: any) => {
+            console.log("[Auth] Syncing session state for user:", session?.user?.id || 'none');
+
+            // Safety timeout to ensure loading screen always clears within 10s
+            safetyTimeout = setTimeout(() => {
+                if (isMounted) {
+                    console.warn("[Auth] Initialization safety timeout reached. Forcing loading screen clear.");
+                    setSessionLoading(false);
+                }
+            }, 10000);
+
             if (!session?.user) {
+                console.log("[Auth] No active session found.");
                 if (isMounted) {
                     setProfile(null);
                     setSessionLoading(false);
+                    clearTimeout(safetyTimeout);
                 }
                 return;
             }
 
             try {
                 const prof = await fetchProfile(session.user.id);
-                if (isMounted) setProfile(prof);
+                if (isMounted) {
+                    setProfile(prof);
+                    console.log("[Auth] Driver profile synchronized successfully.");
+                }
             } catch (err) {
-                console.error("[Auth] Sync failed:", err);
+                console.error("[Auth] Sync failed drastically:", err);
             } finally {
-                if (isMounted) setSessionLoading(false);
+                if (isMounted) {
+                    setSessionLoading(false);
+                    clearTimeout(safetyTimeout);
+                }
             }
         };
 
-        // Initial check
+        // Initial check: getSession is often faster/more reliable for the first paint
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (isMounted) syncAuth(session);
+        }).catch(err => {
+            console.error("[Auth] getSession failed:", err);
+            if (isMounted) setSessionLoading(false);
         });
 
         // Listen for changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            console.log("[Auth] State Event:", event);
+            console.log("[Auth] External event detected:", event);
             if (isMounted) syncAuth(session);
         });
 
         return () => {
             isMounted = false;
+            if (safetyTimeout) clearTimeout(safetyTimeout);
             subscription.unsubscribe();
         };
     }, [fetchProfile, setProfile, setSessionLoading]);

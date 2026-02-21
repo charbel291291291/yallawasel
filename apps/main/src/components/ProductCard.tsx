@@ -10,45 +10,52 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = React.memo(({ product, onAdd, lang }) => {
+    const isRTL = lang === "ar";
+
     return (
-        <div className="depth-card rounded-[2.5rem] overflow-hidden flex flex-col h-full group contain-layout">
-            <div className="relative h-64 overflow-hidden">
+        <div className="luxury-card flex flex-col h-full group animate-entrance">
+            <div className="relative h-72 overflow-hidden">
                 <Image
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                     width="100%"
                     height="100%"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                {/* Subtle Overlays */}
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0B0E17] to-transparent"></div>
+
                 <div
-                    className={`absolute top-6 ${lang === "ar" ? "right-6" : "left-6"
-                        } glass-panel px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-white/50 shadow-sm`}
+                    className={`absolute top-6 ${isRTL ? "left-6" : "right-6"} bg-white/5 border border-white/10 backdrop-blur-xl px-4 py-2 rounded-xl text-[9px] font-black text-white/40 uppercase tracking-[0.2em] shadow-2xl`}
                 >
                     {product.category}
                 </div>
             </div>
-            <div className="p-8 flex flex-col flex-1">
-                <h3 className="font-bold text-gray-900 text-xl mb-3 group-hover:text-primary transition-colors">
-                    {lang === "ar" ? product.nameAr : product.name}
+
+            <div className="p-8 flex flex-col flex-1 relative -mt-4 bg-luxury-card rounded-t-[2rem] z-10 transition-transform duration-500 group-hover:-translate-y-2">
+                <h3 className="font-luxury text-2xl font-black text-white mb-2 tracking-tight group-hover:text-primary transition-colors">
+                    {isRTL ? product.nameAr : product.name}
                 </h3>
-                <p className="text-sm text-gray-500 line-clamp-2 mb-8 leading-relaxed">
-                    {lang === "ar" ? product.descriptionAr : product.description}
+
+                <p className="text-xs text-white/30 line-clamp-2 mb-10 leading-relaxed font-medium">
+                    {isRTL ? product.descriptionAr : product.description}
                 </p>
-                <div className="mt-auto flex justify-between items-center pt-6 border-t border-gray-100/50">
+
+                <div className="mt-auto flex justify-between items-end">
                     <div className="flex flex-col">
-                        <span className="text-2xl font-black text-gray-900">
+                        <span className="text-2xl font-black text-primary tracking-tighter">
                             ${product.price}
                         </span>
-                        <span className="text-[10px] text-green-600 font-bold uppercase tracking-widest mt-0.5">
-                            +{Math.floor(product.price * 10)} pts
+                        <span className="text-[9px] text-white/20 font-black uppercase tracking-widest mt-1">
+                            +{Math.floor(product.price * 10)} REWARD PTS
                         </span>
                     </div>
+
                     <button
                         onClick={() => onAdd(product)}
-                        className="btn-3d w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center active:scale-95 shadow-lg shadow-slate-200"
+                        className="w-12 h-12 bg-white/5 border border-white/10 text-white rounded-2xl flex items-center justify-center hover:bg-primary hover:text-black hover:border-primary transition-all duration-300 shadow-xl"
                     >
-                        <i className="fa-solid fa-plus text-xl"></i>
+                        <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                 </div>
             </div>

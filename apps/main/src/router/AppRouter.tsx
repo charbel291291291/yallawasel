@@ -4,7 +4,6 @@ import ProtectedRoute from "./ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/store/useStore";
-import { useSettings } from "@/contexts/SettingsContext";
 
 // Lazy-loaded pages for code splitting
 const HomePage = React.lazy(() => import("@/pages/HomePage"));
@@ -14,6 +13,7 @@ const ProfilePage = React.lazy(() => import("@/pages/ProfilePage"));
 const LoginPage = React.lazy(() => import("@/components/LoginPage"));
 const AdminPanel = React.lazy(() => import("@/components/AdminPanel"));
 const OrderTrackingPage = React.lazy(() => import("@/components/OrderTrackingPage"));
+const FleetDashboard = React.lazy(() => import("@/features/fleet/pages/FleetDashboard"));
 
 const PageSpinner = () => (
     <div className="min-h-screen flex items-center justify-center bg-transparent">
@@ -88,6 +88,16 @@ const AppRouter: React.FC = () => {
                         <ErrorBoundary>
                             <OrderTrackingPage lang={lang} />
                         </ErrorBoundary>
+                    }
+                />
+                <Route
+                    path="/fleet"
+                    element={
+                        <ProtectedRoute fleetOnly={true}>
+                            <ErrorBoundary>
+                                <FleetDashboard />
+                            </ErrorBoundary>
+                        </ProtectedRoute>
                     }
                 />
                 <Route path="*" element={<Navigate to="/" replace={true} />} />

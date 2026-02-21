@@ -33,13 +33,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser({
                     id: data.id,
                     name: data.full_name || "Valued Member",
+                    full_name: data.full_name,
                     email,
                     phone: data.phone || "",
                     address: data.address || "",
                     wallet_balance: data.wallet_balance || 0,
                     points: data.points || 0,
                     tier: (data.tier as UserTier) || UserTier.BRONZE,
-                    isAdmin: data.is_admin || false,
+                    isAdmin: data.role === 'admin',
+                    role: data.role,
                     joinDate: data.created_at,
                     status: "active",
                 });

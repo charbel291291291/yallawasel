@@ -5,7 +5,7 @@ export enum UserTier {
   ELITE = "Elite",
 }
 
-export type UserRole = "customer" | "admin" | "driver";
+export type UserRole = "customer" | "admin" | "driver" | "fleet_manager";
 
 export interface User {
   id: string;

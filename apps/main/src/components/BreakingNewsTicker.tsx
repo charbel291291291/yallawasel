@@ -22,8 +22,7 @@ const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({
   speed = 40,
 }) => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-
-  // Filter active happy hours, with safe handling for undefined
+  const isRTL = lang === "ar";
   const activeHappyHours = happyHours?.filter((hh) => hh.active) || [];
 
   useEffect(() => {
@@ -33,70 +32,62 @@ const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({
       setCurrentMessageIndex((prev) =>
         prev >= activeHappyHours.length - 1 ? 0 : prev + 1
       );
-    }, 5000); // Change message every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [activeHappyHours.length]);
 
-  // ALWAYS RENDER - Never return null
-  // If no happy hours, show placeholder message
   const hasHappyHours = activeHappyHours && activeHappyHours.length > 0;
-
-  // Use first active happy hour for display, or cycle if implemented
-  const currentHappyHour = hasHappyHours
-    ? activeHappyHours[currentMessageIndex]
-    : null;
+  const currentHappyHour = hasHappyHours ? activeHappyHours[currentMessageIndex] : null;
 
   return (
-    <div className="relative z-50 overflow-hidden bg-slate-900 border-b border-white/10 shadow-lg h-12 flex items-center">
-      {/* Left Badge */}
-      <div className="flex-shrink-0 h-full bg-red-600 px-6 flex items-center justify-center relative z-20 shadow-xl group cursor-pointer hover:bg-red-700 transition-colors">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-3 w-3">
-            {hasHappyHours && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>}
-            <span className={`relative inline-flex rounded-full h-3 w-3 ${hasHappyHours ? "bg-white" : "bg-white/50"}`}></span>
+    <div className={`relative z-50 overflow-hidden bg-black/60 backdrop-blur-xl border-b border-white/5 h-10 flex items-center ${isRTL ? 'flex-row-reverse' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Primary Badge */}
+      <div className={`flex-shrink-0 h-full bg-gold-gradient px-4 flex items-center justify-center relative z-20 shadow-2xl group cursor-pointer overflow-hidden`}>
+        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none"></div>
+        <div className="flex items-center gap-2 relative z-10">
+          <span className="relative flex h-2 w-2">
+            {hasHappyHours && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-40"></span>}
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${hasHappyHours ? "bg-black" : "bg-black/20"}`}></span>
           </span>
-          <span className="font-black text-xs uppercase tracking-widest text-white">
-            {lang === 'ar' ? 'عاجل' : 'LIVE OFFER'}
+          <span className="font-black text-[9px] uppercase tracking-[0.2em] text-black">
+            {isRTL ? 'عرض مباشر' : 'LIMITED ACCESS'}
           </span>
         </div>
-        {/* Arrow decor */}
-        <div className="absolute top-0 right-0 translate-x-1/2 w-4 h-full bg-red-600 transform skew-x-12 z-10 hidden md:block"></div>
       </div>
 
       {/* Scrolling Content */}
-      <div className="flex-1 overflow-hidden relative h-full flex items-center pl-8 md:pl-12">
+      <div className={`flex-1 overflow-hidden relative h-full flex items-center ${isRTL ? 'pr-8' : 'pl-8'}`}>
         {hasHappyHours ? (
           <div
-            className="animate-marquee whitespace-nowrap flex items-center gap-12 font-bold text-sm tracking-wide text-white"
+            className="animate-marquee whitespace-nowrap flex items-center gap-20 font-black text-[10px] tracking-widest text-white/60"
             style={{ animationDuration: `${speed}s` }}
           >
-            {/* Repeat content for smooth loop */}
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="text-yellow-400 font-luxury italic text-lg">{currentHappyHour?.name}</span>
-                <span className="text-white/40">|</span>
-                <span className="text-green-400 font-black">{currentHappyHour?.multiplier}X POINTS</span>
-                <span className="px-2 py-0.5 bg-white/20 rounded text-[10px] font-bold">LIMITED TIME</span>
+              <div key={i} className="flex items-center gap-4">
+                <span className="text-primary font-luxury italic text-sm normal-case tracking-tight">{currentHappyHour?.name}</span>
+                <span className="w-1 h-1 rounded-full bg-white/10"></span>
+                <span className="text-white font-black">{currentHappyHour?.multiplier}X PRESTIGE MULTIPLIER</span>
+                <span className="px-2 py-0.5 bg-primary/20 text-primary border border-primary/20 rounded text-[8px] font-black">ACTIVE</span>
                 {(currentHappyHour?.bonus_points ?? 0) > 0 && (
                   <>
-                    <span className="text-white/40">+</span>
-                    <span className="text-blue-300 font-bold">{currentHappyHour?.bonus_points} BONUS</span>
+                    <span className="text-white/20">+</span>
+                    <span className="text-white font-black">{currentHappyHour?.bonus_points} REWARD TOKENS</span>
                   </>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <div className="flex items-center gap-3 text-gray-500 text-xs font-bold uppercase tracking-widest">
-            <i className="fa-solid fa-star text-slate-800"></i>
-            <span>{lang === 'ar' ? 'ترقبوا العروض القادمة' : 'Stay tuned for exclusive offers'}</span>
+          <div className="flex items-center gap-3 text-white/20 text-[9px] font-black uppercase tracking-[0.4em]">
+            <i className="fa-solid fa-crown text-[8px]"></i>
+            <span>{isRTL ? 'ترقبوا الخدمات الحصرية' : 'Exclusive experiences incoming'}</span>
           </div>
         )}
 
-        {/* Fades */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-900 to-transparent z-10"></div>
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-900 to-transparent z-10"></div>
+        {/* Cinematic Fades */}
+        <div className={`absolute ${isRTL ? 'right-0' : 'left-0'} top-0 bottom-0 w-16 bg-gradient-to-r from-black to-transparent z-10 opacity-50`}></div>
+        <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} top-0 bottom-0 w-16 bg-gradient-to-l from-black to-transparent z-10 opacity-50`}></div>
       </div>
     </div>
   );

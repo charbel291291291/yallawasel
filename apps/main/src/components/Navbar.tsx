@@ -1,7 +1,7 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { User, AppSettings } from "../types";
-import { translations, Language } from "../translations";
+import { Language } from "../translations";
 
 interface NavbarProps {
     user: User | null;
@@ -14,131 +14,69 @@ interface NavbarProps {
     onLogoClick?: () => void;
 }
 
-const NavLink = ({
-    to,
-    label,
-    isActive,
-}: {
-    to: string;
-    label: string;
-    isActive: boolean;
-}) => (
-    <Link
-        to={to}
-        className={`px-4 py-2.5 rounded-lg text-xs font-black transition-all duration-300 uppercase tracking-wider ${isActive
-            ? "bg-white text-primary shadow-sm scale-[1.02] border border-gray-100"
-            : "text-gray-500 hover:text-gray-900 hover:bg-white/40"
-            }`}
-    >
-        {label}
-    </Link>
-);
-
 const Navbar: React.FC<NavbarProps> = ({
     user,
     settings,
     cartCount,
     lang,
     toggleLanguage,
-    onLogout,
     onOpenCart,
     onLogoClick,
 }) => {
-    const t = translations[lang];
-    const location = useLocation();
-
     return (
-        <header className="absolute top-4 left-4 right-4 z-40 glass-panel rounded-2xl border border-white/40 shadow-2xl py-2 px-4 sm:px-6 animate-3d-entrance">
-            <div className="flex justify-between items-center max-w-7xl mx-auto h-14">
-                <div className="flex items-center gap-4 sm:gap-8">
-                    <Link
-                        to="/"
-                        className="flex items-center gap-2 group"
-                        onClick={onLogoClick || undefined}
-                        data-logo="true"
-                    >
-                        {settings.logo_url ? (
-                            <img
-                                src={settings.logo_url}
-                                alt={settings.store_name}
-                                className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform"
-                            />
-                        ) : (
-                            <div className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center font-black shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
-                                Y
-                            </div>
-                        )}
-                        <h1 className="font-luxury text-lg sm:text-xl font-bold text-primary hidden lg:block tracking-tight">
-                            {settings.store_name || "YALLA WASEL"}
-                        </h1>
-                    </Link>
+        <header className="fixed top-0 left-0 right-0 z-50 py-6 px-6 sm:px-12 animate-entrance">
+            <div className="max-w-7xl mx-auto flex justify-between items-center h-16">
+                {/* Logo Section */}
+                <Link
+                    to="/"
+                    className="flex items-center gap-4 group"
+                    onClick={onLogoClick || undefined}
+                >
+                    <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:border-primary/50 transition-all duration-500 shadow-2xl relative">
+                        <div className="absolute inset-0 bg-primary/5 blur-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <img
+                            src={settings.logo_url || "/icons/favicon.png"}
+                            alt="Logo"
+                            className="w-7 h-7 object-contain transition-transform duration-500 group-hover:scale-110"
+                        />
+                    </div>
+                </Link>
 
-                    <nav className="hidden md:flex items-center gap-1 bg-gray-100/30 p-1 rounded-xl border border-gray-200/50 shadow-inner">
-                        <NavLink
-                            to="/"
-                            label={t.home}
-                            isActive={location.pathname === "/"}
-                        />
-                        <NavLink
-                            to="/shop"
-                            label={t.kits}
-                            isActive={location.pathname === "/shop"}
-                        />
-                        <NavLink
-                            to="/impact"
-                            label={t.impact}
-                            isActive={location.pathname === "/impact"}
-                        />
-                    </nav>
-                </div>
-
-                <div className="flex items-center gap-2 sm:gap-4">
+                {/* Right Side Actions */}
+                <div className="flex items-center gap-3">
+                    {/* Language Switcher Pill */}
                     <button
                         onClick={toggleLanguage}
-                        className="hidden sm:flex items-center justify-center h-10 px-3 text-[10px] font-black text-gray-400 hover:text-primary transition-colors rounded-xl hover:bg-white hover:shadow-sm"
+                        className="h-10 px-5 rounded-full bg-white/5 border border-white/10 text-[9px] font-black tracking-[0.2em] text-white/40 hover:text-white hover:bg-white/10 transition-all duration-300 uppercase"
                     >
-                        {lang === "en" ? "عربي" : "ENGLISH"}
+                        {lang === "en" ? "AR" : "EN"}
                     </button>
 
-                    {/* Cart Trigger */}
+                    {/* Minimal Cart */}
                     <button
                         onClick={onOpenCart}
-                        className="relative w-10 h-10 bg-white rounded-xl flex items-center justify-center text-gray-800 hover:text-primary transition-colors shadow-sm hover:shadow-md"
+                        className="relative w-10 h-10 flex items-center justify-center text-white/60 hover:text-primary transition-colors"
                     >
                         <i className="fa-solid fa-bag-shopping"></i>
                         {cartCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white">
-                                {cartCount}
-                            </span>
+                            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(200,169,81,0.5)]"></span>
                         )}
                     </button>
 
+                    {/* Profile / Auth */}
                     {user ? (
-                        <div className="flex items-center gap-3">
-                            <Link
-                                to="/profile"
-                                className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold transition-all shadow-md group ${location.pathname === "/profile"
-                                    ? "bg-primary text-white scale-110"
-                                    : "bg-primary/5 text-primary hover:bg-white"
-                                    }`}
-                            >
-                                <span className="group-hover:scale-110 transition-transform">
-                                    {user.name?.charAt(0) ?? "?"}
-                                </span>
-                            </Link>
-                            <button
-                                onClick={onLogout}
-                                className="hidden lg:flex w-10 h-10 rounded-xl items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-all"
-                            >
-                                <i className="fa-solid fa-power-off text-sm"></i>
-                            </button>
-                        </div>
+                        <Link
+                            to="/profile"
+                            className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/80 hover:bg-white/10 transition-all"
+                        >
+                            <span className="text-xs font-black uppercase">{user.name?.charAt(0)}</span>
+                        </Link>
                     ) : (
                         <Link
                             to="/login"
-                            className="btn-3d bg-slate-900 text-white px-6 py-3 rounded-xl text-xs font-black shadow-lg hidden sm:block uppercase tracking-widest"
+                            className="hidden sm:flex text-[9px] font-black tracking-[0.2em] text-white/20 hover:text-primary transition-colors uppercase py-2"
                         >
-                            {t.signIn}
+                            Sign In
                         </Link>
                     )}
                 </div>

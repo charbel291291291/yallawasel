@@ -34,31 +34,31 @@ const ERROR_CONFIG: Record<
   { title: string; message: string; icon: string; color: string }
 > = {
   VALIDATION: {
-    title: "Data Error",
+    title: "Artifact Breach",
     message:
-      "We received unexpected data from the server. This has been logged and will be investigated.",
-    icon: "⚠️",
-    color: "amber",
+      "We detected an inconsistency in the digital artifact stream. Our technicians have been alerted.",
+    icon: "fa-triangle-exclamation",
+    color: "text-primary",
   },
   NETWORK: {
-    title: "Connection Issue",
+    title: "Terminal Isolation",
     message:
-      "Unable to reach the server. Please check your connection and try again.",
-    icon: "🌐",
-    color: "blue",
+      "Your link to the central node has been severed. Check your uplink status.",
+    icon: "fa-satellite-dish",
+    color: "text-blue-400",
   },
   AUTH: {
-    title: "Authentication Error",
+    title: "Credential Denial",
     message:
-      "Your session may have expired. Please refresh the page or log in again.",
-    icon: "🔒",
-    color: "purple",
+      "Your high-clearance session has expired. Re-verification required for entry.",
+    icon: "fa-vault",
+    color: "text-primary",
   },
   UNKNOWN: {
-    title: "Something Went Wrong",
-    message: "An unexpected error occurred. Our team has been notified.",
-    icon: "❌",
-    color: "red",
+    title: "System Disruption",
+    message: "A critical anomaly has halted this module. Self-repair in progress.",
+    icon: "fa-skull-crossbones",
+    color: "text-red-500",
   },
 };
 
@@ -83,7 +83,6 @@ class ErrorBoundary extends React.Component<
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     const category = classifyError(error);
 
-    // Structured error logging
     const logPayload = {
       category,
       message: error.message,
@@ -110,7 +109,6 @@ class ErrorBoundary extends React.Component<
 
   render() {
     if (this.state.hasError) {
-      // Use custom fallback if provided
       if (this.props.fallback) {
         const FallbackComponent = this.props.fallback;
         return (
@@ -122,40 +120,40 @@ class ErrorBoundary extends React.Component<
         );
       }
 
-      // Default error UI
       const config = ERROR_CONFIG[this.state.category];
 
       return (
-        <div
-          className={`bg-${config.color}-50 border border-${config.color}-200 rounded-lg p-6 m-4`}
-          role="alert"
-        >
-          <div className="flex items-start gap-3">
-            <span className="text-2xl" aria-hidden="true">
-              {config.icon}
-            </span>
-            <div className="flex-1">
-              <h3
-                className={`text-${config.color}-800 font-bold text-lg mb-1`}
-              >
+        <div className="flex items-center justify-center p-6 w-full min-h-[400px]">
+          <div className="relative luxury-card p-12 w-full max-w-xl bg-luxury-glow overflow-hidden animate-entrance" role="alert">
+            <div className="absolute top-0 right-0 p-8 opacity-5">
+              <i className={`fas ${config.icon} text-9xl`}></i>
+            </div>
+
+            <div className="flex flex-col items-center text-center relative z-10">
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-8 bg-white/5 border border-white/10 ${config.color}`}>
+                <i className={`fas ${config.icon} text-3xl`}></i>
+              </div>
+
+              <h3 className="font-luxury text-3xl font-black text-white mb-4 italic tracking-tight uppercase">
                 {config.title}
               </h3>
-              <p className={`text-${config.color}-600 text-sm mb-4`}>
+
+              <p className="text-white/40 text-sm font-medium mb-10 max-w-sm leading-relaxed tracking-wider">
                 {config.message}
               </p>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
                 <button
-                  className={`px-4 py-2 bg-${config.color}-600 text-white rounded-lg hover:bg-${config.color}-700 transition-colors text-sm font-medium`}
+                  className="px-8 py-4 bg-gold-gradient text-black rounded-2xl transition-all font-black uppercase text-[10px] tracking-[0.2em] shadow-xl hover:opacity-90 active:scale-95"
                   onClick={this.handleReset}
                 >
-                  Try Again
+                  Initiate Recovery
                 </button>
                 <button
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                  className="px-8 py-4 bg-white/5 text-white/60 border border-white/5 rounded-2xl transition-all font-black uppercase text-[10px] tracking-[0.2em] hover:bg-white/10"
                   onClick={() => window.location.reload()}
                 >
-                  Reload Page
+                  Network Re-sync
                 </button>
               </div>
             </div>

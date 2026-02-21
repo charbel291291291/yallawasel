@@ -1,6 +1,9 @@
 -- PROD-GRADE DRIVER ECOSYSTEM EXTENSION
 -- High-Performance Wallet, Tier, and Surge Infrastructure
 
+-- 0. ENABLE GEOSPATIAL SUPPORT
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 -- 1. EXTEND DRIVER PROFILE / STATS
 ALTER TABLE public.drivers 
 ADD COLUMN IF NOT EXISTS tier text DEFAULT 'Bronze' CHECK (tier IN ('Bronze', 'Silver', 'Gold')),

@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCheckout } from "@/hooks/useCheckout";
-import { useStore, setupRealtimeListeners } from "@/store/useStore";
+import { useStore } from "@/store/useStore";
 
 // Components
 import Navbar from "@/components/Navbar";
@@ -15,6 +15,7 @@ import HiddenAdminAccess from "@/components/HiddenAdminAccess";
 import BreakingNewsTicker from "@/components/BreakingNewsTicker";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { InstallGate } from "@/components/InstallGate";
 import AppRouter from "@/router/AppRouter";
 
 
@@ -66,57 +67,61 @@ const AppShell: React.FC = () => {
     }
 
     return (
-        <div
-            className={`min-h-screen transition-colors duration-500 pb-24 sm:pb-0 ${isAdminRoute ? "bg-slate-50" : "pt-24 bg-white"
-                }`}
-        >
-            {!isAdminRoute && (
-                <ErrorBoundary>
-                    <HiddenAdminAccess>
-                        <Navbar
-                            user={user}
-                            settings={settings}
-                            cartCount={cart.length}
+        <ErrorBoundary>
+            <InstallGate>
+                <div
+                    className={`min-h-screen-safe transition-colors duration-500 flex flex-col ${isAdminRoute ? "bg-slate-50" : "bg-[#0B0E17] bg-luxury-glow"
+                        }`}
+                >
+                    {!isAdminRoute && (
+                        <HiddenAdminAccess>
+                            <Navbar
+                                user={user}
+                                settings={settings}
+                                cartCount={cart.length}
+                                lang={lang}
+                                toggleLanguage={toggleLanguage}
+                                onLogout={handleLogout}
+                                onOpenCart={() => setIsCartOpen(true)}
+                            />
+                            <BreakingNewsTicker happyHours={happyHours} lang={lang} speed={settings.ticker_speed} />
+                        </HiddenAdminAccess>
+                    )}
+
+                    <main className={`flex-1 flex flex-col ${isAdminRoute ? "" : "w-full pt-20"}`}>
+                        <div className={isAdminRoute ? "" : "max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8"}>
+                            <AppRouter />
+                        </div>
+                    </main>
+
+                    <CartDrawer
+                        isOpen={isCartOpen}
+                        onClose={() => setIsCartOpen(false)}
+                        onCheckout={handleCheckout}
+                        checkoutLoading={checkoutLoading}
+                    />
+
+
+                    {showOrderSuccess && lastOrder && (
+                        <OrderSuccessModal
+                            lastOrder={lastOrder}
                             lang={lang}
-                            toggleLanguage={toggleLanguage}
-                            onLogout={handleLogout}
-                            onOpenCart={() => setIsCartOpen(true)}
+                            onClose={closeOrderSuccess}
                         />
-                        <BreakingNewsTicker happyHours={happyHours} lang={lang} speed={settings.ticker_speed} />
-                    </HiddenAdminAccess>
-                </ErrorBoundary>
-            )}
+                    )}
 
-            <main className={isAdminRoute ? "" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"}>
-                <AppRouter />
-            </main>
+                    {!isAdminRoute && (
+                        <MobileTabBar
+                            lang={lang}
+                            onOpenCart={() => setIsCartOpen(true)}
+                            cartCount={cart.length}
+                        />
+                    )}
 
-            <CartDrawer
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                onCheckout={handleCheckout}
-                checkoutLoading={checkoutLoading}
-            />
-
-
-            {showOrderSuccess && lastOrder && (
-                <OrderSuccessModal
-                    lastOrder={lastOrder}
-                    lang={lang}
-                    onClose={closeOrderSuccess}
-                />
-            )}
-
-            {!isAdminRoute && (
-                <MobileTabBar
-                    lang={lang}
-                    onOpenCart={() => setIsCartOpen(true)}
-                    cartCount={cart.length}
-                />
-            )}
-
-            <OfflineIndicator />
-        </div>
+                    <OfflineIndicator />
+                </div>
+            </InstallGate>
+        </ErrorBoundary>
     );
 };
 

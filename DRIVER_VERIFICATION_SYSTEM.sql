@@ -27,22 +27,34 @@ WITH CHECK (
   (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
 );
 
--- Ensure drivers cannot self-verify
--- The existing "users can update own profile" needs to be restricted
+-- Ensure drivers cannot self-verify or change roles
 DROP POLICY IF EXISTS "users can update own profile" ON public.profiles;
 CREATE POLICY "users can update own profile"
 ON public.profiles
 FOR UPDATE
 USING (auth.uid() = id)
-WITH CHECK (
-  auth.uid() = id 
-  AND (
-    -- Prevent users from changing their own role, verified status, or application status
-    (NEW.role = OLD.role)
-    AND (NEW.verified = OLD.verified)
-    AND (NEW.status = OLD.status)
-  )
-);
+WITH CHECK (auth.uid() = id);
+
+-- 🛡️ PROTECT SENSITIVE COLUMNS (Trigger based enforcement)
+CREATE OR REPLACE FUNCTION public.protect_profile_roles()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- If not an admin, prevent changing sensitive fields
+  IF (SELECT role FROM public.profiles WHERE id = auth.uid()) != 'admin' THEN
+    IF (NEW.role IS DISTINCT FROM OLD.role) OR 
+       (NEW.verified IS DISTINCT FROM OLD.verified) OR 
+       (NEW.status IS DISTINCT FROM OLD.status) THEN
+      RAISE EXCEPTION 'Restricted: You cannot modify your own role or verification status.';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS tr_protect_profile_roles ON public.profiles;
+CREATE TRIGGER tr_protect_profile_roles
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE PROCEDURE public.protect_profile_roles();
 
 -- 🔄 STEP 3 — Real-time Subscription Enforcement
 -- Ensure profiles table is in the publication
