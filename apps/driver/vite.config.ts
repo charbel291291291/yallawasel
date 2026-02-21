@@ -12,8 +12,76 @@ export default defineConfig({
         VitePWA({
             registerType: 'autoUpdate',
             injectRegister: 'auto',
-            includeAssets: ['favicon.ico', 'robots.txt', 'icons/*.png'],
-            manifest: false, // We use the existing public/manifest.json for source of truth
+            includeAssets: ['favicon.png', 'robots.txt', 'icons/*.png'],
+            manifestFilename: 'manifest.json',
+            manifest: {
+                name: "Yalla Wasel Driver Terminal",
+                short_name: "YW Driver",
+                description: "Tactical Mission Control for Yalla Wasel Logistics Operators",
+                start_url: "/",
+                scope: "/",
+                display: "standalone",
+                background_color: "#0A0C14",
+                theme_color: "#B9975B",
+                orientation: "portrait",
+                categories: ["productivity", "utilities"],
+                lang: "en",
+                id: "/",
+                icons: [
+                    {
+                        src: "/icons/icon-192x192.png",
+                        sizes: "192x192",
+                        type: "image/png",
+                        purpose: "any"
+                    },
+                    {
+                        src: "/icons/icon-192x192.png",
+                        sizes: "192x192",
+                        type: "image/png",
+                        purpose: "maskable"
+                    },
+                    {
+                        src: "/icons/icon-512x512.png",
+                        sizes: "512x512",
+                        type: "image/png",
+                        purpose: "any"
+                    },
+                    {
+                        src: "/icons/icon-maskable-512.png",
+                        sizes: "512x512",
+                        type: "image/png",
+                        purpose: "maskable"
+                    }
+                ],
+                screenshots: [
+                    {
+                        src: "/logo.png",
+                        sizes: "512x512",
+                        type: "image/png",
+                        form_factor: "narrow",
+                        label: "Yalla Wasel Driver Interface"
+                    },
+                    {
+                        src: "/logo.png",
+                        sizes: "512x512",
+                        type: "image/png",
+                        form_factor: "wide",
+                        label: "Tactical Mission Control"
+                    }
+                ],
+                shortcuts: [
+                    {
+                        name: "Initiate Shift",
+                        url: "/",
+                        icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }]
+                    },
+                    {
+                        name: "Wallet Archive",
+                        url: "/wallet",
+                        icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }]
+                    }
+                ]
+            },
             workbox: {
                 globPatterns: ['**/*.{js,css,html,png,svg,json,woff2}'],
                 runtimeCaching: [
