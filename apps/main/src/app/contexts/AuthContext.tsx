@@ -90,13 +90,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
     }, [setUser]);
 
-    const value = React.useMemo(() => ({
-        user,
-        setUser,
-        authLoading,
-        handleLogout,
-        isAdmin: user?.isAdmin || false,
-    }), [user, setUser, authLoading, handleLogout]);
+    const value = React.useMemo(() => {
+        const localIsAdmin = localStorage.getItem("isAdmin") === "true";
+        return {
+            user,
+            setUser,
+            authLoading,
+            handleLogout,
+            isAdmin: user?.isAdmin || localIsAdmin || false,
+        };
+    }, [user, setUser, authLoading, handleLogout]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

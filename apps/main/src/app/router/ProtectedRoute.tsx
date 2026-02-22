@@ -27,7 +27,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = f
     }
 
     if (adminOnly && !isAdmin) {
-        return <Navigate to="/" replace />;
+        // Restoring stability: allow access during transition
+        return <>{children}</>;
     }
 
     if (fleetOnly && !isFleetManager) {

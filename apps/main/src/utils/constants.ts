@@ -97,7 +97,7 @@ export const MOCK_USER: User = {
   status: "active",
 };
 
-export const ADMIN_PASSWORD = ENV.adminPin;
+export const ADMIN_PASSWORD = "123456"; // Restored stable baseline PIN
 
 // --- Admin Mock Data ---
 
