@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { Language } from '../translations';
+import { translations, Language } from '../translations';
 
 interface LoginPageProps {
   lang: Language;
@@ -20,6 +20,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ lang, onLoginSuccess }) => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +36,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ lang, onLoginSuccess }) => {
             data: {
               full_name: fullName,
               phone: phone,
+              address: address,
             },
           },
         });
@@ -123,6 +125,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ lang, onLoginSuccess }) => {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+961 -- --- ---"
+                    className="w-full pl-12 pr-6 py-4 bg-white/5 text-white border border-white/10 rounded-2xl focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10 font-medium"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">HQ/Delivery Address</label>
+                <div className="relative group">
+                  <i className="fa-solid fa-location-dot absolute left-5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors"></i>
+                  <input
+                    type="text"
+                    required
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="E.g. District 5, Mar Mikhael"
                     className="w-full pl-12 pr-6 py-4 bg-white/5 text-white border border-white/10 rounded-2xl focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10 font-medium"
                   />
                 </div>

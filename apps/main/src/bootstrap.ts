@@ -1,4 +1,4 @@
-
+import { setupRealtimeListeners } from './store/useStore';
 import { getMessagingInstance } from './services/firebaseConfig';
 import { initTelemetry } from './telemetry.safe';
 
@@ -70,13 +70,10 @@ function initializeVendorSDKs() {
 }
 
 function activateNetworkLayer() {
-    console.log("[Bootstrap] Realtime network layer activation suppressed for stability debugging");
-    /*
     if (!realtimeCleanup) {
         realtimeCleanup = setupRealtimeListeners();
         console.log("[Bootstrap] Realtime listeners activated");
     }
-    */
 }
 
 function deactivateNetworkLayer() {
