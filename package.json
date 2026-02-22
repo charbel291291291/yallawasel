@@ -1,23 +1,7 @@
 {
   "name": "yallawasel-monorepo",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "engines": {
     "node": "20.x"
-  },
-  "scripts": {
-    "build": "npm run build:customer",
-    "build:customer": "npm --workspace=apps/main run build",
-    "build:driver": "npm --workspace=apps/driver run build",
-    "verify:no-root-dist": "node -e \"if (require('fs').existsSync('dist')) { console.error('Root dist forbidden'); process.exit(1); }\""
-  },
-  "overrides": {
-    "glob": "^10.3.10"
-  },
-  "dependencies": {
-    "react-is": "^19.2.4"
   }
 }
