@@ -1,0 +1,10 @@
+{
+    "version": 2,
+    "buildCommand": "npm run build:driver",
+    "outputDirectory": "apps/driver/dist",
+    "installCommand": "npm install",
+    "framework": "vite",
+    "regions": [
+        "cdg1"
+    ]
+}
