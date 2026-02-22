@@ -18,7 +18,7 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        maximumFileSizeToCacheInBytes: 300000,
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         globIgnores: [
           '**/charts-*.js',
           '**/AdminPanel-*.js',
@@ -63,25 +63,7 @@ export default defineConfig({
     },
   },
   build: {
-    sourcemap: false,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'react';
-            if (id.includes('recharts')) return 'charts';
-            if (id.includes('@supabase')) return 'supabase';
-            if (id.includes('firebase')) return 'firebase';
-            if (id.includes('google/genai')) return 'ai-vendor';
-            if (id.includes('framer-motion')) return 'motion';
-            if (id.includes('lucide-react')) return 'icons';
-            if (id.includes('zod')) return 'utils';
-            return 'vendor';
-          }
-        },
-      },
-    },
-    chunkSizeWarningLimit: 1000,
+    sourcemap: false
   },
   clearScreen: false
 })
