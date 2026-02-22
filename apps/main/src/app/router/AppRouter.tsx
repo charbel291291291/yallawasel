@@ -69,9 +69,11 @@ const AppRouter: React.FC = () => {
                 <Route
                     path="/admin/*"
                     element={
-                        <ErrorBoundary>
-                            <AdminPanel />
-                        </ErrorBoundary>
+                        <ProtectedRoute adminOnly={true}>
+                            <ErrorBoundary>
+                                <AdminPanel />
+                            </ErrorBoundary>
+                        </ProtectedRoute>
                     }
                 />
                 <Route

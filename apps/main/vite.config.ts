@@ -18,40 +18,40 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        cacheId: 'yalla-wasel-customer-v1', // Unique cache name
+        maximumFileSizeToCacheInBytes: 300000,
+        globIgnores: [
+          '**/charts-*.js',
+          '**/AdminPanel-*.js',
+          '**/vendor-*.js',
+          '**/SmartKitBuilder-*.js',
+          '**/*View-*.js',
+          '**/FleetDashboard-*.js',
+          '**/firebase-*.js',
+          '**/motion-*.js',
+          '**/ai-vendor-*.js'
+        ],
+        cacheId: 'yalla-main-v1',
         cleanupOutdatedCaches: true
       },
       manifest: {
-        id: 'com.yallawasel.customer', // Unique manifest ID
-        name: 'Yalla Wasel Luxury',
-        short_name: 'Yalla Wasel',
+        id: 'yalla-main-v1',
+        name: 'Yalla Wasel',
+        short_name: 'YW',
         description: 'Elite Deliveries and Curated Kits',
-        theme_color: '#0B0E17',
-        background_color: '#0B0E17',
+        theme_color: '#000000',
+        background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: '/icons/main-192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: '/icons/main-512.png',
             sizes: '512x512',
             type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
           }
         ]
       }
@@ -63,15 +63,23 @@ export default defineConfig({
     },
   },
   build: {
+    sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'supabase-vendor': ['@supabase/supabase-js'],
-          'ui-vendor': ['framer-motion', 'lucide-react', 'zustand', 'recharts'],
-          'ai-vendor': ['@google/genai'],
-        }
-      }
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) return 'react';
+            if (id.includes('recharts')) return 'charts';
+            if (id.includes('@supabase')) return 'supabase';
+            if (id.includes('firebase')) return 'firebase';
+            if (id.includes('google/genai')) return 'ai-vendor';
+            if (id.includes('framer-motion')) return 'motion';
+            if (id.includes('lucide-react')) return 'icons';
+            if (id.includes('zod')) return 'utils';
+            return 'vendor';
+          }
+        },
+      },
     },
     chunkSizeWarningLimit: 1000,
   },

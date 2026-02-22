@@ -25,7 +25,7 @@ export const bootstrap = async () => {
     console.log("[Bootstrap] Initializing safe runtime layer...");
 
     // 1. Safe Vendor/SDK Initialization
-    initializeVendorSDKs();
+    await initializeVendorSDKs();
 
     // 2. Initial Network Check & Layer Activation
     if (navigator.onLine) {
@@ -46,7 +46,7 @@ export const bootstrap = async () => {
     isBootstrapComplete = true;
 };
 
-function initializeVendorSDKs() {
+async function initializeVendorSDKs() {
     try {
         const globals = ['analytics', 'google', 'firebase', 'Emirates'];
         globals.forEach(g => {
@@ -61,7 +61,7 @@ function initializeVendorSDKs() {
 
         // Initialize Firebase Messaging instance (lazy - only if online)
         if (navigator.onLine) {
-            getMessagingInstance();
+            await getMessagingInstance();
         }
 
     } catch (e) {

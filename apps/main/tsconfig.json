@@ -10,12 +10,6 @@
       "DOM.Iterable"
     ],
     "skipLibCheck": true,
-    "types": [
-      "node",
-      "react",
-      "react-dom",
-      "vite/client"
-    ],
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
@@ -37,7 +31,6 @@
     "baseUrl": "."
   },
   "include": [
-    "src",
-    "vite-env.d.ts"
+    "src"
   ]
 }

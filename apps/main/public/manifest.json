@@ -1,46 +1,21 @@
 {
-  "name": "Yalla Wasel | Luxury Kits & Services",
-  "short_name": "Yalla",
-  "id": "yalla-wasel-main",
-  "description": "Luxury Lebanese Super-Kit PWA Platform",
+  "name": "Yalla Wasel",
+  "short_name": "YW",
+  "id": "yalla-main-v1",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#8a1c1c",
+  "theme_color": "#000000",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "/icons/main-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "/icons/main-512.png",
       "sizes": "512x512",
       "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
     }
-  ],
-  "screenshots": [
-    {
-      "src": "/logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Yalla Wasel Splash Screen"
-    }
-  ],
-  "categories": [
-    "shopping",
-    "food",
-    "utilities"
-  ],
-  "lang": "en-US",
-  "dir": "ltr"
+  ]
 }

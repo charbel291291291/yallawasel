@@ -1,5 +1,12 @@
-import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, onMessage, MessagePayload } from "firebase/messaging";
+// Firebase dynamic imports to isolate heavy SDKs from the index bundle
+const getFirebaseApp = async () => {
+  const { initializeApp } = await import("firebase/app");
+  return initializeApp(firebaseConfig);
+};
+
+const getMessagingLib = async () => {
+  return await import("firebase/messaging");
+};
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -25,16 +32,19 @@ const firebaseConfig = {
     "G-XXXXXXXXXX",
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
+// Initialize Firebase instance lazily
+let appInstance: any = null;
 let messagingInstance: any = null;
 
-export const getMessagingInstance = () => {
+export const getMessagingInstance = async () => {
   if (typeof window === "undefined") return null;
   if (!messagingInstance) {
     try {
-      messagingInstance = getMessaging(app);
+      if (!appInstance) {
+        appInstance = await getFirebaseApp();
+      }
+      const { getMessaging } = await getMessagingLib();
+      messagingInstance = getMessaging(appInstance);
     } catch (e) {
       console.warn("Firebase Messaging not supported in this environment", e);
     }
@@ -42,15 +52,15 @@ export const getMessagingInstance = () => {
   return messagingInstance;
 };
 
-
 // Function to request notification permission and get token
 export const requestFCMToken = async (): Promise<string | null> => {
   try {
-    const messaging = getMessagingInstance();
+    const messaging = await getMessagingInstance();
     if (!messaging) return null;
 
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
+      const { getToken } = await getMessagingLib();
       const token = await getToken(messaging, {
         vapidKey:
           import.meta.env['VITE_FIREBASE_VAPID_KEY'] as string ||
@@ -67,11 +77,13 @@ export const requestFCMToken = async (): Promise<string | null> => {
 };
 
 // Handle incoming messages when app is in foreground
-export const onForegroundMessage = (): Promise<MessagePayload> => {
+export const onForegroundMessage = async (): Promise<any> => {
+  const messaging = await getMessagingInstance();
+  if (!messaging) return;
+
+  const { onMessage } = await getMessagingLib();
   return new Promise((resolve) => {
-    const messaging = getMessagingInstance();
-    if (!messaging) return;
-    onMessage(messaging, (payload) => {
+    onMessage(messaging, (payload: any) => {
       resolve(payload);
     });
   });

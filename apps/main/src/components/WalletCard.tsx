@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { User, UserTier } from '../types';
-import { Language } from '../translations';
+import { User, UserTier } from '@/types';
+import { Language } from '@/utils/translations';
 
 interface WalletCardProps {
   user: User;

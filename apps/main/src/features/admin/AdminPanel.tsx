@@ -1,21 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ADMIN_PASSWORD } from "@/utils/constants";
 import { AdminTab } from "./types";
-import SmartKitBuilder from "./smart-kit-builder/SmartKitBuilder";
 import ConfirmModal from "./ConfirmModal";
-
-// Modular Views
-import DashboardView from "./DashboardView";
-import OrdersView from "./OrdersView";
-import ProductsView from "./ProductsView";
-import CustomersView from "./CustomersView";
-import RewardsView from "./RewardsView";
-import HappyHourView from "./HappyHourView";
-import ImpactView from "./ImpactView";
-import ChartSettingsView from "./ChartSettingsView";
-import SettingsView from "./SettingsView";
-import DriverVerificationView from "./DriverVerificationView";
+// Modular Views (Lazy loaded)
+const DashboardView = React.lazy(() => import("./DashboardView"));
+const OrdersView = React.lazy(() => import("./OrdersView"));
+const ProductsView = React.lazy(() => import("./ProductsView"));
+const CustomersView = React.lazy(() => import("./CustomersView"));
+const RewardsView = React.lazy(() => import("./RewardsView"));
+const HappyHourView = React.lazy(() => import("./HappyHourView"));
+const ImpactView = React.lazy(() => import("./ImpactView"));
+const ChartSettingsView = React.lazy(() => import("./ChartSettingsView"));
+const SettingsView = React.lazy(() => import("./SettingsView"));
+const DriverVerificationView = React.lazy(() => import("./DriverVerificationView"));
+const SmartKitBuilder = React.lazy(() => import("./smart-kit-builder/SmartKitBuilder"));
 
 type Tab = AdminTab;
 
@@ -163,32 +162,30 @@ const AdminPanel: React.FC = () => {
   }
 
   const renderContent = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return <DashboardView />;
-      case "orders":
-        return <OrdersView />;
-      case "products":
-        return <ProductsView />;
-      case "kit_builder":
-        return <SmartKitBuilder />;
-      case "customers":
-        return <CustomersView />;
-      case "rewards":
-        return <RewardsView />;
-      case "happyhour":
-        return <HappyHourView />;
-      case "impact":
-        return <ImpactView />;
-      case "chart_settings":
-        return <ChartSettingsView />;
-      case "verification":
-        return <DriverVerificationView />;
-      case "settings":
-        return <SettingsView />;
-      default:
-        return <DashboardView />;
-    }
+    return (
+      <Suspense fallback={
+        <div className="h-64 flex items-center justify-center">
+          <i className="fa-solid fa-spinner fa-spin text-3xl text-gray-200"></i>
+        </div>
+      }>
+        {(() => {
+          switch (activeTab) {
+            case "dashboard": return <DashboardView />;
+            case "orders": return <OrdersView />;
+            case "products": return <ProductsView />;
+            case "kit_builder": return <SmartKitBuilder />;
+            case "customers": return <CustomersView />;
+            case "rewards": return <RewardsView />;
+            case "happyhour": return <HappyHourView />;
+            case "impact": return <ImpactView />;
+            case "chart_settings": return <ChartSettingsView />;
+            case "verification": return <DriverVerificationView />;
+            case "settings": return <SettingsView />;
+            default: return <DashboardView />;
+          }
+        })()}
+      </Suspense>
+    );
   };
 
   /* Sidebar Drag Logic */
