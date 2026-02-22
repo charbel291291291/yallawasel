@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { translations, Language } from '../translations';
+import { Language } from '../translations';
 
 interface LoginPageProps {
   lang: Language;
@@ -20,7 +20,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ lang, onLoginSuccess }) => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +35,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ lang, onLoginSuccess }) => {
             data: {
               full_name: fullName,
               phone: phone,
-              address: address,
             },
           },
         });

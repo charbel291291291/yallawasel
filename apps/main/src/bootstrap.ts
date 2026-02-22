@@ -1,4 +1,4 @@
-import { setupRealtimeListeners } from './store/useStore';
+
 import { getMessagingInstance } from './services/firebaseConfig';
 import { initTelemetry } from './telemetry.safe';
 

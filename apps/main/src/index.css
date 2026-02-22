@@ -1,126 +1,189 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #C8A951;
-  --color-secondary: #0B0E17;
-  --color-accent: #E0B84F;
-  --color-luxury-bg: #0B0E17;
-  --color-luxury-card: #151821;
+    --color-primary: #C8A951;
+    --color-secondary: #0B0E17;
+    --color-accent: #E0B84F;
+    --color-luxury-bg: #0B0E17;
+    --color-luxury-card: #151821;
 
-  --animate-fade-in: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-slide-up: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-entrance: entrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    --animate-fade-in: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    --animate-slide-up: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    --animate-entrance: entrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
+    0% {
+        opacity: 0;
+    }
 
-  100% {
-    opacity: 1;
-  }
+    100% {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
-  0% {
-    transform: translateY(30px);
-    opacity: 0;
-  }
+    0% {
+        transform: translateY(30px);
+        opacity: 0;
+    }
 
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 @keyframes entrance {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
 
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* Luxury Gradient Backgrounds */
 .bg-luxury-glow {
-  background: radial-gradient(circle at center, rgba(200, 169, 81, 0.08) 0%, rgba(11, 14, 23, 1) 70%);
+    background: radial-gradient(circle at center, rgba(200, 169, 81, 0.08) 0%, rgba(11, 14, 23, 1) 70%);
 }
 
 .bg-gold-gradient {
-  background: linear-gradient(90deg, #C8A951, #E0B84F);
+    background: linear-gradient(90deg, #C8A951, #E0B84F);
 }
 
 /* Premium Typography Rules */
 .font-luxury {
-  font-family: 'Playfair Display', serif;
+    font-family: 'Playfair Display', serif;
 }
 
 .font-sans-modern {
-  font-family: 'Inter', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 body {
-  background-color: #0B0E17;
-  color: #ffffff;
-  font-family: 'Inter', sans-serif;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  margin: 0;
-  overflow-x: hidden;
+    background-color: #0B0E17;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    overflow-x: hidden;
 }
 
 body[dir="rtl"] {
-  font-family: 'Tajawal', sans-serif;
+    font-family: 'Tajawal', sans-serif;
 }
 
-/* Luxury Components */
+/* Luxury Components — Vanilla CSS for maximum build stability */
 .luxury-button {
-  @apply relative overflow-hidden bg-gold-gradient text-black font-black uppercase tracking-[0.2em] text-[10px] h-14 px-8 rounded-2xl flex items-center justify-center gap-2 shadow-xl transition-all duration-300 active:scale-95 hover:opacity-90;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, #C8A951, #E0B84F);
+    color: black;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 10px;
+    height: 3.5rem;
+    /* h-14 */
+    padding-left: 2rem;
+    padding-right: 2rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.luxury-button:active {
+    transform: scale(0.95);
+}
+
+.luxury-button:hover {
+    opacity: 0.9;
 }
 
 .luxury-button-outline {
-  @apply relative overflow-hidden bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.2em] text-[10px] h-14 px-8 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 hover:bg-white/10;
+    position: relative;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 10px;
+    height: 3.5rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.luxury-button-outline:active {
+    transform: scale(0.95);
+}
+
+.luxury-button-outline:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
 
 .glass-card {
-  @apply bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl;
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 }
 
 .luxury-card {
-  @apply bg-luxury-card border border-white/5 rounded-[2rem] overflow-hidden transition-all duration-500 hover:border-primary/30;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    background-color: #151821;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 2rem;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
 
-/* Scroll Smoothing */
+.luxury-card:hover {
+    border-color: rgba(200, 169, 81, 0.3);
+}
+
+/* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+    width: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(200, 169, 81, 0.2);
-  border-radius: 10px;
+    background: rgba(200, 169, 81, 0.2);
+    border-radius: 10px;
 }
 
 /* Mobile Priority Helpers */
 .min-h-screen-safe {
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
 }
 
 .pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 24px);
+    padding-bottom: env(safe-area-inset-bottom, 24px);
 }
 
 .pt-safe {
-  padding-top: env(safe-area-inset-top, 24px);
+    padding-top: env(safe-area-inset-top, 24px);
 }
