@@ -9,12 +9,6 @@
         ],
         "module": "ESNext",
         "skipLibCheck": true,
-        "types": [
-            "node",
-            "react",
-            "react-dom",
-            "vite/client"
-        ],
         /* Bundler mode */
         "moduleResolution": "bundler",
         "allowImportingTsExtensions": true,

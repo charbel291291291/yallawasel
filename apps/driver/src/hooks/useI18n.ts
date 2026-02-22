@@ -1,6 +1,6 @@
 import { useDriverStore } from '../store/useDriverStore';
-import en from '../locales/en.json';
-import ar from '../locales/ar.json';
+import en from '../utils/locales/en.json';
+import ar from '../utils/locales/ar.json';
 
 export const useI18n = () => {
     const language = useDriverStore(state => state.language);

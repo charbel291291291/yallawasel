@@ -1,4 +1,4 @@
-import { DriverStats, DriverTier } from '../types';
+import { DriverStats, DriverTier } from '../../types';
 
 /**
  * PRODUCTION TIER ENGINE

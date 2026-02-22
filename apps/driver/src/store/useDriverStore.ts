@@ -14,8 +14,8 @@ import {
 import { MissionService } from '../services/missionService';
 import { WalletService } from '../services/walletService';
 import { DriverService } from '../services/driverService';
-import { TierEngine } from '../engines/tierEngine';
-import { SurgeEngine } from '../engines/surgeEngine';
+import { TierEngine } from '../features/engines/tierEngine';
+import { SurgeEngine } from '../features/engines/surgeEngine';
 
 interface DriverState {
     // Auth & Identity

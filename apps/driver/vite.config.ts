@@ -16,40 +16,28 @@ export default defineConfig({
             includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
             workbox: {
                 globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-                cacheId: 'yalla-wasel-driver-v1', // Unique cache name
+                cacheId: 'yalla-driver-v1', // Unique cache name
                 cleanupOutdatedCaches: true
             },
             manifest: {
-                id: 'com.yallawasel.driver', // Unique manifest ID
-                name: 'Yalla Wasel Driver Terminal',
-                short_name: 'Driver',
+                id: 'yalla-driver-v1', // Unique manifest ID
+                name: 'Yalla Wasel Driver',
+                short_name: 'YW Driver',
                 description: 'Operational Terminal for Elite Drivers',
-                theme_color: '#0E0E11',
-                background_color: '#0E0E11',
+                theme_color: '#000000',
+                background_color: '#000000',
                 display: 'standalone',
                 orientation: 'portrait',
                 icons: [
                     {
-                        src: 'pwa-192x192.png',
+                        src: '/icons/driver-192.png',
                         sizes: '192x192',
                         type: 'image/png'
                     },
                     {
-                        src: 'pwa-512x512.png',
+                        src: '/icons/driver-512.png',
                         sizes: '512x512',
                         type: 'image/png'
-                    },
-                    {
-                        src: 'pwa-512x512.png',
-                        sizes: '512x512',
-                        type: 'image/png',
-                        purpose: 'any'
-                    },
-                    {
-                        src: 'pwa-512x512.png',
-                        sizes: '512x512',
-                        type: 'image/png',
-                        purpose: 'maskable'
                     }
                 ]
             }
