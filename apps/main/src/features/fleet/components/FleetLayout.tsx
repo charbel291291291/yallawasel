@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/app/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 export const FleetLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {

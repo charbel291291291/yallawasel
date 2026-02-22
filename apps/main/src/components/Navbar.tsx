@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { User, AppSettings } from "../types";
-import { Language } from "../translations";
+import { User, AppSettings } from "@/types";
+import { Language } from "@/utils/translations";
 
 interface NavbarProps {
     user: User | null;

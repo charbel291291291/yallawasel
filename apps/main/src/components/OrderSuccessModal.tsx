@@ -1,6 +1,6 @@
 import React from "react";
-import { Language } from "../translations";
-import { getWhatsAppUrl, OrderNotificationData } from "../services/whatsappNotification";
+import { Language } from "@/utils/translations";
+import { getWhatsAppUrl, OrderNotificationData } from "@/services/whatsappNotification";
 
 interface OrderSuccessModalProps {
     lastOrder: OrderNotificationData;

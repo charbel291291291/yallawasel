@@ -1,7 +1,7 @@
 import { supabase } from '@/services/supabaseClient';
 import { AppSettings } from '@/types';
 import { logger } from '@/services/logger';
-import { AppSettingsSchema, validateResponse } from '@/validation';
+import { AppSettingsSchema, validateResponse } from '@/utils/validation';
 
 export const DEFAULT_SETTINGS: AppSettings = {
   store_name: 'Yalla Wasel',

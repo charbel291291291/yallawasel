@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Order } from "../types";
-import { supabase } from "../services/supabaseClient";
-import WalletCard from "../components/WalletCard";
+import { Order } from "@/types";
+import { supabase } from "@/services/supabaseClient";
+import WalletCard from "@/components/WalletCard";
 
-import { useStore } from "../store/useStore";
-import { useAuth } from "../contexts/AuthContext";
+import { useStore } from "@/store/useStore";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 
 const PrivilegeItem = ({ icon, label, desc }: { icon: string; label: string; desc: string }) => (

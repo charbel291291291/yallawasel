@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { supabase } from "../services/supabaseClient";
-import { Language } from "../translations";
+import { supabase } from "@/services/supabaseClient";
+import { Language } from "@/utils/translations";
 
 interface OrderStatusHistory {
   id: string;

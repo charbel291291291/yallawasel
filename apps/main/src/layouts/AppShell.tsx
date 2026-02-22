@@ -1,0 +1,129 @@
+import React, { useState, useEffect, useCallback, startTransition } from "react";
+import { useLocation } from "react-router-dom";
+import { useSettings } from "@/app/contexts/SettingsContext";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { useCheckout } from "@/hooks/useCheckout";
+import { useStore } from "@/store/useStore";
+
+// Components
+import Navbar from "@/components/Navbar";
+
+import MobileTabBar from "@/components/MobileTabBar";
+import CartDrawer from "@/components/CartDrawer";
+import OrderSuccessModal from "@/components/OrderSuccessModal";
+import HiddenAdminAccess from "@/components/HiddenAdminAccess";
+import BreakingNewsTicker from "@/components/BreakingNewsTicker";
+import OfflineIndicator from "@/components/OfflineIndicator";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { InstallGate } from "@/components/InstallGate";
+import AppRouter from "@/app/router/AppRouter";
+
+
+const AppShell: React.FC = () => {
+    const {
+        cart,
+        lang,
+        user,
+        setLang,
+        fetchInitialData
+    } = useStore();
+
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const { settings } = useSettings();
+    const location = useLocation();
+    const { handleLogout, authLoading } = useAuth();
+    const happyHours = useStore(s => s.happyHours);
+
+    const {
+        checkoutLoading,
+        lastOrder,
+        showOrderSuccess,
+        handleCheckout,
+        closeOrderSuccess,
+    } = useCheckout(setIsCartOpen, settings);
+
+
+    useEffect(() => {
+        // Initialize store data - real-time pipeline disabled for stability
+        fetchInitialData();
+        // const cleanup = setupRealtimeListeners();
+        // return cleanup;
+    }, [fetchInitialData]);
+
+    const toggleLanguage = useCallback(() => {
+        startTransition(() => {
+            setLang(lang === "en" ? "ar" : "en");
+        });
+    }, [lang, setLang]);
+
+    const isAdminRoute = location.pathname.startsWith("/admin");
+
+    if (authLoading && !isAdminRoute) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary/20 border-t-primary"></div>
+            </div>
+        );
+    }
+
+    return (
+        <ErrorBoundary>
+            <InstallGate>
+                <div
+                    className={`min-h-screen-safe transition-colors duration-500 flex flex-col ${isAdminRoute ? "bg-slate-50" : "bg-[#0B0E17] bg-luxury-glow"
+                        }`}
+                >
+                    {!isAdminRoute && (
+                        <HiddenAdminAccess>
+                            <Navbar
+                                user={user}
+                                settings={settings}
+                                cartCount={cart.length}
+                                lang={lang}
+                                toggleLanguage={toggleLanguage}
+                                onLogout={handleLogout}
+                                onOpenCart={() => setIsCartOpen(true)}
+                            />
+                            <BreakingNewsTicker happyHours={happyHours} lang={lang} speed={settings.ticker_speed} />
+                        </HiddenAdminAccess>
+                    )}
+
+                    <main className={`flex-1 flex flex-col ${isAdminRoute ? "" : "w-full pt-20"}`}>
+                        <div className={isAdminRoute ? "" : "max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8"}>
+                            <AppRouter />
+                        </div>
+                    </main>
+
+                    <CartDrawer
+                        isOpen={isCartOpen}
+                        onClose={() => setIsCartOpen(false)}
+                        onCheckout={handleCheckout}
+                        checkoutLoading={checkoutLoading}
+                    />
+
+
+                    {showOrderSuccess && lastOrder && (
+                        <OrderSuccessModal
+                            lastOrder={lastOrder}
+                            lang={lang}
+                            onClose={closeOrderSuccess}
+                        />
+                    )}
+
+                    {!isAdminRoute && (
+                        <MobileTabBar
+                            lang={lang}
+                            onOpenCart={() => setIsCartOpen(true)}
+                            cartCount={cart.length}
+                        />
+                    )}
+
+                    <OfflineIndicator />
+                </div>
+            </InstallGate>
+        </ErrorBoundary>
+    );
+};
+
+
+export default AppShell;

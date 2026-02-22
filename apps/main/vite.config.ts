@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// https://vitejs.dev/config/
+// LUXURY CUSTOMER CONFIGURATION
 export default defineConfig({
   plugins: [
     react(),
@@ -16,7 +16,13 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        cacheId: 'yalla-wasel-customer-v1', // Unique cache name
+        cleanupOutdatedCaches: true
+      },
       manifest: {
+        id: 'com.yallawasel.customer', // Unique manifest ID
         name: 'Yalla Wasel Luxury',
         short_name: 'Yalla Wasel',
         description: 'Elite Deliveries and Curated Kits',

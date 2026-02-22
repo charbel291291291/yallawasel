@@ -11,7 +11,7 @@ import {
   UserImpactSchema,
   validateArray,
   validateSingle,
-} from "@/validation";
+} from "@/utils/validation";
 
 const DEFAULT_IMPACT_PERCENTAGE = 3; // 3% of order goes to impact
 

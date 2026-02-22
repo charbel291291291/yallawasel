@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { ImpactCampaign } from "../types";
-import { supabase } from "../services/supabaseClient";
+import { ImpactCampaign } from "@/types";
+import { supabase } from "@/services/supabaseClient";
 
 interface ImpactUserStats {
     totalContributed: number;
@@ -15,7 +15,7 @@ interface LeaderboardEntry {
     impact: number;
 }
 
-import { useStore } from "../store/useStore";
+import { useStore } from "@/store/useStore";
 
 const ImpactPage: React.FC = () => {
     const { lang, user } = useStore();

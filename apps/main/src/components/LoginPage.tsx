@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../services/supabaseClient';
-import { translations, Language } from '../translations';
+import { supabase } from '@/services/supabaseClient';
+import { translations, Language } from '@/utils/translations';
 
 interface LoginPageProps {
   lang: Language;

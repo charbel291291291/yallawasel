@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
 import { startTransition } from "react";
-import { AppSettings } from "../types";
-import { supabase } from "../services/supabaseClient";
-import { OrderNotificationData } from "../services/whatsappNotification";
+import { AppSettings } from "@/types";
+import { supabase } from "@/services/supabaseClient";
+import { OrderNotificationData } from "@/services/whatsappNotification";
 
 
-import { useStore } from "../store/useStore";
+import { useStore } from "@/store/useStore";
 
 export function useCheckout(
     setIsCartOpen: (open: boolean) => void,

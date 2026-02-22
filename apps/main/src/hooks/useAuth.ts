@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { startTransition } from "react";
-import { User, UserTier } from "../types";
-import { supabase } from "../services/supabaseClient";
+import { User, UserTier } from "@/types";
+import { supabase } from "@/services/supabaseClient";
 
 export function useAuth() {
     const [user, setUser] = useState<User | null>(null);

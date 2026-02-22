@@ -1,5 +1,5 @@
 
-import { supabase } from "./supabaseClient";
+import { supabase } from "@/services/supabaseClient";
 import { logger } from "@/services/logger";
 import {
     ChartSettingsSchema,
@@ -7,7 +7,7 @@ import {
     LiveOfferHistorySchema,
     validateSingle,
     validateArray,
-} from "@/validation";
+} from "@/utils/validation";
 
 export interface ChartSettings {
     id: number;

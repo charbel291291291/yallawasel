@@ -1,7 +1,7 @@
 // Central API Service for Yalla Wasel
 // All database operations must go through this service
 
-import { supabase } from "./supabaseClient";
+import { supabase } from "@/services/supabaseClient";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import {
   OrderResponseSchema,
@@ -10,7 +10,7 @@ import {
   ImpactCampaignSchema,
   validateArray,
   validateSingle,
-} from "@/validation";
+} from "@/utils/validation";
 
 // Types
 export interface Product {

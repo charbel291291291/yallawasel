@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { Product, HappyHour, User, CartItem } from '../types';
-import { Language } from '../translations';
-import { supabase } from '../services/supabaseClient';
+import { Product, HappyHour, User, CartItem } from '@/types';
+import { Language } from '@/utils/translations';
+import { supabase } from '@/services/supabaseClient';
 
 
 

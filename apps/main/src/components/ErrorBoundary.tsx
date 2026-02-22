@@ -4,7 +4,7 @@ import {
   classifyError,
   isValidationError,
   type ValidationErrorCategory,
-} from "@/validation";
+} from "@/utils/validation";
 
 // ============================================
 // TYPES
